@@ -1,0 +1,507 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Luiz Kim</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+/* Layout: the name as a monument on the bottom edge of a full-bleed photograph; after it a small, calm
+   page in one grotesk at two sizes; the ending flips to a pale concrete field with the email as display type. */
+:root {
+  color-scheme: dark;
+  --bg: #1c1c1c;
+  --surface: #262626;
+  --surface-2: #303030;
+  --ink: #f1f1ef;
+  --muted: #9a9b96;
+  --accent: #8fa68e;
+  --accent-ink: #1c1c1c;
+  --field: #c8c5ba;
+  --field-ink: #1c1c1c;
+  --field-muted: #4a4a46;
+  --field-surface: #bdbab0;
+
+  --font: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+
+  --m: clamp(1.25rem, 2.2vw, 2rem);
+  --gutter: clamp(1rem, 2vw, 2rem);
+  --section: clamp(7rem, 14vw, 14rem);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --t-press: 140ms;
+  --t-hover: 180ms;
+  --t-reveal: 800ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: var(--step-body); line-height: 1.5; font-weight: 400;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden;
+}
+h1, h2, h3, p, figure, ul, ol, dl, dd { margin: 0; }
+ul[class], ol[class] { padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+img { height: auto; }
+a { color: inherit; }
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+p { max-width: 62ch; text-wrap: pretty; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px), var(--m)); padding-right: max(16px, env(safe-area-inset-right, 0px), var(--m)); }
+.muted { color: var(--muted); }
+.nums { font-variant-numeric: tabular-nums; }
+.link { text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 0.07em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); transition: text-decoration-color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .link:hover { text-decoration-color: currentColor; } }
+.button {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0 1.25rem;
+  background: var(--accent); color: var(--accent-ink); font-weight: 500; text-decoration: none; white-space: nowrap;
+  transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease;
+}
+.button:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .button:hover { background: var(--ink); } }
+
+/* ---------- hero: film title, bottom edge ---------- */
+.hero { position: relative; height: 100svh; min-height: 560px; overflow: hidden; color: var(--ink); isolation: isolate; }
+.hero__pic { position: absolute; inset: 0; z-index: 0; background: var(--surface); }
+.hero__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; filter: grayscale(1) contrast(1.05); }
+.hero__pic img + img { opacity: 0; }
+.hero__scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 1; background: linear-gradient( /* taste-skill-ignore: neutral scrim under the name only */to top, rgba(14,14,14,0.78), rgba(14,14,14,0)); pointer-events: none; }
+.hero__top { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: calc(env(safe-area-inset-top, 0px) + 1.1rem); }
+.hero__mark { font-weight: 500; text-decoration: none; font-size: var(--step-body); }
+.hero__nav { display: flex; align-items: center; gap: clamp(1rem, 2.4vw, 2.25rem); font-size: var(--step-small); font-weight: 500; }
+.hero__nav .button { min-height: 2.5rem; padding: 0 1rem; }
+.hero__nav a { text-decoration: none; opacity: 0.92; transition: opacity var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .hero__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.2em; } }
+.hero__bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 1.1rem; padding-bottom: 1.6rem; }
+.hero__row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; }
+.hero__lead { max-width: 28ch; font-size: var(--step-body); line-height: 1.45; }
+.hero__name {
+  font-size: clamp(96px, 22vw, 340px); font-weight: 500; line-height: 0.82; letter-spacing: -0.055em;
+  white-space: nowrap; margin-left: -0.04em;
+}
+
+@media (max-width: 700px) {
+  .hero { min-height: 100svh; }
+  .hero__pic img { object-position: 55% 35%; }
+  .hero__nav a:not(.button) { display: none; }
+  .hero__row { flex-direction: column; align-items: flex-start; gap: 0.9rem; }
+  .hero__name { font-size: 21.5vw; }
+  .hero__bottom { padding-bottom: 1.25rem; }
+}
+
+/* ---------- intro: narrow column, empty field ---------- */
+.intro { padding-top: 4rem; padding-bottom: 10rem; }
+.intro__col { margin-left: 15%; width: min(360px, 100%); display: flex; flex-direction: column; gap: 1rem; font-size: var(--step-body); line-height: 1.5; }
+.intro__col p:first-child { font-weight: 500; color: var(--ink); }
+.intro__col p:first-child { color: var(--ink); }
+@media (max-width: 700px) { .intro { padding-top: 4.5rem; padding-bottom: 6rem; } .intro__col { margin-left: 0; width: 78%; } }
+
+/* ---------- stats: quiet figure lines + the live thing ---------- */
+.stats { padding-top: 18vh; padding-bottom: 18vh; }
+.stats__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
+.stats__list { grid-column: 2 / 8; }
+.stats__head { font-size: var(--step-head); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin-left: calc(132px + 24px); margin-bottom: 3.5rem; }
+.stats__rows { display: flex; flex-direction: column; gap: 1.75rem; }
+.stats__row { display: grid; grid-template-columns: 132px minmax(0, 1fr); column-gap: 24px; align-items: baseline; text-decoration: none; }
+.stats__fig { text-align: right; font-size: 2rem; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+.stats__txt { max-width: 40ch; color: var(--ink); font-size: var(--step-body); line-height: 1.45; }
+.stats__photo { grid-column: 9 / 12; margin-top: 80px; aspect-ratio: 1 / 1; overflow: hidden; background: var(--surface); }
+.stats__photo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+
+@media (max-width: 900px) {
+  .stats { padding-top: 6rem; padding-bottom: 6rem; }
+  .stats__list { grid-column: 1 / -1; }
+  .stats__head { margin-left: calc(88px + 16px); font-size: 1.375rem; margin-bottom: 2.5rem; }
+  .stats__row { grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; }
+  .stats__fig { font-size: 1.5rem; }
+    .stats__photo { grid-column: 1 / -1; width: 56%; margin-left: auto; margin-top: 3.5rem; }
+}
+
+/* ---------- work: oversized visual, small cluster ---------- */
+.work { display: flex; flex-direction: column; gap: 140px; padding-top: 6rem; padding-bottom: var(--section); overflow: hidden; }
+.case { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: end; }
+.case__visual { grid-column: 1 / 8; height: 80svh; min-height: 420px; max-height: 760px; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); overflow: hidden; }
+.case--2 .case__visual { height: 60svh; }
+.case--3 .case__visual { height: 90svh; }
+.case__visual svg { width: 120%; height: 100%; margin-left: -8%; }
+.case__cluster { grid-column: 8 / 13; display: flex; flex-direction: column; gap: 28px; padding-bottom: 0.5rem; }
+.case__shot { aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: var(--surface); }
+.case__meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.case__title { font-size: clamp(28px, 3vw, 44px); font-weight: 500; line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance; }
+.case__title a { text-decoration: none; }
+.case__desc { font-size: var(--step-body); line-height: 1.45; color: var(--ink); }
+.case__desc a { color: var(--ink); }
+.case__who { font-size: var(--step-small); color: var(--muted); margin-top: 0.35rem; }
+@media (max-width: 900px) {
+  .work { gap: 88px; padding-top: 3rem; }
+  .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
+  .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 70svh; }
+  .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
+  .case__cluster { gap: 1rem; }
+  .case__meta { display: flex; flex-direction: column; gap: 0.75rem; }
+  .case__title { font-size: 8vw; }
+  }
+
+
+/* ---------- about: side facts, wide paragraph ---------- */
+.about { padding-top: var(--section); padding-bottom: var(--section); display: flex; flex-direction: column; gap: 120px; }
+.about__row { display: grid; grid-template-columns: 34% minmax(0, 1fr); column-gap: 0; align-items: center; }
+.who { width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; }
+.who__pics { position: relative; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.9rem; }
+.who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: lighten; }
+/* the topology render fades in over the grey portrait as the card scrolls up the screen:
+   fully grey once the card has appeared, fully drawn by the time it has passed the middle */
+.who__pic--mesh { opacity: 0; }
+@supports (animation-timeline: view()) {
+  .who__pic--mesh { animation: mesh-fade linear both; animation-timeline: view(); animation-range: entry 100% cover 70%; }
+}
+@keyframes mesh-fade { from { opacity: 0; } to { opacity: 1; } }
+.who__name { font-size: var(--step-head); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
+.who__role { font-size: var(--step-body); }
+.who__prev { font-size: var(--step-body); color: var(--muted); }
+.who__link { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-top: 0.6rem; color: var(--ink); transition: color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .who__link:hover { color: var(--accent); } }
+.about__para { font-size: var(--step-lead); line-height: 1.35; max-width: 90%; letter-spacing: -0.01em; }
+.about__word { font-size: var(--step-body); color: var(--ink); }
+.about__lists { display: flex; gap: 64px; flex-wrap: wrap; }
+.about__list { width: 300px; display: flex; flex-direction: column; gap: 10px; font-size: var(--step-body); line-height: 1.3; }
+.about__list li { display: flex; justify-content: space-between; gap: 1rem; }
+.about__list li span { color: var(--muted); text-align: right; }
+@media (max-width: 800px) {
+  .about { gap: 40px; padding-top: 6rem; padding-bottom: 6rem; }
+  .about__row { display: flex; flex-direction: column; gap: 2rem; }
+  .who { align-self: center; }
+  .about__para { max-width: none; }
+  .about__lists { flex-direction: column; gap: 40px; }
+  .about__list { width: 100%; }
+}
+
+/* ---------- contact: the email as display type, curtain ending ---------- */
+.page { position: relative; z-index: 1; background: var(--bg); }
+.contact { height: 100svh; min-height: 560px; background: var(--field); color: var(--field-ink); display: flex; flex-direction: column; justify-content: space-between; padding-top: 1.75rem; padding-bottom: 1.5rem; }
+.contact__intro { font-size: var(--step-lead); max-width: 26ch; line-height: 1.3; font-weight: 500; }
+.contact__mail { align-self: flex-start; text-decoration: none; font-size: clamp(2.75rem, 8.25vw, 8.5rem); line-height: 0.95; letter-spacing: -0.04em; font-weight: 400; white-space: nowrap; margin-left: -0.03em; transition: color var(--t-hover) ease; overflow-wrap: anywhere; }
+.contact__mail .at { display: inline; }
+@media (hover: hover) and (pointer: fine) { .contact__mail:hover { color: var(--accent-hover, #4f6a4e); } }
+.contact__foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; font-size: var(--step-small); line-height: 1.4; }
+.contact__foot .muted { color: var(--field-muted); }
+.contact__links { display: flex; gap: 1.5rem; }
+.contact__cta { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; }
+.contact__copy { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+.copy-btn { background: var(--field-ink); color: var(--field); border: 0; padding: 0 1rem; min-height: 2.5rem; font-weight: 500; cursor: pointer; transition: transform var(--t-press) var(--ease-out); }
+.copy-btn:active { transform: scale(0.97); }
+.copy-btn:focus-visible { outline-color: var(--field-ink); }
+@media (max-width: 700px) {
+  .contact { height: 86svh; }
+  .contact__mail { font-size: 11.5vw; white-space: normal; }
+  .contact__mail .at::after { content: "\A"; white-space: pre; }
+  .contact__foot { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .contact__links { flex-direction: column; gap: 0.75rem; }
+}
+
+/* ---------- motion (content stays visible without script) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-rise] { opacity: 0; transform: translateY(18px); animation: rise var(--t-reveal) var(--ease-out) forwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+  .js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity 700ms var(--ease-out), transform 900ms var(--ease-out); transition-delay: calc(var(--i, 0) * 80ms); }
+  .js [data-reveal].is-in { opacity: 1; transform: none; }
+  .js .shutter[data-reveal] { opacity: 1; transform: none; clip-path: inset(0 100% 0 0); transition: clip-path 1100ms var(--ease-in-out); }
+  .js .shutter[data-reveal] svg { transform: scale(1.06); transform-origin: left bottom; transition: transform 1500ms var(--ease-soft); }
+  .js .shutter[data-reveal].is-in { clip-path: inset(0); }
+  .js .shutter[data-reveal].is-in svg { transform: none; }
+  .hero__pic img + img { animation: xfade 18s linear infinite; }
+  .hero__pic img:nth-child(2) { animation-delay: 6s; }
+  .hero__pic img:nth-child(3) { animation-delay: 12s; }
+  .hero__pic img:first-child { animation: drift 18s var(--ease-soft) infinite alternate; }
+  .hero.is-paused .hero__pic img { animation-play-state: paused; }
+}
+@keyframes rise { to { opacity: 1; transform: none; } }
+@keyframes xfade { 0% { opacity: 0; } 9% { opacity: 1; } 33% { opacity: 1; } 42% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.05); } }
+</style>
+
+<div class="page">
+
+  <header class="hero" id="top">
+    <div class="hero__pic" aria-hidden="true">
+      <img src="img/hero-1.jpg" width="2000" height="1250" alt="">
+      <img src="img/hero-2.jpg" width="2000" height="1250" alt="" loading="lazy">
+      <img src="img/hero-3.jpg" width="2000" height="1250" alt="" loading="lazy">
+    </div>
+    <div class="hero__scrim"></div>
+    <div class="hero__top wrap">
+      <a class="hero__mark" href="#top">Luiz Kim</a>
+      <nav class="hero__nav" aria-label="Main">
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="#contact">CV</a>
+        <a class="button" href="#contact">Email me</a>
+      </nav>
+    </div>
+    <div class="hero__bottom wrap">
+      <div class="hero__row">
+        <p class="hero__lead" data-rise style="--i:0">Product design leader in iGaming, London. I turn design from a delivery function into a measurable business one.</p>
+      </div>
+      <h1 class="hero__name" data-rise style="--i:1">Luiz Kim</h1>
+    </div>
+  </header>
+
+  <section class="stats wrap" aria-labelledby="stats-head">
+    <div class="stats__grid">
+      <div class="stats__list">
+        <h2 class="stats__head" id="stats-head" data-reveal>What design changed</h2>
+        <div class="stats__rows">
+          <a class="stats__row" href="case-ai.html" data-reveal style="--i:0">
+            <span class="stats__fig nums">77%</span>
+            <span class="stats__txt">of AI-tooling commits came from designers who had no repo access eight months earlier</span>
+          </a>
+          <a class="stats__row" href="case-system.html" data-reveal style="--i:1">
+            <span class="stats__fig nums">56%</span>
+            <span class="stats__txt">faster design tasks on one design system for more than 40 brands, zeroheight Award for collaboration</span>
+          </a>
+          <a class="stats__row" href="case-system.html" data-reveal style="--i:2">
+            <span class="stats__fig nums">43%</span>
+            <span class="stats__txt">faster development delivery on the same system (Jira hours)</span>
+          </a>
+        </div>
+      </div>
+      <figure class="stats__photo" data-reveal>
+        <img src="img/lattice.jpg" width="1200" height="1200" alt="Curving glass and steel lattice roof, black and white" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <section class="work wrap" id="work" aria-label="Selected work">
+
+    <article class="case case--1" id="case-1">
+      <div class="case__visual shutter" data-reveal aria-hidden="true">
+        <svg viewBox="0 0 900 640" preserveAspectRatio="xMidYMax slice" role="img" aria-label="AI-tooling commits by month, March to October 2026, design team against everyone else">
+          <rect x="0" y="0" width="900" height="640" fill="#1c1c1c"/>
+          <!-- commits to AI-tooling paths by month, Mar to Oct 2026: design (sage) under everyone else (grey) -->
+          <g><rect x="96" y="570.0" width="64" height="30.0" fill="#8fa68e"/><rect x="96" y="529.1" width="64" height="40.9" fill="#3b3b3b"/><rect x="184" y="567.3" width="64" height="32.7" fill="#8fa68e"/><rect x="184" y="559.1" width="64" height="8.2" fill="#3b3b3b"/><rect x="272" y="425.5" width="64" height="174.5" fill="#8fa68e"/><rect x="272" y="340.9" width="64" height="84.5" fill="#3b3b3b"/><rect x="360" y="564.5" width="64" height="35.5" fill="#8fa68e"/><rect x="360" y="523.6" width="64" height="40.9" fill="#3b3b3b"/><rect x="448" y="510.0" width="64" height="90.0" fill="#8fa68e"/><rect x="448" y="490.9" width="64" height="19.1" fill="#3b3b3b"/><rect x="536" y="199.1" width="64" height="400.9" fill="#8fa68e"/><rect x="536" y="120.0" width="64" height="79.1" fill="#3b3b3b"/><rect x="624" y="395.5" width="64" height="204.5" fill="#8fa68e"/><rect x="624" y="368.2" width="64" height="27.3" fill="#3b3b3b"/><rect x="712" y="583.6" width="64" height="16.4" fill="#8fa68e"/></g>
+          <rect x="80" y="600" width="712" height="3" fill="#c8c5ba"/>
+        </svg>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal style="--i:2"><a href="case-ai.html">From chat tools to a production pipeline</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">Engineers had coding agents; designers had chat tools. Eight months later, designers had written 77% of the AI tooling and shipped from prototypes. <a class="link" href="case-ai.html">Read the case study</a></p>
+            <p class="case__who">A5 Labs · Design Director · 2026 · Poker</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case case--2" id="case-2">
+      <div class="case__visual shutter" data-reveal aria-hidden="true">
+        <svg viewBox="0 0 900 480" preserveAspectRatio="xMinYMax slice" role="img" aria-label="One token layer feeding three system layers and forty brand tiles">
+          <rect x="0" y="0" width="900" height="480" fill="#1c1c1c"/>
+          <!-- tokens: the root -->
+          <rect x="20" y="24" width="300" height="56" fill="#f1f1ef"/>
+          <rect x="20" y="24" width="300" height="10" fill="#c8c5ba"/>
+          <!-- three layers -->
+          <g fill="#303030">
+            <rect x="20" y="120" width="268" height="44"/><rect x="316" y="120" width="268" height="44"/><rect x="612" y="120" width="268" height="44"/>
+          </g>
+          <g fill="#3b3b3b"><rect x="20" y="120" width="268" height="8"/><rect x="316" y="120" width="268" height="8"/><rect x="612" y="120" width="268" height="8"/></g>
+          <!-- feeds -->
+          <g fill="#c8c5ba"><rect x="150" y="80" width="6" height="40"/><rect x="150" y="80" width="600" height="6"/><rect x="450" y="80" width="6" height="40"/><rect x="744" y="80" width="6" height="40"/></g>
+          <!-- forty brand tiles, 10 x 4; eight carry an ambassador -->
+          <g fill="#c8c5ba">
+            <rect x="20" y="212" width="78" height="52"/><rect x="106" y="212" width="78" height="52"/><rect x="192" y="212" width="78" height="52"/><rect x="278" y="212" width="78" height="52"/><rect x="364" y="212" width="78" height="52"/><rect x="450" y="212" width="78" height="52"/><rect x="536" y="212" width="78" height="52"/><rect x="622" y="212" width="78" height="52"/><rect x="708" y="212" width="78" height="52"/><rect x="794" y="212" width="78" height="52"/>
+            <rect x="20" y="272" width="78" height="52"/><rect x="106" y="272" width="78" height="52"/><rect x="192" y="272" width="78" height="52"/><rect x="278" y="272" width="78" height="52"/><rect x="364" y="272" width="78" height="52"/><rect x="450" y="272" width="78" height="52"/><rect x="536" y="272" width="78" height="52"/><rect x="622" y="272" width="78" height="52"/><rect x="708" y="272" width="78" height="52"/><rect x="794" y="272" width="78" height="52"/>
+            <rect x="20" y="332" width="78" height="52"/><rect x="106" y="332" width="78" height="52"/><rect x="192" y="332" width="78" height="52"/><rect x="278" y="332" width="78" height="52"/><rect x="364" y="332" width="78" height="52"/><rect x="450" y="332" width="78" height="52"/><rect x="536" y="332" width="78" height="52"/><rect x="622" y="332" width="78" height="52"/><rect x="708" y="332" width="78" height="52"/><rect x="794" y="332" width="78" height="52"/>
+            <rect x="20" y="392" width="78" height="52"/><rect x="106" y="392" width="78" height="52"/><rect x="192" y="392" width="78" height="52"/><rect x="278" y="392" width="78" height="52"/><rect x="364" y="392" width="78" height="52"/><rect x="450" y="392" width="78" height="52"/><rect x="536" y="392" width="78" height="52"/><rect x="622" y="392" width="78" height="52"/><rect x="708" y="392" width="78" height="52"/><rect x="794" y="392" width="78" height="52"/>
+          </g>
+          <g fill="#8fa68e">
+            <rect x="106" y="212" width="78" height="52"/><rect x="450" y="212" width="78" height="52"/><rect x="794" y="212" width="78" height="52"/>
+            <rect x="278" y="272" width="78" height="52"/><rect x="622" y="272" width="78" height="52"/>
+            <rect x="20" y="332" width="78" height="52"/><rect x="536" y="332" width="78" height="52"/>
+            <rect x="364" y="392" width="78" height="52"/>
+          </g>
+          <!-- a lit edge on every tile -->
+          <g fill="#dedbd0" opacity="0.9">
+            <rect x="20" y="212" width="78" height="6"/><rect x="192" y="212" width="78" height="6"/><rect x="278" y="212" width="78" height="6"/><rect x="364" y="212" width="78" height="6"/><rect x="536" y="212" width="78" height="6"/><rect x="622" y="212" width="78" height="6"/><rect x="708" y="212" width="78" height="6"/>
+            <rect x="20" y="272" width="78" height="6"/><rect x="106" y="272" width="78" height="6"/><rect x="192" y="272" width="78" height="6"/><rect x="364" y="272" width="78" height="6"/><rect x="450" y="272" width="78" height="6"/><rect x="536" y="272" width="78" height="6"/><rect x="708" y="272" width="78" height="6"/><rect x="794" y="272" width="78" height="6"/>
+            <rect x="106" y="332" width="78" height="6"/><rect x="192" y="332" width="78" height="6"/><rect x="278" y="332" width="78" height="6"/><rect x="364" y="332" width="78" height="6"/><rect x="450" y="332" width="78" height="6"/><rect x="622" y="332" width="78" height="6"/><rect x="708" y="332" width="78" height="6"/><rect x="794" y="332" width="78" height="6"/>
+            <rect x="20" y="392" width="78" height="6"/><rect x="106" y="392" width="78" height="6"/><rect x="192" y="392" width="78" height="6"/><rect x="278" y="392" width="78" height="6"/><rect x="450" y="392" width="78" height="6"/><rect x="536" y="392" width="78" height="6"/><rect x="622" y="392" width="78" height="6"/><rect x="708" y="392" width="78" height="6"/><rect x="794" y="392" width="78" height="6"/>
+          </g>
+          <!-- the pipe down from the layers to the brands -->
+          <g fill="#c8c5ba"><rect x="150" y="164" width="6" height="48"/><rect x="450" y="164" width="6" height="48"/><rect x="744" y="164" width="6" height="48"/><rect x="150" y="186" width="600" height="6"/></g>
+        </svg>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal style="--i:2"><a href="case-system.html">One design system for 40 brands</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">One system, 40+ brands, run as a product with ownership by market. <a class="link" href="case-system.html">Read the case study</a></p>
+            <p class="case__who">Entain · Product Design Manager · 2023 to 2026</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case case--3" id="case-3">
+      <div class="case__visual shutter" data-reveal aria-hidden="true">
+        <svg viewBox="0 0 900 720" preserveAspectRatio="xMinYMax slice" role="img" aria-label="A standing player focus group around one table, with stakeholders watching from the observation room">
+          <rect x="0" y="0" width="900" height="720" fill="#1c1c1c"/>
+          <!-- observation room on the right, with its window -->
+          <rect x="620" y="60" width="280" height="660" fill="#262626"/>
+          <rect x="620" y="60" width="280" height="12" fill="#303030"/>
+          <rect x="650" y="150" width="220" height="150" fill="#1c1c1c"/>
+          <rect x="650" y="150" width="220" height="8" fill="#3b3b3b"/>
+          <!-- three stakeholders watching -->
+          <g fill="#c8c5ba">
+            <circle cx="690" cy="372" r="22"/><rect x="664" y="402" width="52" height="70"/>
+            <circle cx="760" cy="372" r="22"/><rect x="734" y="402" width="52" height="70"/>
+            <circle cx="830" cy="372" r="22"/><rect x="804" y="402" width="52" height="70"/>
+          </g>
+          <g fill="#dedbd0"><rect x="664" y="402" width="52" height="8"/><rect x="734" y="402" width="52" height="8"/><rect x="804" y="402" width="52" height="8"/></g>
+          <!-- the player table -->
+          <circle cx="330" cy="400" r="190" fill="#303030"/>
+          <circle cx="330" cy="392" r="190" fill="#3b3b3b"/>
+          <circle cx="330" cy="392" r="150" fill="#8fa68e"/>
+          <circle cx="330" cy="392" r="148" fill="#8fa68e"/>
+          <!-- eight seats -->
+          <g fill="#f1f1ef">
+            <circle cx="330" cy="172" r="26"/><circle cx="486" cy="236" r="26"/><circle cx="550" cy="392" r="26"/><circle cx="486" cy="548" r="26"/>
+            <circle cx="330" cy="612" r="26"/><circle cx="174" cy="548" r="26"/><circle cx="110" cy="392" r="26"/><circle cx="174" cy="236" r="26"/>
+          </g>
+          <!-- cards on the felt: personas from moderated cohorts -->
+          <g fill="#f1f1ef">
+            <rect x="262" y="336" width="60" height="84" transform="rotate(-8 292 378)"/>
+            <rect x="320" y="340" width="60" height="84" transform="rotate(6 350 382)"/>
+            <rect x="376" y="352" width="60" height="84" transform="rotate(14 406 394)"/>
+          </g>
+          <g fill="#1c1c1c">
+            <rect x="272" y="346" width="40" height="6" transform="rotate(-8 292 378)"/><rect x="272" y="358" width="28" height="6" transform="rotate(-8 292 378)"/>
+            <rect x="330" y="350" width="40" height="6" transform="rotate(6 350 382)"/><rect x="330" y="362" width="28" height="6" transform="rotate(6 350 382)"/>
+            <rect x="386" y="362" width="40" height="6" transform="rotate(14 406 394)"/><rect x="386" y="374" width="28" height="6" transform="rotate(14 406 394)"/>
+          </g>
+          <!-- session timeline on the floor: 45 minute moderated session, three pillars -->
+          <rect x="40" y="672" width="540" height="10" fill="#303030"/>
+          <rect x="40" y="672" width="180" height="10" fill="#c8c5ba"/>
+          <rect x="226" y="672" width="180" height="10" fill="#f1f1ef"/>
+          <rect x="412" y="672" width="168" height="10" fill="#8fa68e"/>
+          <g fill="#f1f1ef"><rect x="40" y="652" width="3" height="40"/><rect x="226" y="652" width="3" height="40"/><rect x="412" y="652" width="3" height="40"/><rect x="577" y="652" width="3" height="40"/></g>
+        </svg>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal style="--i:2"><a href="case-poker.html">Research built from zero</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">Poker ran on assumptions. Personas from real players, a standing focus group, and stakeholders watching live sessions. <a class="link" href="case-poker.html">Read the case study</a></p>
+            <p class="case__who">Entain · Product Design Manager · Poker · 2021 to 2023</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="about wrap" id="about" aria-label="About">
+    <div class="about__row about__row--1">
+      <div class="who" data-reveal>
+        <div class="who__pics">
+          <img class="who__pic" src="img/portrait.webp" width="1240" height="1240" alt="Luiz Kim, sculpted portrait in grey" loading="lazy">
+          <img class="who__pic who__pic--mesh" src="img/portrait-mesh.webp" width="1240" height="1240" alt="" aria-hidden="true" loading="lazy">
+        </div>
+        <p class="who__name">Luiz Kim</p>
+        <p class="who__role">Design Director</p>
+        <p class="who__prev">prev. Entain</p>
+        <a class="who__link" href="https://www.linkedin.com/in/luizkimux" rel="noopener" aria-label="Luiz Kim on LinkedIn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+        </a>
+      </div>
+      <p class="about__para" data-reveal style="--i:1">Product design leader in London: design systems, research, DesignOps, AI-augmented workflows. Teams of 4 to 13, across direct reports, matrixed ambassadors and seconded designers. I partner with CTOs and Heads of Product on roadmap, spec and funding.</p>
+    </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="contact wrap" id="contact">
+  <p class="contact__intro">Hiring a Head of Design or UX Director? Write to me.</p>
+  <div class="contact__cta">
+    <div class="contact__copy">
+      <a class="contact__mail" href="mailto:luizfelipekim@gmail.com?subject=Head%20of%20Design" id="mail-link">luizfelipekim<span class="at">@</span>gmail.com</a>
+      <button class="copy-btn" type="button" id="copy-mail">Copy address</button>
+    </div>
+  </div>
+  <div class="contact__foot">
+    <div><span class="muted">London · UK right to work</span><br>Luiz Kim · 2026</div>
+    <div class="contact__links">
+      <a class="link" href="https://www.linkedin.com/in/luizkimux" rel="noopener">LinkedIn</a>
+      <a class="link" href="#contact">CV, PDF, October 2026</a>
+      <span class="muted">Photographs: Carl Nenzen Loven, Charles Forerunner, Thong Vo, Mika Ruusunen (Unsplash licence)</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // reveal once; never leaves content hidden
+  const targets = document.querySelectorAll('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    // a clipped shutter reports no intersection of its own, so its block is watched instead
+    const watched = new Map();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        for (const el of watched.get(e.target) || []) el.classList.add('is-in');
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
+    targets.forEach((el) => {
+      const key = el.classList.contains('shutter') ? el.closest('.case') : el;
+      if (!watched.has(key)) { watched.set(key, []); io.observe(key); }
+      watched.get(key).push(el);
+    });
+    window.addEventListener('load', () => setTimeout(() => {
+      targets.forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in'); });
+    }, 2500));
+  } else { targets.forEach((el) => el.classList.add('is-in')); }
+
+  // scroll-linked portrait fade for browsers without scroll-driven animations
+  if (!CSS.supports('animation-timeline: view()')) {
+    const mesh = document.querySelector('.who__pic--mesh'), box = document.querySelector('.who__pics');
+    let ticking = false;
+    const fade = () => {
+      ticking = false;
+      const r = box.getBoundingClientRect(), vh = innerHeight, h = r.height;
+      const travelled = vh - r.top, start = h, end = 0.7 * (vh + h);
+      mesh.style.opacity = Math.min(1, Math.max(0, (travelled - start) / (end - start)));
+    };
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(fade); } }, { passive: true });
+    addEventListener('resize', fade); fade();
+  }
+
+  // pause the hero crossfade when the tab is hidden
+  const hero = document.querySelector('.hero');
+  document.addEventListener('visibilitychange', () => { hero.classList.toggle('is-paused', document.hidden); });
+
+
+  // copy the address; fall back to selecting it
+  const btn = document.getElementById('copy-mail'), mail = document.getElementById('mail-link');
+  btn.addEventListener('click', () => {
+    const text = 'luizfelipekim@gmail.com';
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy address'; }, 1600); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents(mail); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(select); else select();
+  });
+})();
+</script>
+
+</body></html>
