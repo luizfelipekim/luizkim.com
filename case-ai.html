@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>From chat tools to a production pipeline · Luiz Kim</title>
-<meta name="description" content="How a design team with no repository access in February wrote 77% of the product's AI-tooling commits by October and moved to prototype-first delivery.">
+<title>QuintAce: faster design with AI, same team · Luiz Kim</title>
+<meta name="description" content="Asked for speed with no new headcount, a Design Director more than doubled handoffs per designer with AI, then started the company's first research practice.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="case.css">
 <style>
 /* Page-specific parts for this case: a commits chart drawn in HTML so it stays legible on a phone,
-   four adoption phases, the review as a status list, and a ticket-time bar. */
+   four adoption phases, and a short "next" list. */
 :root {
   --other: #575852;
   --rule: #3a3a3a;
@@ -19,15 +19,12 @@
 }
 @media (max-width: 800px) { :root { --u: 1.5px; } }
 
+.top__brief { font-size: var(--step-small); color: var(--muted); margin-top: -0.4rem; }
+
 /* commits by month */
 .cover--chart { aspect-ratio: auto; display: flex; flex-direction: column; gap: 1.75rem; padding-block: clamp(1.5rem, 4vw, 3rem); padding-left: max(16px, env(safe-area-inset-left, 0px), var(--m)); padding-right: max(16px, env(safe-area-inset-right, 0px), var(--m)); }
 .chart__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; }
 .chart__title { font-size: var(--step-lead); font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; max-width: 34ch; text-wrap: balance; }
-.chart__key { display: flex; gap: 1.25rem; font-size: var(--step-small); color: var(--muted); padding: 0; margin: 0; list-style: none; }
-.chart__key li { display: flex; align-items: center; gap: 0.5rem; }
-.sw { display: inline-block; width: 12px; height: 12px; }
-.sw--design { background: var(--accent); }
-.sw--other { background: var(--other); }
 .chart { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: clamp(6px, 1.6vw, 22px); align-items: end; }
 .col { display: flex; flex-direction: column; min-width: 0; }
 .col__stack { display: flex; flex-direction: column; justify-content: flex-end; height: calc(100 * var(--u) + 1.75rem); }
@@ -43,42 +40,25 @@
 .phases { counter-reset: phase; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gutter); padding: 0; margin: 0; list-style: none; }
 .phases li { counter-increment: phase; display: flex; flex-direction: column; gap: 0.6rem; padding-top: 1rem; border-top: 1px solid var(--rule); min-width: 0; }
 .phases li::before { content: counter(phase); font-size: var(--step-head); font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
-.phase__name { font-weight: 500; }
 .phase__when { color: var(--muted); font-size: var(--step-small); }
 .phase__proof { color: var(--muted); font-size: var(--step-small); padding-top: 0.6rem; border-top: 1px dashed var(--rule); margin-top: auto; }
+.cmd { white-space: nowrap; }
 @media (max-width: 1000px) { .phases { grid-template-columns: 1fr 1fr; row-gap: 2rem; } }
 @media (max-width: 600px) { .phases { grid-template-columns: 1fr; } }
 
-/* the foundation: three owners by role, then a before/after by dimension */
-.owners { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); }
-.owner { background: var(--surface); padding: 1.75rem 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
-.owner h3 { font-size: var(--step-lead); font-weight: 500; line-height: 1.15; letter-spacing: -0.02em; }
-.owner__lead { font-weight: 500; }
-.owner ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: var(--step-small); color: var(--muted); padding-top: 0.5rem; border-top: 1px dashed var(--rule); margin-top: auto; }
-@media (max-width: 900px) { .owners { grid-template-columns: 1fr; } }
-.dims th:first-child, .dims td:first-child { font-weight: 500; white-space: nowrap; }
-
-/* the review as a status list */
-.flaws { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; max-width: 64rem; }
-.flaw { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: 2rem; row-gap: 0.4rem; align-items: start; padding-block: 1.1rem; border-top: 1px solid color-mix(in srgb, var(--field-ink) 20%, transparent); }
-.flaw:last-child { border-bottom: 1px solid color-mix(in srgb, var(--field-ink) 20%, transparent); }
-.flaw__status { display: flex; align-items: center; gap: 0.55rem; font-size: var(--step-small); font-weight: 500; padding-top: 0.2rem; }
-.cmd { white-space: nowrap; }
-.flaw__status::before { content: ""; width: 10px; height: 10px; flex: none; border: 1.5px solid var(--field-ink); }
-.flaw[data-state="done"] .flaw__status::before { background: var(--field-ink); }
-.flaw__body { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
-.field .flaw__body h3 { font-size: var(--step-body); font-weight: 500; line-height: 1.35; }
-.field .flaw__body p { font-size: var(--step-body); line-height: 1.45; max-width: 62ch; color: var(--field-muted); }
-@media (max-width: 700px) { .flaw { grid-template-columns: 1fr; } }
-
-/* ticket time */
-.timebar { height: 22px; background: var(--other); position: relative; }
-.timebar__design { position: absolute; inset: 0 auto 0 0; width: 12.5%; background: var(--accent); }
-.timebar__labels { display: flex; justify-content: space-between; gap: 1rem; font-size: var(--step-small); color: var(--muted); font-variant-numeric: tabular-nums; }
-.timebar__labels b { color: var(--ink); font-weight: 500; }
+/* the week, and where the time went */
+.week { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gutter); }
+.week li { display: flex; flex-direction: column; gap: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); font-size: var(--step-body); }
+.week b { font-weight: 500; }
+@media (max-width: 700px) { .week { grid-template-columns: 1fr 1fr; } }
 .source { font-size: var(--step-small); color: var(--muted); }
+.decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 64rem; }
+.results .plain { font-size: var(--step-body); line-height: 1.5; max-width: 62ch; }
+.results .plain b { font-weight: 500; }
+.results .aside { margin-bottom: 2rem; }
+@media (max-width: 800px) { .decisions { grid-template-columns: 1fr; } }
 
-/* to a peer */
+/* next */
 .notyet { display: flex; flex-direction: column; gap: 0.75rem; max-width: 62ch; }
 .notyet h3 { font-size: var(--step-body); font-weight: 500; }
 .notyet ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -97,31 +77,32 @@
 <main>
   <section class="top wrap">
     <p class="top__meta" data-rise style="--i:0">A5 Labs · Design Director · February 2026 to present</p>
-    <h1 class="top__title" data-rise style="--i:1">From chat tools to a production pipeline</h1>
-    <p class="top__summary" data-rise style="--i:2">February: chat tools, no repo access. Eight months later: 77% of the product's AI-tooling commits, and handoff straight from prototypes.</p>
+    <p class="top__brief" data-rise style="--i:0">The brief, every quarter: faster design, same headcount, AI as the lever.</p>
+    <h1 class="top__title" data-rise style="--i:1">QuintAce: asked for speed, delivered it with AI, team of four</h1>
+    <p class="top__summary" data-rise style="--i:2">Handoffs per designer more than doubled. A 5-hour Figma rebuild became one click. The time that freed started the company's first research practice.</p>
     <div class="outcomes">
         <div class="outcome" data-reveal style="--i:0">
-          <span class="outcome__fig nums">77%</span>
-          <span class="outcome__txt">of AI-tooling commits came from designers</span>
-          <span class="outcome__how">Git history, March to October 2026</span>
+          <span class="outcome__fig nums">0.8 → 1.8</span>
+          <span class="outcome__txt">handoffs per designer per week, same team</span>
+          <span class="outcome__how">Jira and Slack</span>
         </div>
         <div class="outcome" data-reveal style="--i:1">
-          <span class="outcome__fig nums">4 of 4</span>
-          <span class="outcome__txt">designers ship from AI prototypes, up from 1 in Q2</span>
-          <span class="outcome__how">Q2 against October 2026</span>
+          <span class="outcome__fig nums">5 h → 1 click</span>
+          <span class="outcome__txt">to rebuild a prototype in Figma</span>
+          <span class="outcome__how">Figma version history</span>
         </div>
         <div class="outcome" data-reveal style="--i:2">
-          <span class="outcome__fig nums">2.3×</span>
-          <span class="outcome__txt">design tickets per designer per quarter</span>
-          <span class="outcome__how">Jira, Q4 2025 against Q2 2026. Tickets held, not closed or sized.</span>
+          <span class="outcome__fig nums">9% → 50%</span>
+          <span class="outcome__txt">of design tickets arrive with a clickable prototype</span>
+          <span class="outcome__how">Jira</span>
         </div>
     </div>
-    <dl class="facts" data-reveal><div><dt>My role</dt><dd>Design Director</dd></div><div><dt>Team</dt><dd>4 designers, with an org-wide AI specialist</dd></div><div><dt>Duration</dt><dd>February 2026 to present</dd></div><div><dt>Scope</dt><dd>Poker product, all design squads</dd></div></dl>
+    <p class="source" data-reveal>Measured July to October 2026.</p>
+    <dl class="facts" data-reveal><div><dt>Team</dt><dd>4 designers, with an org-wide AI specialist</dd></div><div><dt>Product</dt><dd>QuintAce, an AI poker coach on WPT Global</dd></div><div><dt>Scope</dt><dd>All design squads</dd></div></dl>
 
     <figure class="cover cover--chart" data-reveal>
       <div class="chart__head">
-        <p class="chart__title">Design's share of AI-tooling commits rose from 42% in March to 88% in September</p>
-        <ul class="chart__key" aria-hidden="true"><li><i class="sw sw--design"></i>Design team</li><li><i class="sw sw--other"></i>Everyone else</li></ul>
+        <p class="chart__title">Design's share of the product's AI-tooling commits rose from 42% to 88%</p>
       </div>
       <div class="chart" role="img" aria-label="Design team's share of AI-tooling commits by month, 2026: March 42%, April 80%, May 67%, June 46%, July 83%, August 84%, September 88%.">
         <div class="col" style="--d:42;--o:58"><div class="col__stack"><span class="col__share is-key">42%</span><span class="col__other"></span><span class="col__design"></span></div><span class="col__month">Mar</span></div>
@@ -132,166 +113,109 @@
         <div class="col" style="--d:84;--o:16"><div class="col__stack"><span class="col__share">84%</span><span class="col__other"></span><span class="col__design"></span></div><span class="col__month">Aug</span></div>
         <div class="col" style="--d:88;--o:12"><div class="col__stack"><span class="col__share is-key">88%</span><span class="col__other"></span><span class="col__design"></span></div><span class="col__month">Sep</span></div>
       </div>
-      <figcaption class="chart__note">Share of AI-tooling commits by month, 2026, from Git history.</figcaption>
+      <figcaption class="chart__note">Share of AI-tooling commits, March to October 2026.</figcaption>
     </figure>
   </section>
 
-  <section class="row wrap" aria-label="Context">
-    <p class="row__word" data-reveal>Context</p>
+  <section class="row wrap" aria-label="The situation">
+    <p class="row__word" data-reveal>Situation</p>
     <div class="row__body">
-      <h2 class="row__head" data-reveal style="--i:1">The asymmetry</h2>
-      <div class="pair" data-reveal style="--i:2">
-        <div><h3>Engineering had</h3><ul><li>Coding agents as a daily environment</li><li>Repo access and pull requests</li><li>Its own tooling</li></ul></div>
-        <div><h3>Design had</h3><ul><li>ChatGPT and image generators</li><li>No repo access, no pull request ever opened</li><li>No way to build a tool</li><li>No bridge from the repo to Figma</li></ul></div>
-      </div>
-      <p class="plain muted" data-reveal style="--i:3">February 2026 survey of both teams.</p>
+      <h2 class="row__head" data-reveal style="--i:1">Engineering had agents. Design had a chat box.</h2>
+      <p class="plain" data-reveal style="--i:2">When I joined, engineering had coding agents and its own tooling. Design had ChatGPT, no repo access, and every prototype was rebuilt in Figma by hand. The ask was to close that gap and get faster, with four designers.</p>
     </div>
   </section>
 
-  <section class="led wrap" aria-label="How adoption ran">
-    <h2 class="led__head" data-reveal>Atomic AI adoption, in four phases</h2>
-    <p class="lead" data-reveal style="--i:1">One rule: give designers the leverage engineering had, then let them build tools for their own pain.</p>
-    <ol class="phases" data-reveal style="--i:2">
+  <section class="led wrap" aria-label="What I led">
+    <h2 class="led__head" data-reveal>Leverage first, then let designers build for their own pain</h2>
+    <ol class="phases" data-reveal style="--i:1">
       <li>
         <span class="phase__when">March</span>
-        <span class="phase__name">Access</span>
-        <span>VS Code, Git and Claude Code for every designer. Weekly sessions on GitHub, branches and pull requests.</span>
-        <span class="phase__proof">Four designers committing within four weeks.</span>
+        <span>Git and Claude Code for every designer. Weekly sessions on branches and pull requests.</span>
+        <span class="phase__proof">First commit 20 March. Four designers committing in four weeks.</span>
       </li>
       <li>
         <span class="phase__when">April to June</span>
-        <span class="phase__name">Atoms</span>
-        <span>One pain point, one slash command: <span class="cmd">find-figma</span>, <span class="cmd">figma-annotate</span>, <span class="cmd">design-qa</span>, and <span class="cmd">bind-tokens</span>.</span>
-        <span class="phase__proof">Nearly 10,000 token bindings, zero errors, in a designer's first pull request.</span>
+        <span>One pain point, one command: <span class="cmd">bind-tokens</span>, <span class="cmd">design-qa</span>, <span class="cmd">find-figma</span>.</span>
+        <span class="phase__proof">9,658 token bindings, zero errors, in a first pull request. A brand re-theme in one sprint.</span>
       </li>
       <li>
         <span class="phase__when">July to August</span>
-        <span class="phase__name">Pipeline</span>
-        <span>Commands chained into an 8-stage pipeline, intake to handoff, taught through an Education Hub. Then two Figma plugins and an intake bot.</span>
-        <span class="phase__proof">More than 30 tools, in three programming languages.</span>
+        <span>A skill for each phase, discovery to ship. A Slack agent for component requests. An Education Hub.</span>
+        <span class="phase__proof">30 tools, three languages. 22 of 35 requests fixed in six weeks.</span>
       </li>
       <li>
         <span class="phase__when">September to October</span>
-        <span class="phase__name">Production</span>
-        <span>Ship to engineering from the prototype; Figma polish in parallel. A bridge imports prototypes into Figma as real library instances.</span>
-        <span class="phase__proof">Three core screens shipped from prototypes.</span>
+        <span>Prototype-first: the prototype goes to engineering, and a bridge drops it into Figma as library components.</span>
+        <span class="phase__proof">5 h → 1 click. 5 tickets built straight from a prototype.</span>
       </li>
     </ol>
   </section>
 
-  <section class="led wrap" aria-label="The foundation under the pipeline">
-    <h2 class="led__head" data-reveal>The foundation under the pipeline</h2>
-    <p class="lead" data-reveal style="--i:1">AI output is only as good as the system it's bound to. I set three owners, took over a stalled proof of concept, and agreed the token pipeline with engineering.</p>
-    <div class="owners" data-reveal style="--i:2">
-      <div class="owner">
-        <h3>Library and tokens</h3>
-        <p class="owner__lead">A token architecture engineering can consume.</p>
-        <p>Four-collection token set, reviewed twice with engineering, proven on a full library copy.</p>
-        <ul><li>Tens of thousands of bindings relinked</li><li>A shared glossary, so translations are reviewed before they ship</li></ul>
-      </div>
-      <div class="owner">
-        <h3>Design tech support</h3>
-        <p class="owner__lead">Prototype to Figma without losing the components.</p>
-        <p>A bridge imports prototypes as real library instances. Seven manual steps became two approval gates.</p>
-        <ul><li>Prototype kit run as a shared, versioned codebase</li><li>Taken off the product team's blocker list in October</li></ul>
-      </div>
-      <div class="owner">
-        <h3>Programme and pipeline</h3>
-        <p class="owner__lead">Owners, baselines and the rules the agents follow.</p>
-        <p>Design-to-development charter, coverage baseline, component-token rule, and a UX rules file for AI prototypes.</p>
-        <ul><li>A third of code components matched to Figma; target 90%</li><li>Weekly sync and a live leadership page since July</li></ul>
-      </div>
-    </div>
-    <div class="tablewrap" data-reveal style="--i:3">
-      <table class="dims">
-        <thead><tr><th scope="col">Dimension</th><th scope="col">July 2026</th><th scope="col">October 2026</th></tr></thead>
-        <tbody>
-          <tr><td>Token architecture</td><td>Ad hoc, with no shared structure</td><td>Proven on a full library copy; live migration next</td></tr>
-          <tr><td>Design-system intake</td><td>Chat threads, untracked</td><td>Figma comment to Jira ticket; over half of requests shipped or in QA within two months</td></tr>
-          <tr><td>Figma to code</td><td>Demoed, never integrated</td><td>A pull request on every Figma token change, in a test repo; frontend pending</td></tr>
-          <tr><td>Prototype to Figma</td><td>Seven manual steps; flat frames</td><td>Library instances intact; two approval gates</td></tr>
-          <tr><td>Component coverage</td><td>A third matched to Figma</td><td>Target 90%; focus states added to interactive components</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="muted" data-reveal style="--i:4; font-size: var(--step-small)">Roles, never names. Three people carried this.</p>
-  </section>
-
-  <section class="led wrap" aria-label="What I led">
-    <h2 class="led__head" data-reveal>Key decisions and what each one cost</h2>
+  <section class="led wrap" aria-label="Decisions">
+    <h2 class="led__head" data-reveal>Two decisions that cost something</h2>
     <div class="decisions">
         <div class="decision" data-reveal style="--i:0">
           <h3>Skills first, the agent last</h3>
-          <p>I built a UX orchestrator agent in March, without asking designers what they needed. I shelved it and inverted the order.</p>
-          <p class="cost"><b>Traded off:</b> our most demo-able thing, for small tools designers asked for.</p>
+          <p>I built an orchestrator agent in March without asking designers what hurt. I shelved it and inverted the order.</p>
+          <p class="cost"><b>Cost:</b> our most demo-able thing.</p>
         </div>
         <div class="decision" data-reveal style="--i:1">
-          <h3>Every tool earns its place</h3>
-          <p>Every tool ends in adopt, adopt-with-limits or drop, backed by a written pilot evaluation, scorecards and synthetic-persona runs.</p>
-          <p class="cost"><b>Traded off:</b> speed. The Claude Design pilot took hundreds of prompts for a single ticket, and fewer than one in ten shaped the design. It became the exploration tool, not the handoff.</p>
-        </div>
-        <div class="decision" data-reveal style="--i:2">
           <h3>Prototype-first delivery</h3>
-          <p>From September, prototypes go to engineering; Figma polish runs in parallel.</p>
-          <p class="cost"><b>Traded off:</b> Figma is no longer the source at handoff.</p>
+          <p>The prototype is what engineering builds from. Figma polish runs in parallel.</p>
+          <p class="cost"><b>Cost:</b> Figma is no longer the only source at handoff.</p>
         </div>
     </div>
   </section>
 
-  <section class="field wrap" aria-label="What I had to convince people of">
-    <h2 data-reveal>Turning a critical review into owned fixes</h2>
-    <p data-reveal style="--i:1">In October, product leadership reviewed what was still broken in design delivery. Each issue got a mechanism, an owner and a status.</p>
-    <ul class="flaws" data-reveal style="--i:2">
-      <li class="flaw" data-state="done"><span class="flaw__status">Fixed</span><div class="flaw__body"><h3>Prototypes looked like the product but weren't made of it</h3><p>bind-tokens, an adherence plugin that scores and rebinds, and the Figma bridge. Off the friction list.</p></div></li>
-      <li class="flaw" data-state="done"><span class="flaw__status">Mechanism live</span><div class="flaw__body"><h3>Design brought in late; UI shipped without design</h3><p>In July, about one story in seven had a design link. Now "Design required" creates a design ticket, and Done fires a Design QA ticket.</p></div></li>
-      <li class="flaw" data-state="done"><span class="flaw__status">Baseline set</span><div class="flaw__body"><h3>No baselines to measure against</h3><p>Time and iteration tracking since September, a weekly KPI snapshot, and a Jira ticket study.</p></div></li>
-      <li class="flaw"><span class="flaw__status">Designed, not shipped</span><div class="flaw__body"><h3>Usability issues found by research</h3><p>Findings from moderated and synthetic-persona testing went into two redesigns.</p></div></li>
-      <li class="flaw"><span class="flaw__status">Next</span><div class="flaw__body"><h3>Design tokens reach the frontend by hand</h3><p>Token architecture proven on a library copy; Figma-to-pull-request pipeline proven. Live migration is next.</p></div></li>
-      <li class="flaw"><span class="flaw__status">Open</span><div class="flaw__body"><h3>Communication with engineering after handoff</h3><p>Owners named, not solved yet. Next step proposed: a developer paired with each designer.</p></div></li>
+  <section class="led wrap" aria-label="How the week runs">
+    <h2 class="led__head" data-reveal>The week runs itself</h2>
+    <p class="lead" data-reveal style="--i:1">Definition of Ready and Done. Jira opens design and QA tickets on its own. A management agent runs my week:</p>
+    <ul class="week" data-reveal style="--i:2">
+      <li><b>Monday</b><span>Sprint commitments to each designer; cross-team priorities.</span></li>
+      <li><b>Tuesday</b><span>Action points from the product meetings.</span></li>
+      <li><b>Thursday</b><span>Backlog planning sync.</span></li>
+      <li><b>Friday</b><span>Sprint close, with stakeholder updates.</span></li>
     </ul>
-    <p class="muted" data-reveal style="--i:3; font-size: var(--step-small)">Roles, never names. Status in October 2026.</p>
   </section>
 
   <section class="results wrap" aria-label="Results">
-    <h2 class="results__head" data-reveal>Before and after, and how each was measured</h2>
-    <div class="tablewrap" data-reveal style="--i:1">
+    <h2 class="results__head" data-reveal>Less Figma, more players</h2>
+    <div class="aside">
+      <div class="panel" data-reveal style="--i:1">
+        <h3>Moved to AI</h3>
+        <p>Variations, hi-fi tweaks, handoff prep, Jira writing, docs.</p>
+      </div>
+      <div class="panel" data-reveal style="--i:2">
+        <h3>Stayed human</h3>
+        <p>Problem framing, deciding, peer review, talking to players.</p>
+      </div>
+    </div>
+    <p class="plain" data-reveal style="--i:3"><b>Research, from zero.</b> With the capacity freed, the first moderated study ran: five think-alouds that showed players couldn't reach their analysis unassisted. The fixes to onboarding and analysis shipped. Synthetic personas built from live player data now give a first read before each handoff.</p>
+    <div class="tablewrap" data-reveal style="--i:4">
       <table>
-        <thead><tr><th scope="col">Metric</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">How measured</th></tr></thead>
+        <thead><tr><th scope="col">Metric</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
         <tbody>
-          <tr><td>AI-tooling commits from design</td><td>No repo access (February)</td><td class="nums">77% (March to October)</td><td class="how">Git history</td></tr>
-          <tr><td>Pull requests opened by designers</td><td>None ever</td><td class="nums">65% of the repo's pull requests</td><td class="how">GitHub pull-request list</td></tr>
-          <tr><td>Designers delivering from AI prototypes</td><td class="nums">1 (Q2)</td><td class="nums">4 of 4 (October)</td><td class="how">Per quarter</td></tr>
-          <tr><td>Design tickets per designer, per quarter</td><td>Baseline (Q4 2025)</td><td class="nums">2.3× (Q2 2026)</td><td class="how">Jira; tickets held, not closed or sized</td></tr>
+          <tr><td>Hours to rebuild a prototype in Figma</td><td class="nums">5</td><td>One click</td></tr>
+          <tr><td>Design tickets with a clickable prototype</td><td class="nums">9%</td><td class="nums">50%</td></tr>
+          <tr><td>Handoffs per designer, per week</td><td class="nums">0.8</td><td class="nums">1.8</td></tr>
+          <tr><td>Share of AI-tooling commits from design</td><td>None</td><td class="nums">77%</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="aside">
-      <div class="panel" data-reveal style="--i:2">
-        <h3>Where a ticket's time went</h3>
-        <div class="timebar" role="img" aria-label="Design was active for about one day in eight of a ticket's life"><span class="timebar__design"></span></div>
-        <div class="timebar__labels"><span><b>1 day in 8</b> design active (median)</span><span><b>7 in 8</b> waiting</span></div>
-        <p>Most of a ticket's life was waiting. Features built without design took just as long and failed QA more.</p>
-        <p class="source">Jira ticket study</p>
-      </div>
-      <div class="panel" data-reveal style="--i:3">
-        <h3>What research found</h3>
-        <p>The team's first moderated study and a synthetic-persona pilot both surfaced usability problems in core flows. Both fed two redesigns.</p>
-        <p class="source">5 moderated sessions, August · persona runs, September</p>
-      </div>
-    </div>
+    <p class="source" data-reveal style="--i:5">Sources: Jira, Slack, Figma version history and Git, March to October 2026.</p>
   </section>
 
-  <section class="row wrap" aria-label="What I would tell a peer">
-    <p class="row__word" data-reveal>To a peer</p>
+  <section class="row wrap" aria-label="What I learned">
+    <p class="row__word" data-reveal>Learned</p>
     <div class="row__body">
-      <h2 class="row__head" data-reveal style="--i:1">Tooling does nothing on its own; adoption is the work</h2>
-      <p class="plain" data-reveal style="--i:2">Adoption was uneven: one designer wrote most of the commands, and another opened most of the pull requests. Weekly sessions made the first commit possible, a few hands made the volume, and now every designer ships from prototypes. The lesson: ask designers what hurts before building for them.</p>
+      <h2 class="row__head" data-reveal style="--i:1">Adoption is the work</h2>
+      <p class="plain" data-reveal style="--i:2">One designer wrote 28 of 37 commands. Weekly sessions got the first commit; a few hands made the volume; now every designer ships from prototypes. Ask designers what hurts before building for them.</p>
       <div class="notyet" data-reveal style="--i:3">
-        <h3>Not proven yet</h3>
+        <h3>Next</h3>
         <ul>
-          <li>Hours saved: not measured yet; scorecards have only just started.</li>
-          <li>Tickets are counts, not effort: only half to two-thirds are sized at pickup.</li>
-          <li>Credit limits and prototype hallucinations still interrupt work.</li>
+          <li>Hours saved: tracking is live; first read next quarter.</li>
+          <li>A product metric: the first retention read on the redesigned onboarding and analysis flows lands next quarter.</li>
+          <li>A buddy developer per designer, so handoff quality improves as much as handoff speed did.</li>
         </ul>
       </div>
     </div>
