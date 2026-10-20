@@ -72,15 +72,17 @@ p { max-width: 62ch; text-wrap: pretty; }
 @media (hover: hover) and (pointer: fine) { .button:hover { background: var(--ink); } }
 
 /* ---------- hero: film title, bottom edge ---------- */
-.hero { position: relative; height: 100svh; min-height: 560px; overflow: hidden; color: var(--ink); isolation: isolate; }
-.hero__pic { position: absolute; inset: 0; z-index: 0; background: var(--surface); }
-.hero__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; filter: grayscale(1) contrast(1.05); }
-.hero__pic img + img { opacity: 0; }
-.hero__scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 1; background: linear-gradient( /* taste-skill-ignore: neutral scrim under the name only */to top, rgba(14,14,14,0.78), rgba(14,14,14,0)); pointer-events: none; }
+.hero { position: relative; height: 100svh; min-height: 560px; overflow: hidden; color: var(--hero-ink); isolation: isolate; --hero-ink: #141414; color-scheme: light; }
+.hero__pic { position: absolute; inset: 0; z-index: 0; background: #ffffff radial-gradient(120% 70% at 70% 35%, rgba(25,129,174,0.10), rgba(236,236,236,0) 60%); }
+.hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 900ms var(--ease-out); }
+.hero__canvas.is-ready { opacity: 1; }
+.hero__scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 1; background: linear-gradient( /* taste-skill-ignore: neutral scrim under the name only */to top, rgba(255,255,255,0.72), rgba(255,255,255,0)); pointer-events: none; }
 .hero__top { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: calc(env(safe-area-inset-top, 0px) + 1.1rem); }
 .hero__mark { font-weight: 500; text-decoration: none; font-size: var(--step-body); }
 .hero__nav { display: flex; align-items: center; gap: clamp(1rem, 2.4vw, 2.25rem); font-size: var(--step-small); font-weight: 500; }
 .hero__nav .button { min-height: 2.5rem; padding: 0 1rem; }
+@media (hover: hover) and (pointer: fine) { .hero .button:hover { background: var(--hero-ink); color: #fff; } }
+.hero :focus-visible { outline-color: var(--hero-ink); }
 .hero__nav a { text-decoration: none; opacity: 0.92; transition: opacity var(--t-hover) ease; }
 @media (hover: hover) and (pointer: fine) { .hero__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.2em; } }
 .hero__bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 1.1rem; padding-bottom: 1.6rem; }
@@ -93,7 +95,6 @@ p { max-width: 62ch; text-wrap: pretty; }
 
 @media (max-width: 700px) {
   .hero { min-height: 100svh; }
-  .hero__pic img { object-position: 55% 35%; }
   .hero__nav a:not(.button) { display: none; }
   .hero__row { flex-direction: column; align-items: flex-start; gap: 0.9rem; }
   .hero__name { font-size: 21.5vw; }
@@ -219,24 +220,15 @@ p { max-width: 62ch; text-wrap: pretty; }
   .js .shutter[data-reveal] svg { transform: scale(1.06); transform-origin: left bottom; transition: transform 1500ms var(--ease-soft); }
   .js .shutter[data-reveal].is-in { clip-path: inset(0); }
   .js .shutter[data-reveal].is-in svg { transform: none; }
-  .hero__pic img + img { animation: xfade 18s linear infinite; }
-  .hero__pic img:nth-child(2) { animation-delay: 6s; }
-  .hero__pic img:nth-child(3) { animation-delay: 12s; }
-  .hero__pic img:first-child { animation: drift 18s var(--ease-soft) infinite alternate; }
-  .hero.is-paused .hero__pic img { animation-play-state: paused; }
 }
 @keyframes rise { to { opacity: 1; transform: none; } }
-@keyframes xfade { 0% { opacity: 0; } 9% { opacity: 1; } 33% { opacity: 1; } 42% { opacity: 0; } 100% { opacity: 0; } }
-@keyframes drift { from { transform: scale(1); } to { transform: scale(1.05); } }
 </style>
 
 <div class="page">
 
   <header class="hero" id="top">
     <div class="hero__pic" aria-hidden="true">
-      <img src="img/hero-1.jpg" width="2000" height="1250" alt="">
-      <img src="img/hero-2.jpg" width="2000" height="1250" alt="" loading="lazy">
-      <img src="img/hero-3.jpg" width="2000" height="1250" alt="" loading="lazy">
+      <canvas class="hero__canvas"></canvas>
     </div>
     <div class="hero__scrim"></div>
     <div class="hero__top wrap">
@@ -488,10 +480,6 @@ p { max-width: 62ch; text-wrap: pretty; }
     addEventListener('resize', fade); fade();
   }
 
-  // pause the hero crossfade when the tab is hidden
-  const hero = document.querySelector('.hero');
-  document.addEventListener('visibilitychange', () => { hero.classList.toggle('is-paused', document.hidden); });
-
 
   // copy the address; fall back to selecting it
   const btn = document.getElementById('copy-mail'), mail = document.getElementById('mail-link');
@@ -504,4 +492,55 @@ p { max-width: 62ch; text-wrap: pretty; }
 })();
 </script>
 
+<script type="module">
+// Hero background: a particle-flow shader (shaders.com, MIT licence; copy saved in js/).
+// It loads after the page is up, only on browsers with WebGPU. Everyone else, and anyone
+// who asks their device for reduced motion, keeps the plain light background underneath.
+const canvas = document.querySelector('.hero__canvas');
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const saveData = navigator.connection && navigator.connection.saveData;
+if (canvas && !saveData && 'gpu' in navigator) {
+  const start = async () => {
+    try {
+      const { createShader, isWebGPUSupported } = await import('./js/shaders.js');
+      if (!(await isWebGPUSupported())) return;
+      // Start almost still, then ease up to full motion over a few seconds.
+      const calm = { speed: 0.05, force: 0.01, swirl: 2, ambient: 0.02 };
+      const full = { speed: 1, force: 0.15, swirl: 54, ambient: 0.25 };
+      const RAMP_MS = 7000;
+      let shader;
+      const ramp = () => {
+        const t0 = performance.now();
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / RAMP_MS);
+          const e = k * k * (3 - 2 * k); // smooth ease-in-out
+          const props = {};
+          for (const key in full) props[key] = calm[key] + (full[key] - calm[key]) * e;
+          if (shader) shader.update('flow', props);
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+      shader = await createShader(canvas, {
+        components: [{
+          type: 'ChromaticAberration',
+          props: { strength: 0.52, angle: 45, redOffset: -1, greenOffset: 0, blueOffset: 1 },
+          children: [
+            { type: 'SolidColor', props: { color: '#ffffff' } },
+            { type: 'ParticleFlow', id: 'flow', props: {
+              shape: 'streak', colorA: '#ececec', colorB: '#1981ae', count: 5000, size: 0.6,
+              trails: 0.6, momentum: 0.4, ...calm
+            } }
+          ]
+        }]
+      }, {
+        disableTelemetry: true,
+        onReady: () => { canvas.classList.add('is-ready'); if (still) setTimeout(() => shader && shader.pause(), 1500); else setTimeout(ramp, 400); },
+        onError: () => canvas.classList.remove('is-ready')
+      });
+    } catch (e) { console.warn('Hero shader did not start:', e); }
+  };
+  if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+}
+</script>
 </body></html>
