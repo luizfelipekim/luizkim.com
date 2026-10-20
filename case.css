@@ -170,3 +170,30 @@ td.how { color: var(--muted); }
   .js [data-reveal].is-in { opacity: 1; transform: none; }
 }
 @keyframes rise { to { opacity: 1; transform: none; } }
+
+/* Evidence panel: before image, stat, quote. Reusable on any case study. */
+.evidence { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
+@media (max-width: 760px) { .evidence { grid-template-columns: 1fr; } }
+.ev { margin: 0; background: var(--surface); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.ev p { margin: 0; }
+.ev__label { font-size: var(--step-small); color: var(--muted); }
+.ev__fig { font-size: var(--step-head); font-weight: 500; line-height: 1; }
+.ev__bar { display: grid; grid-template-columns: repeat(24, 1fr); gap: 2px; }
+.ev__bar i { height: 14px; background: var(--surface-2); }
+.ev__bar i.on { background: var(--accent); }
+.ev__quote { margin: 0; font-size: var(--step-lead); line-height: 1.3; }
+.ev figcaption { font-size: var(--step-small); }
+.ev__img { position: relative; }
+.ev__img img { display: block; width: 100%; height: auto; }
+.ev__img::before, .ev__img::after { content: ""; position: absolute; left: 50%; top: 50%; width: 110%; height: 6px; background: #e0413a; transform: translate(-50%, -50%) rotate(-28deg); }
+.ev__img::after { transform: translate(-50%, -50%) rotate(28deg); }
+
+.ev__pic { display: block; width: 100%; height: auto; }
+.ev__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.ev__pair figure { margin: 0; background: #fff; }
+.ev__pair img { display: block; width: 100%; height: auto; }
+.ev__pair figcaption { background: var(--surface); padding-top: 0.4rem; font-size: var(--step-small); color: var(--muted); }
+.ev__pair b { color: var(--ink); font-weight: 500; }
+.shot { margin: 1.5rem 0 0; }
+.shot img { display: block; width: 100%; height: auto; }
+.shot figcaption { margin-top: 0.5rem; font-size: var(--step-small); }
