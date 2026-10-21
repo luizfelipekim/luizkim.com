@@ -392,9 +392,9 @@ p { max-width: 62ch; text-wrap: pretty; }
       </div>
       <div class="case__cluster">
         <div class="case__meta">
-          <h2 class="case__title" data-reveal style="--i:2"><a href="case-poker.html">Poker UX research, built from zero</a></h2>
+          <h2 class="case__title" data-reveal style="--i:2"><a href="case-poker.html">Research built from zero</a></h2>
           <div data-reveal style="--i:3">
-            <p class="case__desc">A small team inside Gaming went from zero testing to out-researching Sports, Casino and Core. <a class="link" href="case-poker.html">Read the case study</a></p>
+            <p class="case__desc">Poker ran on assumptions. Personas from real players, a standing focus group, and stakeholders watching live sessions. <a class="link" href="case-poker.html">Read the case study</a></p>
             <p class="case__who">Entain · Product Design Manager · Poker · 2021 to 2023</p>
           </div>
         </div>
@@ -493,52 +493,120 @@ p { max-width: 62ch; text-wrap: pretty; }
 </script>
 
 <script type="module">
-// Hero background: a particle-flow shader (shaders.com, MIT licence; copy saved in js/).
-// It loads after the page is up, only on browsers with WebGPU. Everyone else, and anyone
-// who asks their device for reduced motion, keeps the plain light background underneath.
+// Hero background. Browsers with WebGPU get the real particle-flow shader (shaders.com, MIT
+// licence; copy saved in js/). Browsers without it (many phones) get a lightweight canvas
+// version with the same colours and calm drift. Reduced motion: both draw, then hold still.
+// Add ?fallback to the address to preview the lightweight version on a desktop.
 const canvas = document.querySelector('.hero__canvas');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const saveData = navigator.connection && navigator.connection.saveData;
-if (canvas && !saveData && 'gpu' in navigator) {
+const forceFallback = new URLSearchParams(location.search).has('fallback');
+
+function runFallback(canvas) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const COLORS = ['#ececec', '#c9d9e0', '#8fbcd0', '#4f9cc0', '#1981ae'];
+  let w = 0, h = 0, dpr = 1, parts = [], t = 0, running = true, visible = true, raf = 0;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const spawn = (p) => { p.x = rand(0, w); p.y = rand(0, h); p.life = rand(120, 480); p.c = COLORS[(Math.random() * COLORS.length) | 0]; return p; };
+  const size = () => {
+    const r = canvas.getBoundingClientRect();
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    w = r.width; h = r.height;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+    const n = Math.min(1400, Math.round((w * h) / 420));
+    parts = Array.from({ length: n }, () => spawn({}));
+  };
+  // smooth swirling flow made from layered sine waves
+  const angle = (x, y) =>
+    Math.sin(x * 0.0021 + t * 0.00035) * 1.6 + Math.cos(y * 0.0026 - t * 0.00028) * 1.6 +
+    Math.sin((x + y) * 0.0012 + t * 0.0002) * 1.2;
+  const frame = (speed) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'; // fade old streaks into short trails (strong enough to leave no grey residue)
+    ctx.fillRect(0, 0, w, h);
+    ctx.lineWidth = 1.1; ctx.lineCap = 'round';
+    for (const p of parts) {
+      const a = angle(p.x, p.y);
+      const nx = p.x + Math.cos(a) * speed, ny = p.y + Math.sin(a) * speed;
+      // faint red/blue split either side, echoing the chromatic aberration
+      ctx.globalAlpha = 0.18;
+      ctx.strokeStyle = '#e8566c'; ctx.beginPath(); ctx.moveTo(p.x - 0.8, p.y - 0.8); ctx.lineTo(nx - 0.8, ny - 0.8); ctx.stroke();
+      ctx.strokeStyle = '#3a7bd5'; ctx.beginPath(); ctx.moveTo(p.x + 0.8, p.y + 0.8); ctx.lineTo(nx + 0.8, ny + 0.8); ctx.stroke();
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = p.c; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny); ctx.stroke();
+      p.x = nx; p.y = ny;
+      if (--p.life < 0 || p.x < -10 || p.x > w + 10 || p.y < -10 || p.y > h + 10) spawn(p);
+    }
+    ctx.globalAlpha = 1;
+  };
+  size();
+  canvas.classList.add('is-ready');
+  if (still) { for (let i = 0; i < 90; i++) { t += 16; frame(0.9); } return; }
+  const t0 = performance.now();
+  const loop = (now) => {
+    raf = 0;
+    if (!running || !visible) return;
+    const ease = Math.min(1, (now - t0) / 5000); // start almost still, settle into a slow drift
+    t = now;
+    frame(0.08 + 0.62 * ease * ease * (3 - 2 * ease));
+    raf = requestAnimationFrame(loop);
+  };
+  const kick = () => { if (!raf && running && visible) raf = requestAnimationFrame(loop); };
+  kick();
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); }).observe(canvas);
+  document.addEventListener('visibilitychange', () => { running = !document.hidden; kick(); });
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(size, 200); });
+}
+
+async function runShader() {
+  const { createShader, isWebGPUSupported } = await import('./js/shaders.js');
+  if (!(await isWebGPUSupported())) return false;
+  // Start almost still, then ease into a gentle, steady drift (never full speed).
+  const calm = { speed: 0.05, force: 0.01, swirl: 2, ambient: 0.02 };
+  const full = { speed: 0.3, force: 0.05, swirl: 12, ambient: 0.1 };
+  const RAMP_MS = 5000;
+  let shader;
+  const ramp = () => {
+    const t0 = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / RAMP_MS);
+      const e = k * k * (3 - 2 * k); // smooth ease-in-out
+      const props = {};
+      for (const key in full) props[key] = calm[key] + (full[key] - calm[key]) * e;
+      if (shader) shader.update('flow', props);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  shader = await createShader(canvas, {
+    components: [{
+      type: 'ChromaticAberration',
+      props: { strength: 0.52, angle: 45, redOffset: -1, greenOffset: 0, blueOffset: 1 },
+      children: [
+        { type: 'SolidColor', props: { color: '#ffffff' } },
+        { type: 'ParticleFlow', id: 'flow', props: {
+          shape: 'streak', colorA: '#ececec', colorB: '#1981ae', count: 5000, size: 0.6,
+          trails: 0.6, momentum: 0.4, ...calm
+        } }
+      ]
+    }]
+  }, {
+    disableTelemetry: true,
+    onReady: () => { canvas.classList.add('is-ready'); if (still) setTimeout(() => shader && shader.pause(), 1500); else setTimeout(ramp, 400); },
+    // if the GPU gives up later, swap in a fresh canvas and run the lightweight version
+    onError: () => { const fresh = canvas.cloneNode(); fresh.classList.remove('is-ready'); canvas.replaceWith(fresh); runFallback(fresh); }
+  });
+  return true;
+}
+
+if (canvas) {
   const start = async () => {
-    try {
-      const { createShader, isWebGPUSupported } = await import('./js/shaders.js');
-      if (!(await isWebGPUSupported())) return;
-      // Start almost still, then ease up to full motion over a few seconds.
-      const calm = { speed: 0.05, force: 0.01, swirl: 2, ambient: 0.02 };
-      const full = { speed: 1, force: 0.15, swirl: 54, ambient: 0.25 };
-      const RAMP_MS = 7000;
-      let shader;
-      const ramp = () => {
-        const t0 = performance.now();
-        const step = (now) => {
-          const k = Math.min(1, (now - t0) / RAMP_MS);
-          const e = k * k * (3 - 2 * k); // smooth ease-in-out
-          const props = {};
-          for (const key in full) props[key] = calm[key] + (full[key] - calm[key]) * e;
-          if (shader) shader.update('flow', props);
-          if (k < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      };
-      shader = await createShader(canvas, {
-        components: [{
-          type: 'ChromaticAberration',
-          props: { strength: 0.52, angle: 45, redOffset: -1, greenOffset: 0, blueOffset: 1 },
-          children: [
-            { type: 'SolidColor', props: { color: '#ffffff' } },
-            { type: 'ParticleFlow', id: 'flow', props: {
-              shape: 'streak', colorA: '#ececec', colorB: '#1981ae', count: 5000, size: 0.6,
-              trails: 0.6, momentum: 0.4, ...calm
-            } }
-          ]
-        }]
-      }, {
-        disableTelemetry: true,
-        onReady: () => { canvas.classList.add('is-ready'); if (still) setTimeout(() => shader && shader.pause(), 1500); else setTimeout(ramp, 400); },
-        onError: () => canvas.classList.remove('is-ready')
-      });
-    } catch (e) { console.warn('Hero shader did not start:', e); }
+    let ok = false;
+    if (!forceFallback && 'gpu' in navigator) {
+      try { ok = await runShader(); } catch (e) { console.warn('Hero shader did not start:', e); }
+    }
+    if (!ok) runFallback(canvas);
   };
   if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
 }
