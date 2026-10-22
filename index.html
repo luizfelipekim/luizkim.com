@@ -144,10 +144,39 @@ p { max-width: 62ch; text-wrap: pretty; }
 .case__desc { font-size: var(--step-body); line-height: 1.45; color: var(--ink); }
 .case__desc a { color: var(--ink); }
 .case__who { font-size: var(--step-small); color: var(--muted); margin-top: 0.35rem; }
+
+/* AI case teaser: the fortune ball */
+.case__visual--ball { overflow: visible; }
+.ball { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; background: #1c1c1c; color: #f1f1ef; padding: 1.5rem max(16px, var(--m)) 1.25rem calc(max(16px, env(safe-area-inset-left, 0px), var(--m)) + 0.5rem); }
+.ball__eyebrow { display: block; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; }
+.ball__ask { display: grid; gap: 4px; min-height: 64px; }
+.ball__q { font-size: clamp(18px, 2vw, 26px); font-weight: 500; line-height: 1.2; max-width: 24ch; text-wrap: balance; transition: opacity 350ms var(--ease-out), transform 350ms var(--ease-out); }
+.ball__q.is-out { opacity: 0; transform: translateY(6px); }
+.ball__view { position: relative; width: 100%; flex: 1 1 auto; min-height: 200px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.ball__view.is-held { cursor: grabbing; }
+.ball__canvas { display: block; width: 100%; height: 100%; outline: none; }
+.ball__meter { position: absolute; left: 50%; bottom: 10px; width: 120px; height: 2px; transform: translateX(-50%); background: #303030; overflow: hidden; opacity: 0; transition: opacity 300ms; }
+.ball__meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 80ms linear; }
+.ball__view.is-held .ball__meter { opacity: 1; }
+.ball__hint { font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; min-height: 1.4em; transition: opacity 400ms; }
+.ball__hint.is-off { opacity: 0; }
+.ball__cap { display: grid; gap: 4px; min-height: 76px; opacity: 0; transform: translateY(8px); transition: opacity 600ms var(--ease-out) 200ms, transform 600ms var(--ease-out) 200ms; }
+.ball__cap.is-shown { opacity: 1; transform: none; }
+.ball__a { font-size: clamp(18px, 2.2vw, 28px); font-weight: 500; line-height: 1.15; max-width: 24ch; text-wrap: balance; }
+.ball__row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; min-height: 40px; }
+.ball__btn { font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; background: transparent; border: 1px solid #3b3b3b; border-radius: 999px; padding: 8px 16px; cursor: pointer; transition: border-color var(--t-hover); }
+.ball__btn:hover { border-color: #c8c5ba; }
+.ball__btn[hidden] { display: none; }
+.ball__count { font-size: var(--step-small); color: #c8c5ba; letter-spacing: 0.08em; }
+.ball__flat { display: none; font-size: var(--step-body); color: #c8c5ba; max-width: 40ch; }
+.ball.is-flat > :not(.ball__flat) { display: none; }
+.ball.is-flat .ball__flat { display: block; }
+@media (prefers-reduced-motion: reduce) { .ball__cap, .ball__q { transition: none; } }
 @media (max-width: 900px) {
   .work { gap: 88px; padding-top: 3rem; }
   .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
   .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 70svh; }
+  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 78svh; min-height: 520px; max-height: none; }
   .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
   .case__cluster { gap: 1rem; }
   .case__meta { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -276,13 +305,29 @@ p { max-width: 62ch; text-wrap: pretty; }
   <section class="work wrap" id="work" aria-label="Selected work">
 
     <article class="case case--1" id="case-1">
-      <div class="case__visual shutter" data-reveal aria-hidden="true">
-        <svg viewBox="0 0 900 640" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Design team's share of AI-tooling commits by month, March to September 2026">
-          <rect x="0" y="0" width="900" height="640" fill="#1c1c1c"/>
-          <!-- share of AI-tooling commits by month, Mar to Sep 2026: design (sage) under everyone else (grey) -->
-          <g><rect x="140" y="415.2" width="64" height="184.8" fill="#8fa68e"/><rect x="140" y="160.0" width="64" height="255.2" fill="#3b3b3b"/><rect x="228" y="248.0" width="64" height="352.0" fill="#8fa68e"/><rect x="228" y="160.0" width="64" height="88.0" fill="#3b3b3b"/><rect x="316" y="305.2" width="64" height="294.8" fill="#8fa68e"/><rect x="316" y="160.0" width="64" height="145.2" fill="#3b3b3b"/><rect x="404" y="397.6" width="64" height="202.4" fill="#8fa68e"/><rect x="404" y="160.0" width="64" height="237.6" fill="#3b3b3b"/><rect x="492" y="234.8" width="64" height="365.2" fill="#8fa68e"/><rect x="492" y="160.0" width="64" height="74.8" fill="#3b3b3b"/><rect x="580" y="230.4" width="64" height="369.6" fill="#8fa68e"/><rect x="580" y="160.0" width="64" height="70.4" fill="#3b3b3b"/><rect x="668" y="212.8" width="64" height="387.2" fill="#8fa68e"/><rect x="668" y="160.0" width="64" height="52.8" fill="#3b3b3b"/></g>
-          <rect x="124" y="600" width="624" height="3" fill="#c8c5ba"/>
-        </svg>
+      <div class="case__visual case__visual--ball" data-reveal>
+        <section class="ball" aria-label="Fortune ball. Shake it to reveal each answer.">
+          <div class="ball__ask">
+            <span class="ball__eyebrow">Designers ask</span>
+            <p class="ball__q">You hand off straight from AI?</p>
+          </div>
+          <div class="ball__view" tabindex="0" role="button" aria-label="Fortune ball. Press and hold, then shake. Or press Enter to reveal.">
+            <canvas class="ball__canvas" aria-hidden="true"></canvas>
+            <div class="ball__meter" aria-hidden="true"><i></i></div>
+          </div>
+          <p class="ball__hint">Press, hold and shake the ball</p>
+          <div class="ball__cap" aria-live="polite">
+            <span class="ball__eyebrow">The ball says</span>
+            <p class="ball__a"></p>
+          </div>
+          <div class="ball__row">
+            <button class="ball__btn" type="button" data-ball-motion hidden>Shake your phone</button>
+            <button class="ball__btn" type="button" data-ball-reveal>Can't shake? Reveal</button>
+            <button class="ball__btn" type="button" data-ball-next hidden>Ask the next one</button>
+            <span class="ball__count"></span>
+          </div>
+          <p class="ball__flat">Designers ask whether you can hand off straight from AI. Yes: five tickets were built straight from the prototype. The 3D ball needs WebGL, which this browser doesn't offer.</p>
+        </section>
       </div>
       <div class="case__cluster">
         <div class="case__meta">
@@ -489,6 +534,9 @@ p { max-width: 62ch; text-wrap: pretty; }
   });
 })();
 </script>
+
+<script src="js/three.min.js" defer></script>
+<script src="js/fortune-ball.js" defer></script>
 
 <script type="module">
 // Hero background: a particle-flow shader (shaders.com, MIT licence; copy saved in js/).
