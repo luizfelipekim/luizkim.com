@@ -197,3 +197,35 @@ td.how { color: var(--muted); }
 .shot { margin: 1.5rem 0 0; }
 .shot img { display: block; width: 100%; height: auto; }
 .shot figcaption { margin-top: 0.5rem; font-size: var(--step-small); }
+
+/* Poker opener: a pinned 3D table; scrolling peels the two cards up. Script in js/poker-peek.js. */
+.peek { position: relative; height: 260vh; height: 260svh; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); }
+.peek__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--bg); }
+.peek__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.peek__vignette { position: absolute; inset: 0; pointer-events: none; background:
+  radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(12, 12, 12, 0.55) 100%),
+  linear-gradient(180deg, rgba(12, 12, 12, 0.3) 0%, transparent 26%, transparent 68%, rgba(12, 12, 12, 0.55) 100%); }
+.peek__overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
+  padding-left: max(16px, env(safe-area-inset-left, 0px), var(--m)); padding-right: max(16px, env(safe-area-inset-right, 0px), var(--m));
+  padding-block: 1.5rem clamp(1.5rem, 5vh, 3.5rem); will-change: transform; }
+.peek__hint { align-self: flex-end; font-size: var(--step-small); color: var(--muted); transition: opacity 400ms ease; }
+.peek__copy { position: relative; max-width: 34rem; min-height: 9.5em; }
+.peek__line { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; gap: 0.75rem; opacity: 0; transform: translateY(10px); transition: opacity 550ms var(--ease-out), transform 550ms var(--ease-out); }
+.peek__line.is-on { opacity: 1; transform: none; }
+.peek__line .h { font-size: var(--step-title); font-weight: 500; line-height: 0.98; letter-spacing: -0.04em; max-width: 12ch; }
+.peek__line .h em { font-style: normal; color: var(--muted); }
+.peek__line p:not(.h) { font-size: var(--step-lead); line-height: 1.35; max-width: 30ch; }
+.peek__meter { position: absolute; right: max(16px, env(safe-area-inset-right, 0px), var(--m)); bottom: clamp(1.5rem, 5vh, 3.5rem); width: 2px; height: 88px; background: var(--surface-2); overflow: hidden; }
+.peek__meter i { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: top; transform: scaleY(0); }
+.peek__flat { display: none; }
+/* no WebGL, or script blocked: a still, no pinning */
+.peek.is-flat, html:not(.js) .peek { height: auto; }
+.peek.is-flat .peek__pin { position: static; height: auto; aspect-ratio: 21 / 9; background: var(--surface); }
+.peek.is-flat .peek__canvas, .peek.is-flat .peek__vignette, .peek.is-flat .peek__overlay { display: none; }
+.peek.is-flat .peek__flat { display: grid; place-items: center; height: 100%; padding: var(--m); text-align: center; color: var(--muted); }
+@media (max-width: 800px) {
+  .peek { height: 220vh; height: 220svh; }
+  .peek__line .h { font-size: clamp(2.25rem, 10vw, 3rem); }
+  .peek__copy { min-height: 8em; max-width: calc(100% - 2rem); }
+}
+@media (prefers-reduced-motion: reduce) { .peek__line { transition: none; } }

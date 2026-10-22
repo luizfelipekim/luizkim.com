@@ -9,7 +9,7 @@
 <meta property="og:description" content="A small team inside Gaming, out-researching Sports, Casino and Core.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="case.css">
 <script>document.documentElement.classList.add('js')</script>
 </head>
@@ -27,6 +27,22 @@
     <p class="top__meta" data-rise style="--i:0">Entain · FTSE 100 at the time · Poker, part of Gaming · 2021 to 2023</p>
     <h1 class="top__title" data-rise style="--i:1">Poker UX research, built from zero</h1>
     <p class="top__summary" data-rise style="--i:2">A small team inside Gaming, out-researching Sports, Casino and Core.</p>
+    <section class="peek" aria-label="Two poker cards face down on the felt; scroll to peek at them">
+      <div class="peek__pin">
+        <canvas class="peek__canvas" aria-hidden="true"></canvas>
+        <div class="peek__vignette" aria-hidden="true"></div>
+        <div class="peek__overlay">
+          <p class="peek__hint" aria-hidden="true">Scroll to peek ↓</p>
+          <div class="peek__copy">
+            <div class="peek__line is-on" data-stage="0"><p class="h">Face <em>down.</em></p><p>No user testing. No personas. Decisions ran on assumptions.</p></div>
+            <div class="peek__line" data-stage="1"><p class="h">Peek.</p><p>I sat product in live sessions with real players.</p></div>
+            <div class="peek__line" data-stage="2"><p class="h">Pocket <em>aces.</em></p><p>Most research of any product team in the company.</p></div>
+          </div>
+          <div class="peek__meter" aria-hidden="true"><i></i></div>
+        </div>
+        <p class="peek__flat">Two cards face down on the felt. The 3D peek needs WebGL, which this browser doesn't offer.</p>
+      </div>
+    </section>
     <div class="outcomes">
         <div class="outcome" data-reveal style="--i:0">
           <span class="outcome__fig nums">Most research</span>
@@ -45,48 +61,6 @@
         </div>
     </div>
     <dl class="facts" data-reveal><div><dt>Role</dt><dd>Product Design Manager</dd></div><div><dt>Team</dt><dd>9 designers reporting to me, 1 researcher, 1 UX writer</dd></div><div><dt>Players</dt><dd>Testing panel, pros, high stakes, streamers</dd></div><div><dt>When</dt><dd>2021 to 2023</dd></div></dl>
-    <figure class="cover" data-reveal aria-label="A standing player focus group around one table, with stakeholders watching from the observation room"><svg viewBox="0 0 900 720" preserveAspectRatio="xMinYMax slice" role="img" aria-label="A standing player focus group around one table, with stakeholders watching from the observation room">
-          <rect x="0" y="0" width="900" height="720" fill="#1c1c1c"/>
-          <!-- observation room on the right, with its window -->
-          <rect x="620" y="60" width="280" height="660" fill="#262626"/>
-          <rect x="620" y="60" width="280" height="12" fill="#303030"/>
-          <rect x="650" y="150" width="220" height="150" fill="#1c1c1c"/>
-          <rect x="650" y="150" width="220" height="8" fill="#3b3b3b"/>
-          <!-- three stakeholders watching -->
-          <g fill="#c8c5ba">
-            <circle cx="690" cy="372" r="22"/><rect x="664" y="402" width="52" height="70"/>
-            <circle cx="760" cy="372" r="22"/><rect x="734" y="402" width="52" height="70"/>
-            <circle cx="830" cy="372" r="22"/><rect x="804" y="402" width="52" height="70"/>
-          </g>
-          <g fill="#dedbd0"><rect x="664" y="402" width="52" height="8"/><rect x="734" y="402" width="52" height="8"/><rect x="804" y="402" width="52" height="8"/></g>
-          <!-- the player table -->
-          <circle cx="330" cy="400" r="190" fill="#303030"/>
-          <circle cx="330" cy="392" r="190" fill="#3b3b3b"/>
-          <circle cx="330" cy="392" r="150" fill="#8fa68e"/>
-          <circle cx="330" cy="392" r="148" fill="#8fa68e"/>
-          <!-- eight seats -->
-          <g fill="#f1f1ef">
-            <circle cx="330" cy="172" r="26"/><circle cx="486" cy="236" r="26"/><circle cx="550" cy="392" r="26"/><circle cx="486" cy="548" r="26"/>
-            <circle cx="330" cy="612" r="26"/><circle cx="174" cy="548" r="26"/><circle cx="110" cy="392" r="26"/><circle cx="174" cy="236" r="26"/>
-          </g>
-          <!-- cards on the felt: personas from moderated cohorts -->
-          <g fill="#f1f1ef">
-            <rect x="262" y="336" width="60" height="84" transform="rotate(-8 292 378)"/>
-            <rect x="320" y="340" width="60" height="84" transform="rotate(6 350 382)"/>
-            <rect x="376" y="352" width="60" height="84" transform="rotate(14 406 394)"/>
-          </g>
-          <g fill="#1c1c1c">
-            <rect x="272" y="346" width="40" height="6" transform="rotate(-8 292 378)"/><rect x="272" y="358" width="28" height="6" transform="rotate(-8 292 378)"/>
-            <rect x="330" y="350" width="40" height="6" transform="rotate(6 350 382)"/><rect x="330" y="362" width="28" height="6" transform="rotate(6 350 382)"/>
-            <rect x="386" y="362" width="40" height="6" transform="rotate(14 406 394)"/><rect x="386" y="374" width="28" height="6" transform="rotate(14 406 394)"/>
-          </g>
-          <!-- session timeline on the floor -->
-          <rect x="40" y="672" width="540" height="10" fill="#303030"/>
-          <rect x="40" y="672" width="180" height="10" fill="#c8c5ba"/>
-          <rect x="226" y="672" width="180" height="10" fill="#f1f1ef"/>
-          <rect x="412" y="672" width="168" height="10" fill="#8fa68e"/>
-          <g fill="#f1f1ef"><rect x="40" y="652" width="3" height="40"/><rect x="226" y="652" width="3" height="40"/><rect x="412" y="652" width="3" height="40"/><rect x="577" y="652" width="3" height="40"/></g>
-        </svg></figure>
   </section>
 
   <section class="row wrap" aria-label="The problem">
@@ -165,6 +139,8 @@
   <span>Luiz Kim · London · <a class="link" href="mailto:luizfelipekim@gmail.com">luizfelipekim@gmail.com</a></span>
   <span><a class="link" href="https://www.linkedin.com/in/luizkimux" rel="noopener">LinkedIn</a></span>
 </footer>
+<script src="js/three.min.js" defer></script>
+<script src="js/poker-peek.js" defer></script>
 <script>
 (() => {
   const targets = document.querySelectorAll('[data-reveal]');
