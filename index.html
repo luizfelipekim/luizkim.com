@@ -5,7 +5,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js')</script>
 <style>
 /* Layout: the name as a monument on the bottom edge of a full-bleed photograph; after it a small, calm
@@ -172,11 +172,34 @@ p { max-width: 62ch; text-wrap: pretty; }
 .ball.is-flat > :not(.ball__flat) { display: none; }
 .ball.is-flat .ball__flat { display: block; }
 @media (prefers-reduced-motion: reduce) { .ball__cap, .ball__q { transition: none; } }
+
+/* Poker case teaser: two cards that peel up as the block scrolls in */
+.case__visual--peek { position: relative; background: var(--bg); }
+.peek__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.peek__vignette { position: absolute; inset: 0; pointer-events: none; background:
+  radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(12, 12, 12, 0.5) 100%),
+  linear-gradient(180deg, rgba(12, 12, 12, 0.25) 0%, transparent 26%, transparent 66%, rgba(12, 12, 12, 0.6) 100%); }
+.peek__overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 1.25rem max(16px, var(--m)) 1.5rem calc(max(16px, env(safe-area-inset-left, 0px), var(--m)) + 0.5rem); will-change: transform; }
+.peek__hint { align-self: flex-end; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; transition: opacity 400ms; }
+.peek__copy { position: relative; max-width: 26rem; min-height: 7.5em; }
+.peek__line { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0; transform: translateY(10px); transition: opacity 550ms var(--ease-out), transform 550ms var(--ease-out); }
+.peek__line.is-on { opacity: 1; transform: none; }
+.peek__line .h { font-size: clamp(2.25rem, 4.5vw, 4rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.04em; max-width: 12ch; }
+.peek__line .h em { font-style: normal; color: #9a9b96; }
+.peek__line p:not(.h) { font-size: var(--step-body); line-height: 1.4; max-width: 30ch; color: #c8c5ba; }
+.peek__meter { position: absolute; right: max(16px, var(--m)); bottom: 1.5rem; width: 2px; height: 72px; background: #303030; overflow: hidden; }
+.peek__meter i { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: top; transform: scaleY(0); }
+.peek__flat { display: none; }
+.peek.is-flat .peek__canvas, .peek.is-flat .peek__vignette, .peek.is-flat .peek__overlay { display: none; }
+.peek.is-flat .peek__flat { display: grid; place-items: center; height: 100%; padding: var(--m); text-align: center; color: #c8c5ba; max-width: none; }
+@media (prefers-reduced-motion: reduce) { .peek__line { transition: none; } }
 @media (max-width: 900px) {
   .work { gap: 88px; padding-top: 3rem; }
   .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
   .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 70svh; }
   .case__visual--ball { width: 100%; aspect-ratio: auto; height: 78svh; min-height: 520px; max-height: none; }
+  .case__visual--peek { width: 100%; aspect-ratio: auto; height: 72svh; min-height: 480px; }
   .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
   .case__cluster { gap: 1rem; }
   .case__meta { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -390,49 +413,19 @@ p { max-width: 62ch; text-wrap: pretty; }
     </article>
 
     <article class="case case--3" id="case-3">
-      <div class="case__visual shutter" data-reveal aria-hidden="true">
-        <svg viewBox="0 0 900 720" preserveAspectRatio="xMinYMax slice" role="img" aria-label="A standing player focus group around one table, with stakeholders watching from the observation room">
-          <rect x="0" y="0" width="900" height="720" fill="#1c1c1c"/>
-          <!-- observation room on the right, with its window -->
-          <rect x="620" y="60" width="280" height="660" fill="#262626"/>
-          <rect x="620" y="60" width="280" height="12" fill="#303030"/>
-          <rect x="650" y="150" width="220" height="150" fill="#1c1c1c"/>
-          <rect x="650" y="150" width="220" height="8" fill="#3b3b3b"/>
-          <!-- three stakeholders watching -->
-          <g fill="#c8c5ba">
-            <circle cx="690" cy="372" r="22"/><rect x="664" y="402" width="52" height="70"/>
-            <circle cx="760" cy="372" r="22"/><rect x="734" y="402" width="52" height="70"/>
-            <circle cx="830" cy="372" r="22"/><rect x="804" y="402" width="52" height="70"/>
-          </g>
-          <g fill="#dedbd0"><rect x="664" y="402" width="52" height="8"/><rect x="734" y="402" width="52" height="8"/><rect x="804" y="402" width="52" height="8"/></g>
-          <!-- the player table -->
-          <circle cx="330" cy="400" r="190" fill="#303030"/>
-          <circle cx="330" cy="392" r="190" fill="#3b3b3b"/>
-          <circle cx="330" cy="392" r="150" fill="#8fa68e"/>
-          <circle cx="330" cy="392" r="148" fill="#8fa68e"/>
-          <!-- eight seats -->
-          <g fill="#f1f1ef">
-            <circle cx="330" cy="172" r="26"/><circle cx="486" cy="236" r="26"/><circle cx="550" cy="392" r="26"/><circle cx="486" cy="548" r="26"/>
-            <circle cx="330" cy="612" r="26"/><circle cx="174" cy="548" r="26"/><circle cx="110" cy="392" r="26"/><circle cx="174" cy="236" r="26"/>
-          </g>
-          <!-- cards on the felt: personas from moderated cohorts -->
-          <g fill="#f1f1ef">
-            <rect x="262" y="336" width="60" height="84" transform="rotate(-8 292 378)"/>
-            <rect x="320" y="340" width="60" height="84" transform="rotate(6 350 382)"/>
-            <rect x="376" y="352" width="60" height="84" transform="rotate(14 406 394)"/>
-          </g>
-          <g fill="#1c1c1c">
-            <rect x="272" y="346" width="40" height="6" transform="rotate(-8 292 378)"/><rect x="272" y="358" width="28" height="6" transform="rotate(-8 292 378)"/>
-            <rect x="330" y="350" width="40" height="6" transform="rotate(6 350 382)"/><rect x="330" y="362" width="28" height="6" transform="rotate(6 350 382)"/>
-            <rect x="386" y="362" width="40" height="6" transform="rotate(14 406 394)"/><rect x="386" y="374" width="28" height="6" transform="rotate(14 406 394)"/>
-          </g>
-          <!-- session timeline on the floor: 45 minute moderated session, three pillars -->
-          <rect x="40" y="672" width="540" height="10" fill="#303030"/>
-          <rect x="40" y="672" width="180" height="10" fill="#c8c5ba"/>
-          <rect x="226" y="672" width="180" height="10" fill="#f1f1ef"/>
-          <rect x="412" y="672" width="168" height="10" fill="#8fa68e"/>
-          <g fill="#f1f1ef"><rect x="40" y="652" width="3" height="40"/><rect x="226" y="652" width="3" height="40"/><rect x="412" y="652" width="3" height="40"/><rect x="577" y="652" width="3" height="40"/></g>
-        </svg>
+      <div class="case__visual case__visual--peek peek" data-reveal aria-label="Two poker cards face down on the felt; they peel up as you scroll">
+        <canvas class="peek__canvas" aria-hidden="true"></canvas>
+        <div class="peek__vignette" aria-hidden="true"></div>
+        <div class="peek__overlay">
+          <p class="peek__hint" aria-hidden="true">Scroll to peek</p>
+          <div class="peek__copy">
+            <div class="peek__line is-on" data-stage="0"><p class="h">Face <em>down.</em></p><p>No user testing. No personas. Decisions ran on assumptions.</p></div>
+            <div class="peek__line" data-stage="1"><p class="h">Peek.</p><p>I sat product in live sessions with real players.</p></div>
+            <div class="peek__line" data-stage="2"><p class="h">Pocket <em>aces.</em></p><p>Most research of any product team in the company.</p></div>
+          </div>
+          <div class="peek__meter" aria-hidden="true"><i></i></div>
+        </div>
+        <p class="peek__flat">Two cards face down on the felt. The 3D peek needs WebGL, which this browser doesn't offer.</p>
       </div>
       <div class="case__cluster">
         <div class="case__meta">
@@ -537,6 +530,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 
 <script src="js/three.min.js" defer></script>
 <script src="js/fortune-ball.js" defer></script>
+<script src="js/poker-peek.js" defer></script>
 
 <script type="module">
 // Hero background: a particle-flow shader (shaders.com, MIT licence; copy saved in js/).
