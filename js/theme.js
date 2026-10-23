@@ -4,9 +4,9 @@
    look at random, never the current one and no repeats until all have shown this session.
    State lives in sessionStorage only, so it dies with the tab. ?theme=name forces a look. */
 (function () {
-  var THEMES = ['placeholder'];            // one entry per file in css/themes/; charcoal is implicit
+  var THEMES = ['brutalist'];            // one entry per file in css/themes/; charcoal is implicit
   var LOOKS = ['charcoal'].concat(THEMES);
-  var LABELS = { charcoal: 'Charcoal', placeholder: 'Placeholder' };
+  var LABELS = { charcoal: 'Charcoal', brutalist: 'Brutalist' };
   var KEY = 'theme', SEEN = 'theme-seen';
   var html = document.documentElement;
   var loaded = {};
