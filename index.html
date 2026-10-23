@@ -519,6 +519,10 @@ if (canvas && !saveData && 'gpu' in navigator) {
       const full = { speed: 1, force: 0.15, swirl: 54, ambient: 0.25 };
       const RAMP_MS = 7000;
       let shader;
+      // the three hero colours come from tokens; a theme must write them as hex or rgb() because the shader parses them
+      const token = (name, fallback) => (getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback);
+      const hero = () => ({ bg: token('--hero-bg', '#ffffff'), a: token('--hero-a', '#ececec'), b: token('--hero-b', '#1981ae') }); // fallback
+      document.addEventListener('theme:change', () => { if (!shader) return; const h = hero(); shader.update('base', { color: h.bg }); shader.update('flow', { colorA: h.a, colorB: h.b }); });
       const ramp = () => {
         const t0 = performance.now();
         const step = (now) => {
@@ -536,9 +540,9 @@ if (canvas && !saveData && 'gpu' in navigator) {
           type: 'ChromaticAberration',
           props: { strength: 0.52, angle: 45, redOffset: -1, greenOffset: 0, blueOffset: 1 },
           children: [
-            { type: 'SolidColor', props: { color: '#ffffff' } },
+            { type: 'SolidColor', id: 'base', props: { color: hero().bg } },
             { type: 'ParticleFlow', id: 'flow', props: {
-              shape: 'streak', colorA: '#ececec', colorB: '#1981ae', count: 5000, size: 0.6,
+              shape: 'streak', colorA: hero().a, colorB: hero().b, count: 5000, size: 0.6,
               trails: 0.6, momentum: 0.4, ...calm
             } }
           ]
