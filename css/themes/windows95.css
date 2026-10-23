@@ -2,12 +2,25 @@
    window with a solid navy title bar and the three caption buttons. The bar is solid on purpose:
    the dark-to-light gradient arrived with Windows 98. A taskbar with a Start button sits along
    the bottom, and the page ends on the black "safe to turn off" screen in orange.
-   Type: no web font. Window chrome uses the system's own sans: MS Sans Serif where it still exists,
-   then Microsoft Sans Serif (its vector successor, on Windows and macOS), Tahoma and Verdana.
-   Headings use Tahoma at regular weight: Windows 95 kept bold for title bars and the Start button. Body copy is Arial, which shipped with
-   Windows 95. A pixel web font was tried and dropped: its numerals were hard to tell apart. Generated title-bar text carries empty
-   alt text so screen readers skip it. Bevels follow the system palette: white and #dfdfdf light
-   edges, #808080 and #0a0a0a dark edges, no blur anywhere. */
+   Type: everything is set in MS Sans Serif, the Windows 95 system bitmap face, as the web font
+   "W95 Sans" (a redraw by "lou" on FontStruct, CC BY-SA 3.0, as bundled with 98.css and served by
+   jsDelivr). It is a pixel font drawn on an 11px grid, so sizes are multiples of 5.5px: sharp at
+   2x and 3x screens, and at 11/22/33px on 1x screens too. Bold is kept for title bars, the Start
+   button and the "Did you know..." lead-in, as in Windows 95. Fallback: MS Sans Serif, Microsoft
+   Sans Serif (its vector successor, on Windows and macOS), Tahoma, Verdana.
+   Generated title-bar text carries empty alt text so screen readers skip it. Bevels follow the
+   system palette: white and #dfdfdf light edges, #808080 and #0a0a0a dark edges, no blur. */
+@font-face {
+  font-family: "W95 Sans"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/98.css@0.1.21/dist/ms_sans_serif.woff2") format("woff2"),
+       url("https://cdn.jsdelivr.net/npm/98.css@0.1.21/dist/ms_sans_serif.woff") format("woff");
+}
+@font-face {
+  font-family: "W95 Sans"; font-weight: 700; font-style: normal; font-display: swap;
+  src: url("https://cdn.jsdelivr.net/npm/98.css@0.1.21/dist/ms_sans_serif_bold.woff2") format("woff2"),
+       url("https://cdn.jsdelivr.net/npm/98.css@0.1.21/dist/ms_sans_serif_bold.woff") format("woff");
+}
+
 html[data-theme="windows95"] {
   color-scheme: light;
 
@@ -39,9 +52,9 @@ html[data-theme="windows95"] {
   --stage-muted: #404040;
   --stage-line: #808080;
 
-  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  --font-display: Tahoma, Verdana, "Segoe UI", Arial, sans-serif;
-  --font-ui: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Verdana, "Segoe UI", Arial, sans-serif;
+  --font: "W95 Sans", "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Verdana, "Segoe UI", Arial, sans-serif;
+  --font-display: var(--font);
+  --font-ui: var(--font);
   --weight: 400;
   --weight-strong: 700;
 
@@ -63,7 +76,8 @@ html[data-theme="windows95"] {
 
 /* ---------- the desktop ---------- */
 html[data-theme="windows95"] body, html[data-theme="windows95"] .page { background: var(--desktop); }
-html[data-theme="windows95"] body { padding-bottom: 30px; }
+html[data-theme="windows95"] body { padding-bottom: 30px; font-size: 16.5px; line-height: 1.34; -webkit-font-smoothing: none; font-smooth: never; }
+html[data-theme="windows95"] :is(p, li, dd, td, .stats__txt, .case__desc) { font-size: 16.5px; line-height: 1.34; }
 html[data-theme="windows95"] ::selection { background: var(--title); color: #ffffff; }
 html[data-theme="windows95"] :focus-visible { outline: 1px dotted #000000; outline-offset: -5px; }
 
@@ -75,7 +89,7 @@ html[data-theme="windows95"] body::before {
 html[data-theme="windows95"] body::after {
   content: "Start"; content: "Start" / ""; position: fixed; left: 3px; bottom: 3px; height: 23px; z-index: 9001; pointer-events: none;
   display: flex; align-items: center; padding: 0 7px 0 26px; background: var(--chrome) var(--flag) no-repeat 6px 5px;
-  box-shadow: var(--raised); color: #000000; font: 700 14px/1 var(--font-display);
+  box-shadow: var(--raised); color: #000000; font: 700 16.5px/1 var(--font);
 }
 
 /* ---------- windows ---------- */
@@ -85,10 +99,10 @@ html[data-theme="windows95"] :is(.stats, .case, .about__row, .top, .row, .led, .
 }
 /* the title bar: solid navy, white bold label, caption buttons drawn on the right */
 html[data-theme="windows95"] :is(.stats, .case, .about__row, .top, .row, .led, .results)::before {
-  position: absolute; top: 3px; left: 3px; right: 3px; height: 22px; display: flex; align-items: center;
+  position: absolute; top: 3px; left: 3px; right: 3px; height: 24px; display: flex; align-items: center;
   padding: 0 62px 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   background: var(--title) var(--caption-buttons) no-repeat right 2px center; color: #ffffff;
-  font: 700 14px/1 var(--font-display); letter-spacing: 0.01em;
+  font: 700 16.5px/1 var(--font); letter-spacing: 0;
 }
 html[data-theme="windows95"] .stats::before { content: "Results.xls"; content: "Results.xls" / ""; }
 html[data-theme="windows95"] .about__row::before { content: "About Luiz Kim"; content: "About Luiz Kim" / ""; }
@@ -103,12 +117,12 @@ html[data-theme="windows95"] .results::before { content: "Results.xls"; content:
 /* ---------- type ---------- */
 html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
   .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
-  font-family: var(--font-display); font-weight: 400; letter-spacing: 0;
+  font-family: var(--font); font-weight: 400; letter-spacing: 0; line-height: 1.17;
 }
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
   .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
-  font-family: var(--font-ui); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 14px;
+  font-family: var(--font); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 16.5px;
 }
 
 /* ---------- buttons: raised grey, pressed on click, navy selection on hover ---------- */
@@ -136,12 +150,12 @@ html[data-theme="windows95"] .hero__bottom {
 html[data-theme="windows95"] .hero__bottom::before {
   content: "Welcome"; content: "Welcome" / ""; position: absolute; top: 3px; left: 3px; right: 3px; height: 22px;
   display: flex; align-items: center; padding: 0 62px 0 6px; background: var(--title) var(--caption-buttons) no-repeat right 2px center;
-  color: #ffffff; font: 700 14px/1 var(--font-display);
+  color: #ffffff; font: 700 16.5px/1 var(--font);
 }
-html[data-theme="windows95"] .hero__name { order: -1; font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; margin: 0; }
+html[data-theme="windows95"] .hero__name { order: -1; font-size: 132px; line-height: 1; letter-spacing: 0; margin: 0; }
 html[data-theme="windows95"] .hero__name::before {
   content: "Welcome to"; content: "Welcome to" / ""; display: block; margin-bottom: 0.15em;
-  font: 400 clamp(18px, 2vw, 28px)/1 var(--font-ui);
+  font: 400 33px/1 var(--font);
 }
 html[data-theme="windows95"] .hero__lead { max-width: 52ch; padding: 12px 14px; background: #ffffe1; box-shadow: var(--sunken); }
 html[data-theme="windows95"] .hero__lead::before { content: "Did you know... "; content: "Did you know... " / ""; font-weight: 700; }
@@ -149,14 +163,14 @@ html[data-theme="windows95"] .hero__lead::before { content: "Did you know... "; 
 /* ---------- stats ---------- */
 html[data-theme="windows95"] .stats { padding-bottom: clamp(14px, 2vw, 24px); margin-top: 32px; margin-bottom: 28px; }
 html[data-theme="windows95"] .stats__list { grid-column: 1 / -1; }
-html[data-theme="windows95"] .stats__head { margin-bottom: 1.25rem; font-size: clamp(1.75rem, 3vw, 2.5rem); }
+html[data-theme="windows95"] .stats__head { margin-bottom: 1.25rem; font-size: 33px; }
 html[data-theme="windows95"] .stats__rows { gap: 8px; }
 html[data-theme="windows95"] .stats__row { background: #ffffff; box-shadow: var(--sunken); padding: 16px 18px 18px; }
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="windows95"] .stats__row:hover { background: var(--title); color: #ffffff; }
   html[data-theme="windows95"] .stats__row:hover .stats__txt { color: #ffffff; }
 }
-html[data-theme="windows95"] .stats__fig { font-size: clamp(3rem, 6vw, 5.5rem); }
+html[data-theme="windows95"] .stats__fig { font-size: 66px; }
 
 /* ---------- cases ---------- */
 html[data-theme="windows95"] .case { align-items: start; }
@@ -164,7 +178,7 @@ html[data-theme="windows95"] .case__visual { margin-left: 0; box-shadow: var(--s
 html[data-theme="windows95"] .case__visual--claw { box-shadow: none; padding: 0; background: transparent; }
 html[data-theme="windows95"] .case__cluster { background: #ffffff; box-shadow: var(--sunken); padding: 16px 18px 18px; }
 html[data-theme="windows95"] .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-html[data-theme="windows95"] .case__title { font-size: clamp(1.75rem, 2.6vw, 2.5rem); line-height: 1.05; }
+html[data-theme="windows95"] .case__title { font-size: 33px; line-height: 1.17; }
 html[data-theme="windows95"] .case__title a { color: var(--title); }
 html[data-theme="windows95"] .ball { padding-inline: 1rem; }
 html[data-theme="windows95"] .ball__meter { height: 14px; width: 160px; background: #ffffff; box-shadow: var(--sunken); padding: 2px; }
@@ -191,8 +205,8 @@ html[data-theme="windows95"] .stats.wrap { padding-inline: clamp(12px, 2vw, 24px
 
 /* ---------- contact: it's now safe to turn off your computer ---------- */
 html[data-theme="windows95"] .contact { padding-bottom: calc(1.5rem + 30px); }
-html[data-theme="windows95"] .contact__intro { font-size: clamp(1.75rem, 4vw, 3.5rem); line-height: 1.1; max-width: 22ch; font-weight: 400; }
-html[data-theme="windows95"] .contact__mail { font-weight: 400; font-size: clamp(2.5rem, 7.5vw, 8rem); letter-spacing: -0.01em; }
+html[data-theme="windows95"] .contact__intro { font-size: 44px; line-height: 1.25; max-width: 22ch; font-weight: 400; }
+html[data-theme="windows95"] .contact__mail { font-weight: 400; font-size: 88px; letter-spacing: 0; line-height: 1.12; }
 html[data-theme="windows95"] .contact .copy-btn { background: var(--chrome); color: #000000; }
 @media (hover: hover) and (pointer: fine) { html[data-theme="windows95"] .contact .copy-btn:hover { background: var(--title); color: #ffffff; } }
 html[data-theme="windows95"] .contact .link { color: var(--field-ink); }
@@ -200,7 +214,10 @@ html[data-theme="windows95"] .contact .link { color: var(--field-ink); }
 /* ---------- case pages ---------- */
 html[data-theme="windows95"] .bar { background: var(--chrome); box-shadow: inset 0 -1px #808080, inset 0 -2px #ffffff; color: #000000; }
 html[data-theme="windows95"] main { padding-top: 24px; display: flex; flex-direction: column; gap: 28px; }
-html[data-theme="windows95"] .top__title { font-size: clamp(2.5rem, 1.5rem + 4vw, 5rem); line-height: 1; }
+html[data-theme="windows95"] .top__title { font-size: 66px; line-height: 1.17; }
+html[data-theme="windows95"] :is(.row__head, .led__head, .results__head, .field h2, .ev__fig) { font-size: 33px; }
+html[data-theme="windows95"] .outcome__fig { font-size: 44px; }
+html[data-theme="windows95"] :is(.who__name, .ball__q, .ball__a, .pager b, .decision h3, .about__para, .top__summary, .row__body p, .field p) { font-size: 22px; line-height: 1.25; }
 html[data-theme="windows95"] .row, html[data-theme="windows95"] .led, html[data-theme="windows95"] .results, html[data-theme="windows95"] .top { padding-bottom: 24px; }
 html[data-theme="windows95"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap) { background: #ffffff; box-shadow: var(--sunken); }
 html[data-theme="windows95"] .cover { box-shadow: var(--sunken); padding: 2px; margin-inline: 0; }
@@ -221,13 +238,20 @@ html[data-theme="windows95"] .foot { color: #ffffff; }
 html[data-theme="windows95"] .foot a { color: #ffffff; }
 
 /* ---------- small screens ---------- */
+@media (max-width: 1100px) {
+  html[data-theme="windows95"] .hero__name { font-size: 88px; }
+  html[data-theme="windows95"] .contact__mail { font-size: 66px; }
+}
 @media (max-width: 900px) {
   html[data-theme="windows95"] .case { gap: 12px; }
   html[data-theme="windows95"] .case__visual { width: 100%; }
 }
 @media (max-width: 700px) {
   html[data-theme="windows95"] .hero__bottom { left: 8px; right: 8px; bottom: 42px; max-width: none; padding: 36px 14px 16px; }
-  html[data-theme="windows95"] .hero__name { font-size: 16.5vw; }
-  html[data-theme="windows95"] .hero__lead { font-size: 15px; }
-  html[data-theme="windows95"] .contact__mail { font-size: 12vw; }
+  html[data-theme="windows95"] .hero__name { font-size: 66px; }
+  html[data-theme="windows95"] .hero__name::before { font-size: 22px; }
+  html[data-theme="windows95"] .contact__intro { font-size: 33px; }
+  html[data-theme="windows95"] .contact__mail { font-size: 44px; }
+  html[data-theme="windows95"] .top__title { font-size: 44px; }
+  html[data-theme="windows95"] .stats__fig { font-size: 55px; }
 }
