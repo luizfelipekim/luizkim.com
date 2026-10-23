@@ -111,30 +111,29 @@ p { max-width: 62ch; text-wrap: pretty; }
 /* ---------- stats: quiet figure lines + the live thing ---------- */
 .stats { padding-top: 18vh; padding-bottom: 18vh; }
 .stats__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
-.stats__list { grid-column: 2 / 8; }
-.stats__head { font-size: var(--step-head); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin-left: calc(132px + 24px); margin-bottom: 3.5rem; }
-.stats__rows { display: flex; flex-direction: column; gap: 1.75rem; }
-.stats__row { display: grid; grid-template-columns: 132px minmax(0, 1fr); column-gap: 24px; align-items: baseline; text-decoration: none; }
-.stats__fig { text-align: right; font-size: 2rem; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
-.stats__txt { max-width: 40ch; color: var(--ink); font-size: var(--step-body); line-height: 1.45; }
-.stats__photo { grid-column: 9 / 12; margin-top: 80px; aspect-ratio: 1 / 1; overflow: hidden; background: var(--surface); }
-.stats__photo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+.stats__list { grid-column: 2 / 12; }
+.stats__head { font-size: var(--step-head); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 3.5rem; }
+.stats__rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 2rem; align-items: start; }
+.stats__row { display: flex; flex-direction: column; gap: 0.75rem; text-decoration: none; }
+.stats__fig { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
+.stats__txt { max-width: 28ch; color: var(--ink); font-size: var(--step-body); line-height: 1.45; }
 
 @media (max-width: 900px) {
   .stats { padding-top: 6rem; padding-bottom: 6rem; }
   .stats__list { grid-column: 1 / -1; }
-  .stats__head { margin-left: calc(88px + 16px); font-size: 1.375rem; margin-bottom: 2.5rem; }
-  .stats__row { grid-template-columns: 88px minmax(0, 1fr); column-gap: 16px; }
-  .stats__fig { font-size: 1.5rem; }
-    .stats__photo { grid-column: 1 / -1; width: 56%; margin-left: auto; margin-top: 3.5rem; }
+  .stats__head { font-size: 1.375rem; margin-bottom: 2.5rem; }
+}
+@media (max-width: 600px) {
+  .stats__rows { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; }
+  .stats__fig { font-size: 2.25rem; }
 }
 
 /* ---------- work: oversized visual, small cluster ---------- */
 .work { display: flex; flex-direction: column; gap: 140px; padding-top: 6rem; padding-bottom: var(--section); overflow: hidden; }
 .case { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: end; }
-.case__visual { grid-column: 1 / 8; height: 80svh; min-height: 420px; max-height: 760px; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); overflow: hidden; }
-.case--2 .case__visual { height: 60svh; }
-.case--3 .case__visual { height: 90svh; }
+.case__visual { grid-column: 1 / 8; height: 64svh; min-height: 400px; max-height: 610px; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); overflow: hidden; }
+.case--2 .case__visual { height: 48svh; }
+.case--3 .case__visual { height: 72svh; }
 .case__visual svg { width: 120%; height: 100%; margin-left: -8%; }
 .case__cluster { grid-column: 8 / 13; display: flex; flex-direction: column; gap: 28px; padding-bottom: 0.5rem; }
 .case__shot { aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden; background: var(--surface); }
@@ -144,6 +143,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 .case__desc { font-size: var(--step-body); line-height: 1.45; color: var(--ink); }
 .case__desc a { color: var(--ink); }
 .case__who { font-size: var(--step-small); color: var(--muted); margin-top: 0.35rem; }
+.case__cta { margin-top: 1.25rem; }
 
 /* AI case teaser: the fortune ball */
 .case__visual--ball { overflow: visible; }
@@ -182,24 +182,17 @@ p { max-width: 62ch; text-wrap: pretty; }
 .peek__overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
   padding: 1.25rem max(16px, var(--m)) 1.5rem calc(max(16px, env(safe-area-inset-left, 0px), var(--m)) + 0.5rem); will-change: transform; }
 .peek__hint { align-self: flex-end; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; transition: opacity 400ms; }
-.peek__copy { position: relative; max-width: 26rem; min-height: 7.5em; }
-.peek__line { position: absolute; left: 0; bottom: 0; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0; transform: translateY(10px); transition: opacity 550ms var(--ease-out), transform 550ms var(--ease-out); }
-.peek__line.is-on { opacity: 1; transform: none; }
-.peek__line .h { font-size: clamp(2.25rem, 4.5vw, 4rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.04em; max-width: 12ch; }
-.peek__line .h em { font-style: normal; color: #9a9b96; }
-.peek__line p:not(.h) { font-size: var(--step-body); line-height: 1.4; max-width: 30ch; color: #c8c5ba; }
 .peek__meter { position: absolute; right: max(16px, var(--m)); bottom: 1.5rem; width: 2px; height: 72px; background: #303030; overflow: hidden; }
 .peek__meter i { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: top; transform: scaleY(0); }
 .peek__flat { display: none; }
 .peek.is-flat .peek__canvas, .peek.is-flat .peek__vignette, .peek.is-flat .peek__overlay { display: none; }
 .peek.is-flat .peek__flat { display: grid; place-items: center; height: 100%; padding: var(--m); text-align: center; color: #c8c5ba; max-width: none; }
-@media (prefers-reduced-motion: reduce) { .peek__line { transition: none; } }
 @media (max-width: 900px) {
   .work { gap: 88px; padding-top: 3rem; }
   .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
-  .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 70svh; }
-  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 78svh; min-height: 520px; max-height: none; }
-  .case__visual--peek { width: 100%; aspect-ratio: auto; height: 72svh; min-height: 480px; }
+  .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 56svh; }
+  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 440px; max-height: none; }
+  .case__visual--peek { width: 100%; aspect-ratio: auto; height: 58svh; min-height: 400px; }
   .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
   .case__cluster { gap: 1rem; }
   .case__meta { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -210,7 +203,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 /* Design-system case teaser: the claw machine */
 .case.case--2 .case__visual--claw { height: auto; min-height: 0; max-height: none; overflow: visible; }
 .claw { display: flex; flex-direction: column; gap: 10px; background: #1c1c1c; color: #f1f1ef; padding: 0 0 0 calc(max(16px, env(safe-area-inset-left, 0px), var(--m))); }
-.claw__stage { position: relative; width: 100%; aspect-ratio: 16 / 11; max-width: 100%; border: 1px solid #303030; overflow: hidden; outline: none; background: #1c1c1c; }
+.claw__stage { position: relative; width: 100%; aspect-ratio: 20 / 11; max-width: 100%; border: 1px solid #303030; overflow: hidden; outline: none; background: #1c1c1c; }
 .claw__stage:focus-visible { border-color: #f1f1ef; }
 .claw__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .claw__hud { position: absolute; inset: 10px 10px auto 10px; display: flex; justify-content: space-between; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; pointer-events: none; }
@@ -228,62 +221,29 @@ p { max-width: 62ch; text-wrap: pretty; }
 .claw__drop:active { transform: scale(0.96); }
 .claw__drop:disabled { background: rgba(28, 28, 28, 0.75); color: #9a9b96; border-color: #3b3b3b; cursor: default; }
 .claw__drop:focus-visible { outline: 2px solid #f1f1ef; outline-offset: 4px; }
-.claw__foot { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; min-height: 1.5em; }
-.claw__status { font-size: var(--step-small); color: #c8c5ba; }
-.claw__status b { font-weight: 500; color: #f1f1ef; }
-.claw__refill { appearance: none; background: none; border: 0; padding: 0; cursor: pointer; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; text-decoration: underline; text-underline-offset: 3px; }
-.claw__refill:hover, .claw__refill:focus-visible { color: #f1f1ef; outline: none; }
-.claw__tray { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
-.claw__slot { min-width: 0; min-height: 84px; border: 1px dashed #3b3b3b; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 8px; transition: border-color 200ms, opacity 200ms; }
-.claw__slot[data-empty="true"] { opacity: 0.45; }
-.claw__slot[data-empty="true"] > :not(.claw__label) { visibility: hidden; }
-.claw__slot[data-empty="false"] { border-style: solid; border-color: #f1f1ef; opacity: 1; }
-.claw__label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #c8c5ba; white-space: nowrap; }
-.claw__label i { font-style: normal; font-variant-numeric: tabular-nums; }
-.claw__slot[data-empty="false"] .claw__label { color: #f1f1ef; }
-.claw__switch { appearance: none; width: 40px; height: 22px; border-radius: 999px; border: 1px solid #f1f1ef; background: transparent; position: relative; cursor: pointer; padding: 0; transition: background 160ms; }
-.claw__switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #f1f1ef; transition: transform 160ms, background 160ms; }
-.claw__switch[aria-checked="true"] { background: #f1f1ef; }
-.claw__switch[aria-checked="true"]::after { background: #1c1c1c; transform: translateX(18px); }
-.claw__pill { appearance: none; border: 1px solid #f1f1ef; border-radius: 999px; padding: 4px 10px; background: transparent; color: #f1f1ef; font: inherit; font-size: 12px; cursor: pointer; transition: background 120ms, color 120ms; }
-.claw__pill[aria-pressed="true"] { background: #f1f1ef; color: #1c1c1c; }
-.claw__check input, .claw__radio input { appearance: none; margin: 0; width: 20px; height: 20px; border: 1px solid #f1f1ef; background: transparent; display: grid; place-items: center; cursor: pointer; }
-.claw__check input { border-radius: 5px; }
-.claw__check input::after { content: ""; width: 10px; height: 6px; border-left: 2px solid #1c1c1c; border-bottom: 2px solid #1c1c1c; transform: translateY(-1px) rotate(-45deg); opacity: 0; }
-.claw__check input:checked { background: #f1f1ef; }
-.claw__check input:checked::after { opacity: 1; }
-.claw__radios { display: flex; gap: 6px; }
-.claw__radio input { border-radius: 50%; }
-.claw__radio input::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #f1f1ef; transform: scale(0); transition: transform 120ms; }
-.claw__radio input:checked::after { transform: scale(1); }
-.claw__btn { appearance: none; border: 1px solid #f1f1ef; border-radius: 8px; padding: 6px 12px; background: #f1f1ef; color: #1c1c1c; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 120ms, color 120ms; }
-.claw__btn[data-done="true"] { background: transparent; color: #f1f1ef; }
-.claw__field { appearance: none; width: 100%; min-width: 0; border: 1px solid #f1f1ef; border-radius: 8px; padding: 6px 8px; background: transparent; color: #f1f1ef; font: inherit; font-size: 12px; }
-.claw__field::placeholder { color: #9a9b96; }
-.claw__field:focus { outline: none; box-shadow: 0 0 0 1px #f1f1ef; }
-.claw__switch:focus-visible, .claw__pill:focus-visible, .claw__btn:focus-visible, .claw__check input:focus-visible, .claw__radio input:focus-visible { outline: 2px solid #f1f1ef; outline-offset: 3px; }
 .claw__flat { display: none; font-size: var(--step-body); color: #c8c5ba; max-width: 40ch; }
 .claw.is-flat > :not(.claw__flat) { display: none; }
 .claw.is-flat .claw__flat { display: block; }
-@media (prefers-reduced-motion: reduce) { .claw__switch, .claw__switch::after, .claw__slot, .claw__drop, .claw__radio input::after { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .claw__drop { transition: none; } }
 @media (max-width: 900px) {
   .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
   .claw { padding-left: 0; }
-  .claw__stage { aspect-ratio: 4 / 5; }
-  .claw__tray { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .claw__stage { aspect-ratio: 1 / 1; }
 }
 
 /* ---------- about: side facts, wide paragraph ---------- */
 .about { padding-top: var(--section); padding-bottom: var(--section); display: flex; flex-direction: column; gap: 120px; }
 .about__row { display: grid; grid-template-columns: 34% minmax(0, 1fr); column-gap: 0; align-items: center; }
 .who { width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; }
-.who__pics { position: relative; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.9rem; }
+.who__pics { position: relative; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.9rem;
+  /* the portrait files sit on #232324, a shade lighter than the page, so a soft edge mask hides the square frame */
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 58%, transparent 72%); mask-image: radial-gradient(circle at 50% 50%, #000 58%, transparent 72%); }
 .who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: lighten; }
-/* the topology render fades in over the grey portrait as the card scrolls up the screen:
-   fully grey once the card has appeared, fully drawn by the time it has passed the middle */
+/* the topology render fades in over the grey portrait as the card scrolls into view:
+   grey as its top edge appears, fully drawn by the time the whole card is on screen */
 .who__pic--mesh { opacity: 0; }
 @supports (animation-timeline: view()) {
-  .who__pic--mesh { animation: mesh-fade linear both; animation-timeline: view(); animation-range: entry 100% cover 70%; }
+  .who__pic--mesh { animation: mesh-fade linear both; animation-timeline: view(); animation-range: entry 20% entry 100%; }
 }
 @keyframes mesh-fade { from { opacity: 0; } to { opacity: 1; } }
 .who__name { font-size: var(--step-head); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
@@ -385,9 +345,6 @@ p { max-width: 62ch; text-wrap: pretty; }
           </a>
         </div>
       </div>
-      <figure class="stats__photo" data-reveal>
-        <img src="img/lattice.jpg" width="1200" height="1200" alt="Curving glass and steel lattice roof, black and white" loading="lazy">
-      </figure>
     </div>
   </section>
 
@@ -422,8 +379,9 @@ p { max-width: 62ch; text-wrap: pretty; }
         <div class="case__meta">
           <h2 class="case__title" data-reveal style="--i:2"><a href="case-ai.html">QuintAce: asked for speed, delivered it with AI</a></h2>
           <div data-reveal style="--i:3">
-            <p class="case__desc">The brief was faster design, same headcount. Handoffs per designer more than doubled, a 5-hour Figma rebuild became one click, and the time freed started the first research practice. <a class="link" href="case-ai.html">Read the case study</a></p>
+            <p class="case__desc">The brief was faster design, same headcount. Handoffs per designer more than doubled, a 5-hour Figma rebuild became one click, and the time freed started the first research practice.</p>
             <p class="case__who">A5 Labs · Design Director · 2026 · Team of four</p>
+            <a class="button case__cta" href="case-ai.html">Read the case study</a>
           </div>
         </div>
       </div>
@@ -445,18 +403,6 @@ p { max-width: 62ch; text-wrap: pretty; }
               <button class="claw__drop" type="button" data-claw-drop>Drop</button>
             </div>
           </div>
-          <div class="claw__foot">
-            <p class="claw__status" aria-live="polite">Drag the glass or hold the pad, then drop.</p>
-            <button class="claw__refill" type="button" data-claw-refill hidden>Refill</button>
-          </div>
-          <div class="claw__tray" aria-label="Collected components">
-            <div class="claw__slot" data-type="toggle" data-empty="true"><span class="claw__label">Toggle <i class="claw__n"></i></span><button class="claw__switch" type="button" role="switch" aria-checked="true" aria-label="Toggle"></button></div>
-            <div class="claw__slot" data-type="pill" data-empty="true"><span class="claw__label">Pill <i class="claw__n"></i></span><button class="claw__pill" type="button" aria-pressed="true">Tokens</button></div>
-            <div class="claw__slot" data-type="checkbox" data-empty="true"><span class="claw__label">Checkbox <i class="claw__n"></i></span><label class="claw__check"><input type="checkbox" checked aria-label="Checkbox"></label></div>
-            <div class="claw__slot" data-type="radio" data-empty="true"><span class="claw__label">Radio <i class="claw__n"></i></span><span class="claw__radios"><label class="claw__radio"><input type="radio" name="claw-radio" checked aria-label="Option A"></label><label class="claw__radio"><input type="radio" name="claw-radio" aria-label="Option B"></label></span></div>
-            <div class="claw__slot" data-type="button" data-empty="true"><span class="claw__label">Button <i class="claw__n"></i></span><button class="claw__btn" type="button">Continue</button></div>
-            <div class="claw__slot" data-type="input" data-empty="true"><span class="claw__label">Text input <i class="claw__n"></i></span><input class="claw__field" type="text" placeholder="Type here" aria-label="Text input" autocomplete="off"></div>
-          </div>
           <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
         </section>
       </div>
@@ -464,8 +410,9 @@ p { max-width: 62ch; text-wrap: pretty; }
         <div class="case__meta">
           <h2 class="case__title" data-reveal style="--i:2"><a href="case-system.html">One design system for 40 brands</a></h2>
           <div data-reveal style="--i:3">
-            <p class="case__desc">One system, 40+ brands, run as a product with ownership by market. <a class="link" href="case-system.html">Read the case study</a></p>
-            <p class="case__who">Entain · VP of Design, Emerging Markets · 2023 to 2026</p>
+            <p class="case__desc">One system, 40+ brands, run as a product with ownership by market.</p>
+            <p class="case__who">Entain · Product Design Manager · 2023 to 2026</p>
+            <a class="button case__cta" href="case-system.html">Read the case study</a>
           </div>
         </div>
       </div>
@@ -477,11 +424,6 @@ p { max-width: 62ch; text-wrap: pretty; }
         <div class="peek__vignette" aria-hidden="true"></div>
         <div class="peek__overlay">
           <p class="peek__hint" aria-hidden="true">Scroll to peek</p>
-          <div class="peek__copy">
-            <div class="peek__line is-on" data-stage="0"><p class="h">Face <em>down.</em></p><p>No user testing. No personas. Decisions ran on assumptions.</p></div>
-            <div class="peek__line" data-stage="1"><p class="h">Peek.</p><p>I sat product in live sessions with real players.</p></div>
-            <div class="peek__line" data-stage="2"><p class="h">Pocket <em>aces.</em></p><p>Most research of any product team in the company.</p></div>
-          </div>
           <div class="peek__meter" aria-hidden="true"><i></i></div>
         </div>
         <p class="peek__flat">Two cards face down on the felt. The 3D peek needs WebGL, which this browser doesn't offer.</p>
@@ -490,8 +432,9 @@ p { max-width: 62ch; text-wrap: pretty; }
         <div class="case__meta">
           <h2 class="case__title" data-reveal style="--i:2"><a href="case-poker.html">Poker UX research, built from zero</a></h2>
           <div data-reveal style="--i:3">
-            <p class="case__desc">A small team inside Gaming went from zero testing to out-researching Sports, Casino and Core. <a class="link" href="case-poker.html">Read the case study</a></p>
+            <p class="case__desc">A small team inside Gaming went from zero testing to out-researching Sports, Casino and Core.</p>
             <p class="case__who">Entain · Product Design Manager · Poker · 2021 to 2023</p>
+            <a class="button case__cta" href="case-poker.html">Read the case study</a>
           </div>
         </div>
       </div>

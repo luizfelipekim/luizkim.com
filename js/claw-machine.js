@@ -24,7 +24,7 @@
   var statusEl = root.querySelector('.claw__status'), triesEl = root.querySelector('[data-claw-tries]'),
       caughtEl = root.querySelector('[data-claw-caught]'), dropBtn = root.querySelector('[data-claw-drop]'),
       refillBtn = root.querySelector('[data-claw-refill]');
-  function setStatus(html) { statusEl.innerHTML = html; }
+  function setStatus(html) { if (statusEl) statusEl.innerHTML = html; }
 
   /* ---------- renderer / scene ---------- */
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
@@ -218,7 +218,7 @@
       });
     });
     left = items.length;
-    refillBtn.hidden = true;
+    if (refillBtn) refillBtn.hidden = true;
   }
 
   /* ---------- game state ---------- */
@@ -283,8 +283,10 @@
     }
     if (left === 0) {
       setStatus('<b>Machine empty.</b> You caught all 15.');
-      refillBtn.hidden = false;
       dropBtn.disabled = true;
+      // no Refill button on the homepage: the machine restocks itself
+      if (refillBtn) refillBtn.hidden = false;
+      else setTimeout(function () { spawnItems(); setStatus('Refilled. Ready.'); dropBtn.disabled = (state !== 'idle'); }, 1600);
     } else {
       setStatus('<b>' + LABELS[it.type] + '</b> collected. ' + left + ' left.');
     }
@@ -351,7 +353,7 @@
         break;
       case 'return':
         claw.open += (1 - claw.open) * Math.min(1, dt * 4);
-        if (moveToward(0, 0, dt)) { go('idle'); if (left > 0 && !/collected|slipped|missed|Nothing/.test(statusEl.textContent)) setStatus('Ready.'); }
+        if (moveToward(0, 0, dt)) { go('idle'); if (left > 0 && statusEl && !/collected|slipped|missed|Nothing/.test(statusEl.textContent)) setStatus('Ready.'); }
         break;
     }
 
@@ -379,7 +381,7 @@
 
   /* ---------- input ---------- */
   dropBtn.addEventListener('click', function () { drop(); stage.focus({ preventScroll: true }); });
-  refillBtn.addEventListener('click', function () { spawnItems(); setStatus('Refilled. Ready.'); dropBtn.disabled = (state !== 'idle'); });
+  if (refillBtn) refillBtn.addEventListener('click', function () { spawnItems(); setStatus('Refilled. Ready.'); dropBtn.disabled = (state !== 'idle'); });
 
   Array.prototype.forEach.call(root.querySelectorAll('[data-claw-dir]'), function (b) {
     var dir = b.getAttribute('data-claw-dir');
