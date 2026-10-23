@@ -1,0 +1,133 @@
+/* Brutalist: acid yellow ground, black display type at poster size, thick black rules, nothing rounded.
+   Everything is either yellow with black on it or black with yellow on it; white is for the paper the
+   screenshots sit on. Display face is Archivo Black (Google Fonts), falling back to Arial Black / Impact,
+   which read the same at this size. Body is plain Arial: the point is that the type is big, not fancy. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap");
+
+html[data-theme="brutalist"] {
+  color-scheme: light;
+
+  --bg: #e6ff00;
+  --surface: #e6ff00;
+  --surface-2: #ffffff;
+  --ink: #000000;
+  --muted: #2b2b2b;
+  --line: #000000;
+  --accent: #000000;
+  --accent-ink: #e6ff00;
+  --danger: #ff2a00;
+
+  --field: #000000;
+  --field-ink: #e6ff00;
+  --field-muted: #b4c800;
+  --field-accent: #ffffff;
+
+  --hero-bg: #e6ff00;
+  --hero-ink: #000000;
+  --hero-a: #000000;
+  --hero-b: #ff2a00;
+
+  /* stage stays on the page colour: black objects on acid yellow is the whole idea */
+  --stage-muted: var(--muted);
+
+  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --weight: 400;
+  --weight-strong: 700;
+
+  --radius: 0;
+  --radius-pill: 0;
+  --border: 3px;
+}
+
+/* ---------- skin ---------- */
+html[data-theme="brutalist"] body { line-height: 1.35; }
+html[data-theme="brutalist"] ::selection { background: var(--ink); color: var(--bg); }
+
+/* display type: all caps, tight, oversized */
+html[data-theme="brutalist"] .hero__name,
+html[data-theme="brutalist"] .stats__fig,
+html[data-theme="brutalist"] .case__title,
+html[data-theme="brutalist"] .contact__mail,
+html[data-theme="brutalist"] .top__title,
+html[data-theme="brutalist"] .outcome__fig { font-weight: 400; text-transform: uppercase; letter-spacing: -0.02em; }
+html[data-theme="brutalist"] .contact__mail { text-transform: none; font-size: clamp(2.25rem, 6.4vw, 6.5rem); letter-spacing: -0.03em; }
+html[data-theme="brutalist"] .hero__name { font-size: clamp(96px, 23.5vw, 360px); letter-spacing: -0.04em; }
+html[data-theme="brutalist"] .stats__fig { font-size: clamp(3.5rem, 8vw, 8rem); }
+html[data-theme="brutalist"] .case__title { font-size: clamp(26px, 2.7vw, 40px); line-height: 0.95; }
+html[data-theme="brutalist"] .stats__head, html[data-theme="brutalist"] .who__name,
+html[data-theme="brutalist"] .row__head, html[data-theme="brutalist"] .led__head, html[data-theme="brutalist"] .results__head,
+html[data-theme="brutalist"] .field h2, html[data-theme="brutalist"] .pager b, html[data-theme="brutalist"] .decision h3 {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: 0; }
+html[data-theme="brutalist"] .hero__lead, html[data-theme="brutalist"] .about__para,
+html[data-theme="brutalist"] .contact__intro, html[data-theme="brutalist"] .top__summary { font-weight: 700; }
+
+/* small type: uppercase labels, like stencils on a crate */
+html[data-theme="brutalist"] .hero__nav, html[data-theme="brutalist"] .bar__nav,
+html[data-theme="brutalist"] .case__who, html[data-theme="brutalist"] .who__prev,
+html[data-theme="brutalist"] .contact__foot, html[data-theme="brutalist"] .foot,
+html[data-theme="brutalist"] .top__meta, html[data-theme="brutalist"] .facts dt,
+html[data-theme="brutalist"] .outcome__how, html[data-theme="brutalist"] .pager span { text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+
+/* rules: every section and every block gets a thick black edge */
+html[data-theme="brutalist"] .stats, html[data-theme="brutalist"] .work,
+html[data-theme="brutalist"] .about, html[data-theme="brutalist"] .top,
+html[data-theme="brutalist"] .row, html[data-theme="brutalist"] .led,
+html[data-theme="brutalist"] .results, html[data-theme="brutalist"] .pager { border-top: var(--border) solid var(--line); }
+html[data-theme="brutalist"] .bar { border-bottom: var(--border) solid var(--line); }
+html[data-theme="brutalist"] .case__visual, html[data-theme="brutalist"] .case__visual--ball,
+html[data-theme="brutalist"] .claw__stage, html[data-theme="brutalist"] .cover,
+html[data-theme="brutalist"] .facts, html[data-theme="brutalist"] .pair div,
+html[data-theme="brutalist"] .decision, html[data-theme="brutalist"] .panel,
+html[data-theme="brutalist"] .tablewrap, html[data-theme="brutalist"] .ev,
+html[data-theme="brutalist"] .pager a, html[data-theme="brutalist"] .who__pics,
+html[data-theme="brutalist"] [data-ui] { border: var(--border) solid var(--line); }
+html[data-theme="brutalist"] .case__visual--peek { background: var(--bg); }
+html[data-theme="brutalist"] .case__visual--claw { border: 0; }
+html[data-theme="brutalist"] .stats__row { border-top: var(--border) solid var(--line); padding-top: 1rem; }
+html[data-theme="brutalist"] th, html[data-theme="brutalist"] td { border-bottom: var(--border) solid var(--line); }
+html[data-theme="brutalist"] th { background: var(--ink); color: var(--bg); text-transform: uppercase; }
+html[data-theme="brutalist"] .ev__bar i { background: var(--surface-2); border: 1px solid var(--line); }
+html[data-theme="brutalist"] .ev__bar i.on { background: var(--ink); }
+html[data-theme="brutalist"] [data-ui] { --ui-muted: var(--muted); }
+html[data-theme="brutalist"] [data-ui] .ui-bar, html[data-theme="brutalist"] [data-ui] .ui-row.is-on { background: var(--surface-2); }
+
+/* actions: black slabs */
+html[data-theme="brutalist"] .button, html[data-theme="brutalist"] .copy-btn {
+  border: var(--border) solid var(--line); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; min-height: 3rem; padding: 0 1.5rem; }
+html[data-theme="brutalist"] .link { text-decoration-thickness: 0.15em; text-underline-offset: 0.15em; text-decoration-color: currentColor; }
+html[data-theme="brutalist"] .ball__btn { border-width: var(--border); font-weight: 700; }
+html[data-theme="brutalist"] .ball__btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+html[data-theme="brutalist"] .claw__key, html[data-theme="brutalist"] .claw__drop { border-width: var(--border); border-radius: 0; background: var(--bg); color: var(--ink); }
+html[data-theme="brutalist"] .claw__drop { background: var(--ink); color: var(--bg); font-weight: 700; }
+html[data-theme="brutalist"] .claw__hud span { background: var(--bg); border: var(--border) solid var(--line); }
+html[data-theme="brutalist"] .ball__meter, html[data-theme="brutalist"] .peek__meter { background: var(--bg); border: 1px solid var(--line); }
+html[data-theme="brutalist"] .calc input[type=range] { accent-color: var(--ink); }
+html[data-theme="brutalist"] .calc__out strong { color: var(--ink); text-decoration: underline; text-decoration-thickness: 0.15em; }
+
+/* hero: no soft scrim, the name sits on a black slab */
+html[data-theme="brutalist"] .hero__scrim { display: none; }
+html[data-theme="brutalist"] .hero__bottom { background: var(--ink); color: var(--bg); padding-top: 1.25rem; }
+html[data-theme="brutalist"] .hero__bottom .hero__lead { max-width: 34ch; }
+html[data-theme="brutalist"] .hero__canvas { mix-blend-mode: multiply; }
+
+/* portrait: a square photo with a hard edge, no vignette */
+html[data-theme="brutalist"] .who__pics { -webkit-mask-image: none; mask-image: none; background: var(--ink); }
+html[data-theme="brutalist"] .who__pic { mix-blend-mode: lighten; }
+html[data-theme="brutalist"] .who__link { border: var(--border) solid var(--line); }
+
+/* field: the ending is a black block with yellow type */
+html[data-theme="brutalist"] .contact, html[data-theme="brutalist"] .field { border-top: var(--border) solid var(--line); }
+html[data-theme="brutalist"] .copy-btn { background: var(--bg); color: var(--ink); border-color: var(--bg); }
+
+@media (max-width: 700px) {
+  html[data-theme="brutalist"] .hero__name { font-size: 22vw; }
+  html[data-theme="brutalist"] .stats__fig { font-size: 3.25rem; }
+  html[data-theme="brutalist"] .contact__mail { font-size: 10vw; }
+  html[data-theme="brutalist"] .case__title { font-size: 7.5vw; }
+}
+
+/* the peek hint is painted over the dark felt, not the stage, so it takes the page colour */
+html[data-theme="brutalist"] .peek__hint { color: var(--bg); }
+html[data-theme="brutalist"] .peek__meter { background: color-mix(in srgb, var(--bg) 40%, transparent); border: 0; }
+html[data-theme="brutalist"] .peek__meter i { background: var(--bg); }
