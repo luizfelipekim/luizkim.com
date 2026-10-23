@@ -1,0 +1,73 @@
+/* Design tokens: the one place colour, type and shape are defined.
+   Every page loads this first. A theme overrides these under html[data-theme="name"]
+   and never touches the markup. See PLAN.md for the full token set and rules.
+
+   Charcoal is the default look: charcoal ground, one grotesk at two sizes, one sage action,
+   one pale concrete field for the hardest conversation. */
+:root {
+  color-scheme: dark;
+
+  /* page */
+  --bg: #1c1c1c;
+  --surface: #262626;
+  --surface-2: #303030;
+  --ink: #f1f1ef;
+  --muted: #9a9b96;
+  --line: #3b3b3b;
+  --accent: #8fa68e;
+  --accent-ink: #1c1c1c;
+  --danger: #e0413a;
+
+  /* field: the pale block at the end of every page */
+  --field: #c8c5ba;
+  --field-ink: #1c1c1c;
+  --field-muted: #4a4a46;
+  --field-accent: #4f6a4e;
+
+  /* hero: the light opening screen on the home page; --hero-a/--hero-b feed the shader */
+  --hero-bg: #ffffff;
+  --hero-ink: #141414;
+  --hero-a: #ececec;
+  --hero-b: #1981ae;
+
+  /* stage: the chrome around each 3D opener; follows the page unless a theme says otherwise */
+  --stage-bg: var(--bg);
+  --stage-ink: var(--ink);
+  --stage-muted: #c8c5ba;
+  --stage-line: var(--line);
+
+  /* type */
+  --font: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font);
+  --weight: 400;
+  --weight-strong: 500;
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --step-title: clamp(2.5rem, 1.2rem + 4.6vw, 5rem);
+
+  /* shape */
+  --radius: 6px;
+  --radius-pill: 999px;
+  --border: 1px;
+
+  /* space */
+  --m: clamp(1.25rem, 2.2vw, 2rem);
+  --gutter: clamp(1rem, 2vw, 2rem);
+  --section: clamp(7rem, 14vw, 14rem);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --t-press: 140ms;
+  --t-hover: 180ms;
+  --t-reveal: 800ms;
+}
+
+/* Areas with their own colour scheme map their family onto the local page tokens,
+   so anything inside them (buttons, muted text, rules) needs no special rules. */
+.hero { --bg: var(--hero-bg); --ink: var(--hero-ink); }
+.ball, .claw, .peek { --bg: var(--stage-bg); --ink: var(--stage-ink); --muted: var(--stage-muted); --line: var(--stage-line); }
+.contact, .field { --bg: var(--field); --ink: var(--field-ink); --muted: var(--field-muted); --accent: var(--field-accent); }
