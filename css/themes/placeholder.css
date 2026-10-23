@@ -1,0 +1,39 @@
+/* Placeholder theme: deliberately ugly so any element still wearing charcoal is easy to spot.
+   Becomes the starting file for the first real theme. */
+html[data-theme="placeholder"] {
+  color-scheme: light;
+
+  --bg: #ff00ff;
+  --surface: #ff66ff;
+  --surface-2: #ffb3ff;
+  --ink: #003300;
+  --muted: #006600;
+  --line: #00cc00;
+  --accent: #ccff00;
+  --accent-ink: #003300;
+  --danger: #ff0000;
+
+  --field: #ccff00;
+  --field-ink: #330066;
+  --field-muted: #6600cc;
+  --field-accent: #ff00ff;
+
+  --hero-bg: #ccff00;
+  --hero-ink: #330066;
+  --hero-a: #ffffff;
+  --hero-b: #ff00ff;
+
+  --stage-bg: #00ffff;
+  --stage-ink: #003333;
+  --stage-muted: #006666;
+  --stage-line: #ff00ff;
+
+  --font: "Comic Sans MS", "Chalkboard SE", cursive;
+  --font-display: "Impact", "Arial Black", sans-serif;
+  --weight: 400;
+  --weight-strong: 700;
+
+  --radius: 20px;
+  --radius-pill: 0;
+  --border: 4px;
+}

@@ -279,6 +279,7 @@
     items.splice(items.indexOf(it), 1);
     caught++; left--; counts[it.type]++;
     caughtEl.textContent = caught;
+    document.dispatchEvent(new CustomEvent('claw:caught', { detail: { type: it.type, label: LABELS[it.type].toLowerCase(), caught: caught } }));
     var slot = root.querySelector('.claw__slot[data-type="' + it.type + '"]');
     if (slot) {
       slot.setAttribute('data-empty', 'false');
