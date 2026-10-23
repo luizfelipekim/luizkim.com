@@ -190,6 +190,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 .claw__drop:active { transform: scale(0.96); }
 .claw__drop:disabled { background: color-mix(in srgb, var(--bg) 75%, transparent); color: color-mix(in srgb, var(--muted) 75%, var(--bg)); border-color: var(--line); cursor: default; }
 .claw__drop:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.claw__hint { font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-height: 1.4em; }
 .claw__flat { display: none; font-size: var(--step-body); color: var(--muted); max-width: 40ch; }
 .claw.is-flat > :not(.claw__flat) { display: none; }
 .claw.is-flat .claw__flat { display: block; }
@@ -269,6 +270,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 }
 @keyframes rise { to { opacity: 1; transform: none; } }
 </style>
+<script src="js/theme.js"></script>
 
 <div class="page">
 
@@ -371,6 +373,7 @@ p { max-width: 62ch; text-wrap: pretty; }
               <button class="claw__drop" type="button" data-claw-drop>Drop</button>
             </div>
           </div>
+          <p class="claw__hint" aria-live="polite">Catch one and the whole site changes</p>
           <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
         </section>
       </div>
