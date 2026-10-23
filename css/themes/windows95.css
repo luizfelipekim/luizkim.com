@@ -2,13 +2,12 @@
    window with a solid navy title bar and the three caption buttons. The bar is solid on purpose:
    the dark-to-light gradient arrived with Windows 98. A taskbar with a Start button sits along
    the bottom, and the page ends on the black "safe to turn off" screen in orange.
-   Type: window chrome and display in Pixelify Sans, the nearest Google Font to the MS Sans Serif
-   bitmap; body copy in Arial, which shipped with Windows 95. Fallback for the chrome is Tahoma /
-   MS Sans Serif, which is the real thing where it exists. Generated title-bar text carries empty
+   Type: no web font. Window chrome uses the system's own sans: MS Sans Serif where it still exists,
+   then Microsoft Sans Serif (its vector successor, on Windows and macOS), Tahoma and Verdana.
+   Bold display type uses Tahoma, which has a real bold. Body copy is Arial, which shipped with
+   Windows 95. A pixel web font was tried and dropped: its numerals were hard to tell apart. Generated title-bar text carries empty
    alt text so screen readers skip it. Bevels follow the system palette: white and #dfdfdf light
    edges, #808080 and #0a0a0a dark edges, no blur anywhere. */
-@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap");
-
 html[data-theme="windows95"] {
   color-scheme: light;
 
@@ -41,7 +40,8 @@ html[data-theme="windows95"] {
   --stage-line: #808080;
 
   --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  --font-display: "Pixelify Sans", Tahoma, "MS Sans Serif", Arial, sans-serif;
+  --font-display: Tahoma, Verdana, "Segoe UI", Arial, sans-serif;
+  --font-ui: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Verdana, "Segoe UI", Arial, sans-serif;
   --weight: 400;
   --weight-strong: 700;
 
@@ -108,7 +108,7 @@ html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
   .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
-  font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; text-transform: none; font-size: 15px;
+  font-family: var(--font-ui); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 14px;
 }
 
 /* ---------- buttons: raised grey, pressed on click, navy selection on hover ---------- */
@@ -141,7 +141,7 @@ html[data-theme="windows95"] .hero__bottom::before {
 html[data-theme="windows95"] .hero__name { order: -1; font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; margin: 0; }
 html[data-theme="windows95"] .hero__name::before {
   content: "Welcome to"; content: "Welcome to" / ""; display: block; margin-bottom: 0.15em;
-  font: 400 clamp(18px, 2vw, 28px)/1 var(--font-display);
+  font: 400 clamp(18px, 2vw, 28px)/1 var(--font-ui);
 }
 html[data-theme="windows95"] .hero__lead { max-width: 52ch; padding: 12px 14px; background: #ffffe1; box-shadow: var(--sunken); }
 html[data-theme="windows95"] .hero__lead::before { content: "Did you know... "; content: "Did you know... " / ""; font-weight: 700; }
