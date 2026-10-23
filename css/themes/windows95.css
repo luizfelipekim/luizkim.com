@@ -1,0 +1,233 @@
+/* Windows 95: the site as a desktop. Teal desktop, grey bevelled chrome, and every section is a
+   window with a solid navy title bar and the three caption buttons. The bar is solid on purpose:
+   the dark-to-light gradient arrived with Windows 98. A taskbar with a Start button sits along
+   the bottom, and the page ends on the black "safe to turn off" screen in orange.
+   Type: window chrome and display in Pixelify Sans, the nearest Google Font to the MS Sans Serif
+   bitmap; body copy in Arial, which shipped with Windows 95. Fallback for the chrome is Tahoma /
+   MS Sans Serif, which is the real thing where it exists. Generated title-bar text carries empty
+   alt text so screen readers skip it. Bevels follow the system palette: white and #dfdfdf light
+   edges, #808080 and #0a0a0a dark edges, no blur anywhere. */
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap");
+
+html[data-theme="windows95"] {
+  color-scheme: light;
+
+  /* page tokens describe a window face; the desktop behind the windows is --desktop */
+  --bg: #c0c0c0;
+  --surface: #ffffff;
+  --surface-2: #dfdfdf;
+  --ink: #000000;
+  --muted: #404040;
+  --line: #808080;
+  --accent: #000080;
+  --accent-ink: #ffffff;
+  --danger: #ff0000;
+
+  /* the ending: "It's now safe to turn off your computer" */
+  --field: #000000;
+  --field-ink: #ffaa00;
+  --field-muted: #c0c0c0;
+  --field-accent: #ffff00;
+
+  --hero-bg: #008080;
+  --hero-ink: #ffffff;
+  --hero-a: #ffffff;
+  --hero-b: #000080;
+
+  /* the 3D openers sit in a white client area, like a document inside its window */
+  --stage-bg: #ffffff;
+  --stage-ink: #000000;
+  --stage-muted: #404040;
+  --stage-line: #808080;
+
+  --font: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-display: "Pixelify Sans", Tahoma, "MS Sans Serif", Arial, sans-serif;
+  --weight: 400;
+  --weight-strong: 700;
+
+  --radius: 0;
+  --radius-pill: 0;
+  --border: 1px;
+
+  --desktop: #008080;
+  --chrome: #c0c0c0;
+  --chrome-ink: #000000;
+  --title: #000080;
+  --raised: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  --sunken: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  --pressed: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080;
+  /* minimise and maximise side by side, a gap, then close */
+  --caption-buttons: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='14' shape-rendering='crispEdges'%3E%3Cdefs%3E%3Cg id='b'%3E%3Crect width='16' height='14' fill='%23c0c0c0'/%3E%3Cpath d='M0 0h15v1H1v12H0z' fill='%23fff'/%3E%3Cpath d='M15 0h1v14H0v-1h15z' fill='%230a0a0a'/%3E%3Cpath d='M14 1h1v12H1v-1h13z' fill='%23808080'/%3E%3C/g%3E%3C/defs%3E%3Cuse href='%23b'/%3E%3Cuse href='%23b' x='16'/%3E%3Cuse href='%23b' x='34'/%3E%3Cpath d='M4 9h6v2H4z'/%3E%3Cpath d='M20 2h9v9h-9zM21 4v6h7V4z' fill-rule='evenodd'/%3E%3Cpath d='M38 3h2l2 2 2-2h2v1l-3 3 3 3v1h-2l-2-2-2 2h-2v-1l3-3-3-3z'/%3E%3C/svg%3E");
+  --flag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='14' shape-rendering='crispEdges'%3E%3Crect x='1' y='1' width='6' height='5' fill='%23ff0000'/%3E%3Crect x='8' y='1' width='6' height='5' fill='%2300a000'/%3E%3Crect x='1' y='7' width='6' height='5' fill='%230000ff'/%3E%3Crect x='8' y='7' width='6' height='5' fill='%23ffd700'/%3E%3C/svg%3E");
+}
+
+/* ---------- the desktop ---------- */
+html[data-theme="windows95"] body, html[data-theme="windows95"] .page { background: var(--desktop); }
+html[data-theme="windows95"] body { padding-bottom: 30px; }
+html[data-theme="windows95"] ::selection { background: var(--title); color: #ffffff; }
+html[data-theme="windows95"] :focus-visible { outline: 1px dotted #000000; outline-offset: -5px; }
+
+/* taskbar and Start button, fixed to the bottom edge */
+html[data-theme="windows95"] body::before {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 30px; z-index: 9000; pointer-events: none;
+  background: var(--chrome); box-shadow: inset 0 1px #dfdfdf, inset 0 2px #ffffff;
+}
+html[data-theme="windows95"] body::after {
+  content: "Start"; content: "Start" / ""; position: fixed; left: 3px; bottom: 3px; height: 23px; z-index: 9001; pointer-events: none;
+  display: flex; align-items: center; padding: 0 7px 0 26px; background: var(--chrome) var(--flag) no-repeat 6px 5px;
+  box-shadow: var(--raised); color: #000000; font: 700 14px/1 var(--font-display);
+}
+
+/* ---------- windows ---------- */
+html[data-theme="windows95"] :is(.stats, .case, .about__row, .top, .row, .led, .results) {
+  position: relative; background: var(--chrome); color: var(--chrome-ink); box-shadow: var(--raised);
+  margin-inline: clamp(8px, 2vw, 32px); padding: 38px clamp(12px, 2vw, 24px) clamp(14px, 2vw, 24px);
+}
+/* the title bar: solid navy, white bold label, caption buttons drawn on the right */
+html[data-theme="windows95"] :is(.stats, .case, .about__row, .top, .row, .led, .results)::before {
+  position: absolute; top: 3px; left: 3px; right: 3px; height: 22px; display: flex; align-items: center;
+  padding: 0 62px 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  background: var(--title) var(--caption-buttons) no-repeat right 2px center; color: #ffffff;
+  font: 700 14px/1 var(--font-display); letter-spacing: 0.01em;
+}
+html[data-theme="windows95"] .stats::before { content: "Results.xls"; content: "Results.xls" / ""; }
+html[data-theme="windows95"] .about__row::before { content: "About Luiz Kim"; content: "About Luiz Kim" / ""; }
+html[data-theme="windows95"] .work { counter-reset: case; padding: 0; gap: 28px; overflow: visible; }
+html[data-theme="windows95"] .case { counter-increment: case; }
+html[data-theme="windows95"] .case::before { content: "Case study " counter(case) " of 3 - Explorer"; content: "Case study " counter(case) " of 3 - Explorer" / ""; }
+html[data-theme="windows95"] .top::before { content: "Case study - WordPad"; content: "Case study - WordPad" / ""; }
+html[data-theme="windows95"] .row::before { content: "Context.txt - Notepad"; content: "Context.txt - Notepad" / ""; }
+html[data-theme="windows95"] .led::before { content: "Decisions.doc - WordPad"; content: "Decisions.doc - WordPad" / ""; }
+html[data-theme="windows95"] .results::before { content: "Results.xls"; content: "Results.xls" / ""; }
+
+/* ---------- type ---------- */
+html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  font-family: var(--font-display); font-weight: 700; letter-spacing: 0;
+}
+html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
+  .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ev__label, .contact__foot, .foot, .row__word, th) {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; text-transform: none; font-size: 15px;
+}
+
+/* ---------- buttons: raised grey, pressed on click, navy selection on hover ---------- */
+html[data-theme="windows95"] :is(.button, .copy-btn, .ball__btn, .claw__key) {
+  background: var(--chrome); color: #000000; border: 0; border-radius: 0; box-shadow: var(--raised);
+  min-height: 32px; padding: 0 18px; transition: none;
+}
+html[data-theme="windows95"] :is(.button, .copy-btn, .ball__btn, .claw__key, .claw__drop):active { transform: none; box-shadow: var(--pressed); padding-top: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="windows95"] :is(.button, .copy-btn, .ball__btn):hover { background: var(--title); color: #ffffff; border-color: transparent; }
+}
+html[data-theme="windows95"] .claw__key { padding: 0; }
+html[data-theme="windows95"] .claw__key[data-held="true"] { background: var(--chrome); color: #000000; box-shadow: var(--pressed); }
+html[data-theme="windows95"] .claw__drop { border: 0; border-radius: 0; background: var(--chrome); color: #000000; box-shadow: var(--raised), 0 0 0 1px #000000; }
+
+/* ---------- hero: the desktop with a Welcome dialog ---------- */
+html[data-theme="windows95"] .hero__pic { background: var(--desktop); }
+html[data-theme="windows95"] .hero__scrim { display: none; }
+html[data-theme="windows95"] .hero__nav a { opacity: 1; }
+html[data-theme="windows95"] .hero__bottom {
+  --bg: var(--chrome); --ink: #000000; color: #000000;
+  left: clamp(8px, 2vw, 32px); right: auto; bottom: 48px; max-width: min(1060px, calc(100% - 2 * clamp(8px, 2vw, 32px)));
+  background: var(--chrome); box-shadow: var(--raised), 3px 3px 0 #000000; padding: 40px 24px 24px; gap: 1rem;
+}
+html[data-theme="windows95"] .hero__bottom::before {
+  content: "Welcome"; content: "Welcome" / ""; position: absolute; top: 3px; left: 3px; right: 3px; height: 22px;
+  display: flex; align-items: center; padding: 0 62px 0 6px; background: var(--title) var(--caption-buttons) no-repeat right 2px center;
+  color: #ffffff; font: 700 14px/1 var(--font-display);
+}
+html[data-theme="windows95"] .hero__name { order: -1; font-size: clamp(64px, 12vw, 200px); line-height: 0.9; letter-spacing: -0.01em; margin: 0; }
+html[data-theme="windows95"] .hero__name::before {
+  content: "Welcome to"; content: "Welcome to" / ""; display: block; margin-bottom: 0.15em;
+  font: 400 clamp(18px, 2vw, 28px)/1 var(--font-display);
+}
+html[data-theme="windows95"] .hero__lead { max-width: 52ch; padding: 12px 14px; background: #ffffe1; box-shadow: var(--sunken); }
+html[data-theme="windows95"] .hero__lead::before { content: "Did you know... "; content: "Did you know... " / ""; font-weight: 700; }
+
+/* ---------- stats ---------- */
+html[data-theme="windows95"] .stats { padding-bottom: clamp(14px, 2vw, 24px); margin-top: 32px; margin-bottom: 28px; }
+html[data-theme="windows95"] .stats__list { grid-column: 1 / -1; }
+html[data-theme="windows95"] .stats__head { margin-bottom: 1.25rem; font-size: clamp(1.75rem, 3vw, 2.5rem); }
+html[data-theme="windows95"] .stats__rows { gap: 8px; }
+html[data-theme="windows95"] .stats__row { background: #ffffff; box-shadow: var(--sunken); padding: 16px 18px 18px; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="windows95"] .stats__row:hover { background: var(--title); color: #ffffff; }
+  html[data-theme="windows95"] .stats__row:hover .stats__txt { color: #ffffff; }
+}
+html[data-theme="windows95"] .stats__fig { font-size: clamp(3rem, 6vw, 5.5rem); }
+
+/* ---------- cases ---------- */
+html[data-theme="windows95"] .case { align-items: start; }
+html[data-theme="windows95"] .case__visual { margin-left: 0; box-shadow: var(--sunken); padding: 2px; background: #ffffff; }
+html[data-theme="windows95"] .case__visual--claw { box-shadow: none; padding: 0; background: transparent; }
+html[data-theme="windows95"] .case__cluster { background: #ffffff; box-shadow: var(--sunken); padding: 16px 18px 18px; }
+html[data-theme="windows95"] .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+html[data-theme="windows95"] .case__title { font-size: clamp(1.75rem, 2.6vw, 2.5rem); line-height: 1.05; }
+html[data-theme="windows95"] .case__title a { color: var(--title); }
+html[data-theme="windows95"] .ball { padding-inline: 1rem; }
+html[data-theme="windows95"] .ball__meter { height: 14px; width: 160px; background: #ffffff; box-shadow: var(--sunken); padding: 2px; }
+html[data-theme="windows95"] .ball__meter i { background: repeating-linear-gradient(90deg, var(--title) 0 8px, transparent 8px 10px); }
+html[data-theme="windows95"] .claw { padding-left: 0; gap: 6px; }
+html[data-theme="windows95"] .claw__stage { border: 0; box-shadow: var(--sunken); padding: 2px; }
+html[data-theme="windows95"] .claw__hud span { background: var(--chrome); box-shadow: var(--raised); color: #000000; }
+html[data-theme="windows95"] .claw__hint { background: var(--chrome); box-shadow: var(--sunken); padding: 4px 8px; color: #000000; }
+/* the peek hint sits over the dark felt, so it takes white */
+html[data-theme="windows95"] .peek__hint { color: #ffffff; }
+html[data-theme="windows95"] .peek__meter { width: 14px; background: var(--chrome); box-shadow: var(--sunken); padding: 2px; }
+html[data-theme="windows95"] .peek__meter i { background: repeating-linear-gradient(180deg, var(--title) 0 8px, transparent 8px 10px); }
+
+/* ---------- about ---------- */
+html[data-theme="windows95"] .about { padding-top: 28px; padding-bottom: 48px; gap: 28px; }
+html[data-theme="windows95"] .about.wrap { padding-inline: 0; }
+html[data-theme="windows95"] .about__row { align-items: start; gap: 24px; }
+html[data-theme="windows95"] .who { background: #ffffff; box-shadow: var(--sunken); padding: 14px; }
+html[data-theme="windows95"] .who__pics { background: #232324; }
+html[data-theme="windows95"] .who__link { color: var(--title); }
+html[data-theme="windows95"] .about__para { background: #ffffff; box-shadow: var(--sunken); padding: 18px 20px; max-width: none; }
+html[data-theme="windows95"] :is(.stats, .work).wrap { padding-inline: 0; }
+html[data-theme="windows95"] .stats.wrap { padding-inline: clamp(12px, 2vw, 24px); }
+
+/* ---------- contact: it's now safe to turn off your computer ---------- */
+html[data-theme="windows95"] .contact { padding-bottom: calc(1.5rem + 30px); }
+html[data-theme="windows95"] .contact__intro { font-size: clamp(1.75rem, 4vw, 3.5rem); line-height: 1.1; max-width: 22ch; font-weight: 400; }
+html[data-theme="windows95"] .contact__mail { font-weight: 400; font-size: clamp(2.5rem, 7.5vw, 8rem); letter-spacing: -0.01em; }
+html[data-theme="windows95"] .contact .copy-btn { background: var(--chrome); color: #000000; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="windows95"] .contact .copy-btn:hover { background: var(--title); color: #ffffff; } }
+html[data-theme="windows95"] .contact .link { color: var(--field-ink); }
+
+/* ---------- case pages ---------- */
+html[data-theme="windows95"] .bar { background: var(--chrome); box-shadow: inset 0 -1px #808080, inset 0 -2px #ffffff; color: #000000; }
+html[data-theme="windows95"] main { padding-top: 24px; display: flex; flex-direction: column; gap: 28px; }
+html[data-theme="windows95"] .top__title { font-size: clamp(2.5rem, 1.5rem + 4vw, 5rem); line-height: 1; }
+html[data-theme="windows95"] .row, html[data-theme="windows95"] .led, html[data-theme="windows95"] .results, html[data-theme="windows95"] .top { padding-bottom: 24px; }
+html[data-theme="windows95"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap) { background: #ffffff; box-shadow: var(--sunken); }
+html[data-theme="windows95"] .cover { box-shadow: var(--sunken); padding: 2px; margin-inline: 0; }
+html[data-theme="windows95"] th { background: var(--chrome); box-shadow: var(--raised); }
+html[data-theme="windows95"] :is(th, td) { border-bottom-color: #dfdfdf; }
+html[data-theme="windows95"] [data-ui] .ui-bar { background: var(--title); color: #ffffff; }
+html[data-theme="windows95"] [data-ui] .ui-bar span:last-child { color: #ffffff; }
+html[data-theme="windows95"] [data-ui] .ui-row.is-on { background: var(--title); color: #ffffff; }
+html[data-theme="windows95"] [data-ui] .ui-row.is-on :is(.ui-val, .ui-val b) { color: #ffffff; }
+html[data-theme="windows95"] .ev__bar i { background: #dfdfdf; }
+html[data-theme="windows95"] .ev__bar i.on { background: var(--title); }
+html[data-theme="windows95"] .calc input[type=range] { accent-color: var(--title); }
+html[data-theme="windows95"] .field { margin-inline: 0; }
+html[data-theme="windows95"] .pager { padding-inline: clamp(8px, 2vw, 32px); }
+html[data-theme="windows95"] .pager a { background: var(--chrome); color: #000000; box-shadow: var(--raised); }
+@media (hover: hover) and (pointer: fine) { html[data-theme="windows95"] .pager a:hover { background: var(--title); color: #ffffff; } html[data-theme="windows95"] .pager a:hover span { color: #ffffff; } }
+html[data-theme="windows95"] .foot { color: #ffffff; }
+html[data-theme="windows95"] .foot a { color: #ffffff; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 900px) {
+  html[data-theme="windows95"] .case { gap: 12px; }
+  html[data-theme="windows95"] .case__visual { width: 100%; }
+}
+@media (max-width: 700px) {
+  html[data-theme="windows95"] .hero__bottom { left: 8px; right: 8px; bottom: 42px; max-width: none; padding: 36px 14px 16px; }
+  html[data-theme="windows95"] .hero__name { font-size: 16.5vw; }
+  html[data-theme="windows95"] .hero__lead { font-size: 15px; }
+  html[data-theme="windows95"] .contact__mail { font-size: 12vw; }
+}
