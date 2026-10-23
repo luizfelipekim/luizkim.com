@@ -29,7 +29,10 @@
   /* ---------- renderer / scene ---------- */
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x1c1c1c, 1);
+  // the stage colour is whatever the page paints behind the machine; read it, never assume it
+  function stageColor() { var c = getComputedStyle(root).backgroundColor; return (c && c.indexOf('rgba(0, 0, 0, 0)') < 0) ? c : '#1c1c1c'; /* fallback */ }
+  renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1);
+  document.addEventListener('theme:change', function () { renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1); });
   renderer.outputEncoding = THREE.sRGBEncoding;
 
   var scene = new THREE.Scene();

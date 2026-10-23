@@ -138,8 +138,11 @@
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1c1c1c);
-  scene.fog = new THREE.Fog(0x1c1c1c, 42, 120);
+  // the horizon and fog take the stage colour the page paints behind the table; read it, never assume it
+  const stageColor = () => { const c = getComputedStyle(stage).backgroundColor; return (c && !c.startsWith('rgba(0, 0, 0, 0)')) ? c : '#1c1c1c'; /* fallback */ };
+  scene.background = new THREE.Color().setStyle(stageColor());
+  scene.fog = new THREE.Fog(scene.background.clone(), 42, 120);
+  document.addEventListener('theme:change', () => { scene.background.setStyle(stageColor()); scene.fog.color.copy(scene.background); });
 
   // 70 mm lens on 35 mm gauge; fov is derived from it on every resize
   const camera = new THREE.PerspectiveCamera(30, 1, 1, 400);
