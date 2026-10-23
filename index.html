@@ -200,6 +200,37 @@ p { max-width: 62ch; text-wrap: pretty; }
   }
 
 
+/* Design-system case teaser: the claw machine */
+.case.case--2 .case__visual--claw { height: auto; min-height: 0; max-height: none; overflow: visible; }
+.claw { display: flex; flex-direction: column; gap: 10px; background: #1c1c1c; color: #f1f1ef; padding: 0 0 0 calc(max(16px, env(safe-area-inset-left, 0px), var(--m))); }
+.claw__stage { position: relative; width: 100%; aspect-ratio: 20 / 11; max-width: 100%; border: 1px solid #303030; overflow: hidden; outline: none; background: #1c1c1c; }
+.claw__stage:focus-visible { border-color: #f1f1ef; }
+.claw__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.claw__hud { position: absolute; inset: 10px 10px auto 10px; display: flex; justify-content: space-between; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: #c8c5ba; pointer-events: none; }
+.claw__hud span { background: rgba(28, 28, 28, 0.75); padding: 4px 8px; border-radius: 6px; }
+.claw__hud b { font-weight: 500; color: #f1f1ef; font-variant-numeric: tabular-nums; }
+.claw__controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; gap: 12px; pointer-events: none; }
+.claw__controls > * { pointer-events: auto; }
+.claw__pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 3px; }
+.claw__key { appearance: none; border: 1px solid #3b3b3b; background: rgba(28, 28, 28, 0.75); color: #f1f1ef; border-radius: 9px; padding: 0; display: grid; place-items: center; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 90ms, border-color 90ms; }
+.claw__key:active, .claw__key[data-held="true"] { background: #f1f1ef; color: #1c1c1c; border-color: #f1f1ef; }
+.claw__key:focus-visible { border-color: #f1f1ef; }
+.claw__key svg { width: 16px; height: 16px; }
+.claw__key--u { grid-area: 1 / 2; } .claw__key--l { grid-area: 2 / 1; } .claw__key--d { grid-area: 2 / 2; } .claw__key--r { grid-area: 2 / 3; }
+.claw__drop { appearance: none; width: 76px; height: 76px; border-radius: 50%; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; border: 1px solid #f1f1ef; background: #f1f1ef; color: #1c1c1c; font-size: var(--step-small); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; transition: transform 120ms, background 120ms, color 120ms; }
+.claw__drop:active { transform: scale(0.96); }
+.claw__drop:disabled { background: rgba(28, 28, 28, 0.75); color: #9a9b96; border-color: #3b3b3b; cursor: default; }
+.claw__drop:focus-visible { outline: 2px solid #f1f1ef; outline-offset: 4px; }
+.claw__flat { display: none; font-size: var(--step-body); color: #c8c5ba; max-width: 40ch; }
+.claw.is-flat > :not(.claw__flat) { display: none; }
+.claw.is-flat .claw__flat { display: block; }
+@media (prefers-reduced-motion: reduce) { .claw__drop { transition: none; } }
+@media (max-width: 900px) {
+  .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
+  .claw { padding-left: 0; }
+  .claw__stage { aspect-ratio: 1 / 1; }
+}
+
 /* ---------- about: side facts, wide paragraph ---------- */
 .about { padding-top: var(--section); padding-bottom: var(--section); display: flex; flex-direction: column; gap: 120px; }
 .about__row { display: grid; grid-template-columns: 34% minmax(0, 1fr); column-gap: 0; align-items: center; }
@@ -357,42 +388,23 @@ p { max-width: 62ch; text-wrap: pretty; }
     </article>
 
     <article class="case case--2" id="case-2">
-      <div class="case__visual shutter" data-reveal>
-        <svg viewBox="0 0 900 480" preserveAspectRatio="xMinYMax slice" aria-hidden="true">
-          <rect x="0" y="0" width="900" height="480" fill="#1c1c1c"/>
-          <!-- tokens: the root -->
-          <rect x="20" y="24" width="300" height="56" fill="#f1f1ef"/>
-          <rect x="20" y="24" width="300" height="10" fill="#c8c5ba"/>
-          <!-- three layers -->
-          <g fill="#303030">
-            <rect x="20" y="120" width="268" height="44"/><rect x="316" y="120" width="268" height="44"/><rect x="612" y="120" width="268" height="44"/>
-          </g>
-          <g fill="#3b3b3b"><rect x="20" y="120" width="268" height="8"/><rect x="316" y="120" width="268" height="8"/><rect x="612" y="120" width="268" height="8"/></g>
-          <!-- feeds -->
-          <g fill="#c8c5ba"><rect x="150" y="80" width="6" height="40"/><rect x="150" y="80" width="600" height="6"/><rect x="450" y="80" width="6" height="40"/><rect x="744" y="80" width="6" height="40"/></g>
-          <!-- forty brand tiles, 10 x 4; eight carry an ambassador -->
-          <g fill="#c8c5ba">
-            <rect x="20" y="212" width="78" height="52"/><rect x="106" y="212" width="78" height="52"/><rect x="192" y="212" width="78" height="52"/><rect x="278" y="212" width="78" height="52"/><rect x="364" y="212" width="78" height="52"/><rect x="450" y="212" width="78" height="52"/><rect x="536" y="212" width="78" height="52"/><rect x="622" y="212" width="78" height="52"/><rect x="708" y="212" width="78" height="52"/><rect x="794" y="212" width="78" height="52"/>
-            <rect x="20" y="272" width="78" height="52"/><rect x="106" y="272" width="78" height="52"/><rect x="192" y="272" width="78" height="52"/><rect x="278" y="272" width="78" height="52"/><rect x="364" y="272" width="78" height="52"/><rect x="450" y="272" width="78" height="52"/><rect x="536" y="272" width="78" height="52"/><rect x="622" y="272" width="78" height="52"/><rect x="708" y="272" width="78" height="52"/><rect x="794" y="272" width="78" height="52"/>
-            <rect x="20" y="332" width="78" height="52"/><rect x="106" y="332" width="78" height="52"/><rect x="192" y="332" width="78" height="52"/><rect x="278" y="332" width="78" height="52"/><rect x="364" y="332" width="78" height="52"/><rect x="450" y="332" width="78" height="52"/><rect x="536" y="332" width="78" height="52"/><rect x="622" y="332" width="78" height="52"/><rect x="708" y="332" width="78" height="52"/><rect x="794" y="332" width="78" height="52"/>
-            <rect x="20" y="392" width="78" height="52"/><rect x="106" y="392" width="78" height="52"/><rect x="192" y="392" width="78" height="52"/><rect x="278" y="392" width="78" height="52"/><rect x="364" y="392" width="78" height="52"/><rect x="450" y="392" width="78" height="52"/><rect x="536" y="392" width="78" height="52"/><rect x="622" y="392" width="78" height="52"/><rect x="708" y="392" width="78" height="52"/><rect x="794" y="392" width="78" height="52"/>
-          </g>
-          <g fill="#8fa68e">
-            <rect x="106" y="212" width="78" height="52"/><rect x="450" y="212" width="78" height="52"/><rect x="794" y="212" width="78" height="52"/>
-            <rect x="278" y="272" width="78" height="52"/><rect x="622" y="272" width="78" height="52"/>
-            <rect x="20" y="332" width="78" height="52"/><rect x="536" y="332" width="78" height="52"/>
-            <rect x="364" y="392" width="78" height="52"/>
-          </g>
-          <!-- a lit edge on every tile -->
-          <g fill="#dedbd0" opacity="0.9">
-            <rect x="20" y="212" width="78" height="6"/><rect x="192" y="212" width="78" height="6"/><rect x="278" y="212" width="78" height="6"/><rect x="364" y="212" width="78" height="6"/><rect x="536" y="212" width="78" height="6"/><rect x="622" y="212" width="78" height="6"/><rect x="708" y="212" width="78" height="6"/>
-            <rect x="20" y="272" width="78" height="6"/><rect x="106" y="272" width="78" height="6"/><rect x="192" y="272" width="78" height="6"/><rect x="364" y="272" width="78" height="6"/><rect x="450" y="272" width="78" height="6"/><rect x="536" y="272" width="78" height="6"/><rect x="708" y="272" width="78" height="6"/><rect x="794" y="272" width="78" height="6"/>
-            <rect x="106" y="332" width="78" height="6"/><rect x="192" y="332" width="78" height="6"/><rect x="278" y="332" width="78" height="6"/><rect x="364" y="332" width="78" height="6"/><rect x="450" y="332" width="78" height="6"/><rect x="622" y="332" width="78" height="6"/><rect x="708" y="332" width="78" height="6"/><rect x="794" y="332" width="78" height="6"/>
-            <rect x="20" y="392" width="78" height="6"/><rect x="106" y="392" width="78" height="6"/><rect x="192" y="392" width="78" height="6"/><rect x="278" y="392" width="78" height="6"/><rect x="450" y="392" width="78" height="6"/><rect x="536" y="392" width="78" height="6"/><rect x="622" y="392" width="78" height="6"/><rect x="708" y="392" width="78" height="6"/><rect x="794" y="392" width="78" height="6"/>
-          </g>
-          <!-- the pipe down from the layers to the brands -->
-          <g fill="#c8c5ba"><rect x="150" y="164" width="6" height="48"/><rect x="450" y="164" width="6" height="48"/><rect x="744" y="164" width="6" height="48"/><rect x="150" y="186" width="600" height="6"/></g>
-        </svg>
+      <div class="case__visual case__visual--claw" data-reveal>
+        <section class="claw" aria-label="Claw machine. Catch the system's foundational components.">
+          <div class="claw__stage" tabindex="0" role="application" aria-label="Claw machine. Use arrow keys to move, space to drop.">
+            <canvas class="claw__canvas" aria-hidden="true"></canvas>
+            <div class="claw__hud" aria-hidden="true"><span>Tries <b data-claw-tries>0</b></span><span>Caught <b data-claw-caught>0</b></span></div>
+            <div class="claw__controls">
+              <div class="claw__pad" aria-label="Move the claw">
+                <button class="claw__key claw__key--u" type="button" data-claw-dir="up" aria-label="Move back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                <button class="claw__key claw__key--l" type="button" data-claw-dir="left" aria-label="Move left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+                <button class="claw__key claw__key--d" type="button" data-claw-dir="down" aria-label="Move forward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+                <button class="claw__key claw__key--r" type="button" data-claw-dir="right" aria-label="Move right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+              </div>
+              <button class="claw__drop" type="button" data-claw-drop>Drop</button>
+            </div>
+          </div>
+          <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
+        </section>
       </div>
       <div class="case__cluster">
         <div class="case__meta">
@@ -573,4 +585,5 @@ if (canvas && !saveData && 'gpu' in navigator) {
   if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
 }
 </script>
+<script src="js/claw-machine.js" defer></script>
 </body></html>
