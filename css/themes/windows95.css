@@ -4,7 +4,7 @@
    the bottom, and the page ends on the black "safe to turn off" screen in orange.
    Type: no web font. Window chrome uses the system's own sans: MS Sans Serif where it still exists,
    then Microsoft Sans Serif (its vector successor, on Windows and macOS), Tahoma and Verdana.
-   Bold display type uses Tahoma, which has a real bold. Body copy is Arial, which shipped with
+   Headings use Tahoma at regular weight: Windows 95 kept bold for title bars and the Start button. Body copy is Arial, which shipped with
    Windows 95. A pixel web font was tried and dropped: its numerals were hard to tell apart. Generated title-bar text carries empty
    alt text so screen readers skip it. Bevels follow the system palette: white and #dfdfdf light
    edges, #808080 and #0a0a0a dark edges, no blur anywhere. */
@@ -103,7 +103,7 @@ html[data-theme="windows95"] .results::before { content: "Results.xls"; content:
 /* ---------- type ---------- */
 html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
   .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
-  font-family: var(--font-display); font-weight: 700; letter-spacing: 0;
+  font-family: var(--font-display); font-weight: 400; letter-spacing: 0;
 }
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
   .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
