@@ -1,0 +1,228 @@
+/* Broadsheet: the site as a front page. Warm cream newsprint, near-black ink, rules instead of
+   boxes: a 3px rule over the masthead and each section front, hairline column rules between
+   stories, drop caps on the lead paragraphs. Monochrome; one dark red is kept for links on hover
+   and the selection, as a newspaper keeps red for its corrections.
+   Type in three tiers, after the newspaper-explainer template: Playfair Display (black, 900) for
+   the nameplate, headlines and figures, set with lining numerals; Source Serif 4 for body copy;
+   the system sans in small tracked capitals for folios, bylines and labels. Fallbacks: Georgia /
+   Times New Roman for both serifs, which read as a newspaper on their own.
+   The hero stops being a full screen: it becomes the masthead, and the first story follows it.
+   Generated text (section kickers) carries empty alt text so screen readers skip it. */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap");
+
+html[data-theme="broadsheet"] {
+  color-scheme: light;
+
+  --bg: #faf8f4;
+  --surface: #f0ece4;
+  --surface-2: #e8e2d6;
+  --ink: #1a1715;
+  --muted: #4a4540;
+  --line: #1a1715;
+  --accent: #1a1715;
+  --accent-ink: #faf8f4;
+  --danger: #8b1a1a;
+
+  /* the classifieds: a tinted page section at the end */
+  --field: #f0ece4;
+  --field-ink: #1a1715;
+  --field-muted: #4a4540;
+  --field-accent: #8b1a1a;
+
+  --hero-bg: #faf8f4;
+  --hero-ink: #1a1715;
+  --hero-a: #d4cfc8;
+  --hero-b: #1a1715;
+
+  /* the 3D openers sit in tinted plates, like photographs on the page */
+  --stage-bg: #f0ece4;
+  --stage-ink: #1a1715;
+  --stage-muted: #4a4540;
+  --stage-line: #1a1715;
+
+  --font: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --weight: 400;
+  --weight-strong: 600;
+
+  --radius: 0;
+  --radius-pill: 0;
+  --border: 1px;
+
+  --red: #8b1a1a;
+  --hair: #d4cfc8;
+}
+
+/* ---------- ground ---------- */
+html[data-theme="broadsheet"] body { line-height: 1.6; font-variant-numeric: lining-nums; }
+html[data-theme="broadsheet"] ::selection { background: var(--red); color: #faf8f4; }
+/* newsprint: one fixed layer over the page, multiplied into the paper. A fine grain for the
+   stock, and a slow mottle, stretched across the page, for uneven ink take-up. Tiles are SVG
+   noise, so nothing is downloaded. */
+html[data-theme="broadsheet"] body::after {
+  content: ""; position: fixed; inset: 0; z-index: 9000; pointer-events: none; mix-blend-mode: multiply;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.24 0 0 0 -1.4 1.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.012' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.4 0 0 0 0 0.3 0 0 0 -0.9 0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  background-size: 200px 200px, 600px 600px;
+  opacity: 0.38;
+}
+html[data-theme="broadsheet"] :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+html[data-theme="broadsheet"] .link { text-decoration-thickness: 1px; text-decoration-color: currentColor; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="broadsheet"] .link:hover { color: var(--red); } }
+
+/* ---------- type tiers ---------- */
+html[data-theme="broadsheet"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  font-family: var(--font-display); font-weight: 900; letter-spacing: -0.01em; font-variant-numeric: lining-nums;
+}
+html[data-theme="broadsheet"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
+  .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ev__label, .contact__foot, .foot, .row__word, th) {
+  font-family: var(--sans); font-weight: 600; font-size: 11px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase;
+}
+/* section kickers, generated: small capitals over a heavy rule, like the head of a section front */
+html[data-theme="broadsheet"] :is(.stats, .work, .about)::before {
+  display: block; border-top: 3px solid var(--line); padding-top: 8px; margin-bottom: 1.75rem;
+  font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+}
+html[data-theme="broadsheet"] .stats::before { content: "Front page · The numbers"; content: "Front page · The numbers" / ""; }
+html[data-theme="broadsheet"] .work::before { content: "Features · Selected work"; content: "Features · Selected work" / ""; margin-bottom: 0; }
+html[data-theme="broadsheet"] .about::before { content: "Profile"; content: "Profile" / ""; margin-bottom: 0; }
+
+/* ---------- actions: small ink slabs, "continued" arrows ---------- */
+html[data-theme="broadsheet"] :is(.button, .copy-btn) { min-height: 2.5rem; padding: 0 1rem; gap: 0.6rem; border: 1px solid var(--ink); }
+html[data-theme="broadsheet"] .button::after { content: "→"; content: "→" / ""; font-family: var(--font); letter-spacing: 0; font-size: 1rem; text-transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="broadsheet"] :is(.button, .copy-btn):hover { background: var(--bg); color: var(--ink); }
+}
+
+/* ---------- hero: the masthead ---------- */
+html[data-theme="broadsheet"] .hero { height: auto; min-height: 0; padding-top: calc(env(safe-area-inset-top, 0px) + 18px); }
+html[data-theme="broadsheet"] .hero__canvas, html[data-theme="broadsheet"] .hero__scrim { display: none; }
+html[data-theme="broadsheet"] .hero__pic { background: var(--bg); }
+html[data-theme="broadsheet"] .hero__top { position: relative; padding-top: 0; }
+html[data-theme="broadsheet"] .hero__top > * { border-top: 3px solid var(--line); padding-top: 8px; }
+html[data-theme="broadsheet"] .hero__top { align-items: stretch; gap: 0; }
+html[data-theme="broadsheet"] .hero__mark { flex: 1; }
+html[data-theme="broadsheet"] .hero__mark::after { content: " · London edition"; content: " · London edition" / ""; color: var(--muted); }
+html[data-theme="broadsheet"] .hero__nav { gap: 1.5rem; }
+html[data-theme="broadsheet"] .hero__nav a { opacity: 1; }
+html[data-theme="broadsheet"] .hero__nav .button { min-height: 2rem; margin-top: -4px; }
+html[data-theme="broadsheet"] .hero__bottom { position: relative; padding-bottom: 0; gap: 0; text-align: center; }
+html[data-theme="broadsheet"] .hero__name {
+  order: -1; margin: 10px 0 0; padding: 0.06em 0 0.1em; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  font-size: clamp(64px, 14vw, 216px); line-height: 1; letter-spacing: -0.02em; white-space: nowrap;
+}
+html[data-theme="broadsheet"] .hero__row { justify-content: center; border-bottom: 3px solid var(--line); padding: 10px 0 12px; }
+html[data-theme="broadsheet"] .hero__lead { max-width: 60ch; font-family: var(--font-display); font-style: italic; font-size: clamp(16px, 1.4vw, 20px); color: var(--muted); }
+
+/* ---------- stats: the front-page lead, three stories with column rules ---------- */
+html[data-theme="broadsheet"] .stats { padding-top: 2.5rem; padding-bottom: 5rem; }
+html[data-theme="broadsheet"] .stats__list { grid-column: 1 / -1; }
+html[data-theme="broadsheet"] .stats__head { font-size: clamp(2.25rem, 4.6vw, 4.25rem); line-height: 1.02; max-width: 16ch; margin-bottom: 2rem; }
+html[data-theme="broadsheet"] .stats__rows { column-gap: 0; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+html[data-theme="broadsheet"] .stats__row { padding: 0 1.5rem; border-left: 1px solid var(--hair); gap: 0.5rem; }
+html[data-theme="broadsheet"] .stats__row:first-child { padding-left: 0; border-left: 0; }
+html[data-theme="broadsheet"] .stats__fig { font-size: clamp(4rem, 7.5vw, 7rem); line-height: 1; letter-spacing: -0.02em; }
+html[data-theme="broadsheet"] .stats__txt { font-size: 1.0625rem; line-height: 1.5; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="broadsheet"] .stats__row:hover .stats__fig { color: var(--red); } }
+
+/* ---------- work: each case a feature with a photograph, headline, standfirst and byline ---------- */
+html[data-theme="broadsheet"] .work { padding-top: 0; gap: 4.5rem; }
+html[data-theme="broadsheet"] .case { align-items: start; padding-top: 2.5rem; border-top: 1px solid var(--hair); }
+html[data-theme="broadsheet"] .case--1 { border-top: 0; }
+html[data-theme="broadsheet"] .case__visual { margin-left: 0; border: 1px solid var(--line); }
+html[data-theme="broadsheet"] .case__visual--claw { border: 0; }
+html[data-theme="broadsheet"] .case__cluster { padding-left: 1.5rem; border-left: 1px solid var(--hair); }
+html[data-theme="broadsheet"] .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+html[data-theme="broadsheet"] .case__title { font-size: clamp(2rem, 3.2vw, 3.25rem); line-height: 1.04; }
+html[data-theme="broadsheet"] .case__title a:hover { color: var(--red); }
+html[data-theme="broadsheet"] .case__desc { font-size: 1.0625rem; line-height: 1.6; }
+html[data-theme="broadsheet"] .case__desc::first-letter {
+  float: left; font-family: var(--font-display); font-weight: 900; font-size: 4.1em; line-height: 0.8; padding: 0.06em 0.08em 0 0;
+}
+html[data-theme="broadsheet"] .case__who { color: var(--muted); margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--hair); }
+html[data-theme="broadsheet"] .ball { padding-inline: 1rem; }
+html[data-theme="broadsheet"] .ball__q, html[data-theme="broadsheet"] .ball__a { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
+html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
+html[data-theme="broadsheet"] .claw { padding-left: 0; }
+html[data-theme="broadsheet"] .claw__stage { border: 1px solid var(--line); }
+html[data-theme="broadsheet"] .claw__hud span { background: var(--bg); border: 1px solid var(--line); }
+html[data-theme="broadsheet"] .claw__key { background: var(--bg); }
+html[data-theme="broadsheet"] .claw__hint { font-family: var(--font); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; }
+/* the peek hint sits over the dark felt, so it takes the paper colour */
+html[data-theme="broadsheet"] .peek__hint { color: var(--bg); }
+html[data-theme="broadsheet"] .peek__meter i { background: var(--bg); }
+
+/* ---------- about: a profile in two justified columns ---------- */
+html[data-theme="broadsheet"] .about { padding-top: 0; gap: 2rem; }
+html[data-theme="broadsheet"] .about__row { align-items: start; padding-top: 2rem; }
+html[data-theme="broadsheet"] .who { align-items: flex-start; text-align: left; }
+html[data-theme="broadsheet"] .who__pics { background: #232324; }
+html[data-theme="broadsheet"] .who__name { font-size: 1.75rem; }
+html[data-theme="broadsheet"] .who__role { font-style: italic; }
+html[data-theme="broadsheet"] .who__prev { font-family: var(--sans); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
+html[data-theme="broadsheet"] .about__para {
+  font-size: 1.1875rem; line-height: 1.6; letter-spacing: 0; max-width: none;
+  column-count: 2; column-gap: 2.5rem; column-rule: 1px solid var(--hair); text-align: justify; hyphens: auto; -webkit-hyphens: auto;
+}
+html[data-theme="broadsheet"] .about__para::first-letter {
+  float: left; font-family: var(--font-display); font-weight: 900; font-size: 4.4em; line-height: 0.8; padding: 0.05em 0.08em 0 0;
+}
+
+/* ---------- contact: the classifieds ---------- */
+html[data-theme="broadsheet"] .contact { border-top: 3px solid #1a1715; }
+html[data-theme="broadsheet"] .contact::before {
+  content: "Classified · Situations wanted"; content: "Classified · Situations wanted" / "";
+  font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  border-bottom: 1px solid var(--line); padding-bottom: 8px;
+}
+html[data-theme="broadsheet"] .contact__intro { font-size: clamp(2rem, 4.4vw, 4rem); line-height: 1.04; max-width: 18ch; }
+html[data-theme="broadsheet"] .contact__mail { font-size: clamp(2.5rem, 7.4vw, 7.75rem); letter-spacing: -0.02em; }
+html[data-theme="broadsheet"] .contact__foot { border-top: 1px solid var(--line); padding-top: 0.75rem; }
+
+/* ---------- case pages: masthead bar, headline and standfirst, rules between sections ---------- */
+html[data-theme="broadsheet"] .bar { border-top: 3px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 12px; padding-top: 0.6rem; padding-bottom: 0.6rem; }
+html[data-theme="broadsheet"] .bar__mark { font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; letter-spacing: -0.01em; text-transform: none; }
+html[data-theme="broadsheet"] .top__title { line-height: 1.02; max-width: 16ch; }
+html[data-theme="broadsheet"] .top__summary { font-family: var(--font-display); font-style: italic; color: var(--muted); }
+html[data-theme="broadsheet"] :is(.row, .led, .results, .pager) { border-top: 1px solid var(--line); padding-top: 1.5rem; }
+html[data-theme="broadsheet"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap) { background: transparent; border-top: 3px solid var(--line); border-bottom: 1px solid var(--line); }
+html[data-theme="broadsheet"] .facts { padding-inline: 0; }
+html[data-theme="broadsheet"] :is(.pair div, .decision, .panel, .ev) { padding-inline: 0; }
+html[data-theme="broadsheet"] .decisions, html[data-theme="broadsheet"] .aside { column-gap: 2rem; }
+html[data-theme="broadsheet"] th { background: transparent; border-bottom: 1px solid var(--line); }
+html[data-theme="broadsheet"] :is(th, td) { border-bottom-color: var(--hair); padding-inline: 0.75rem 0; }
+html[data-theme="broadsheet"] .pager a { background: transparent; border-top: 3px solid var(--line); padding-inline: 0; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="broadsheet"] .pager a:hover { background: transparent; color: var(--red); } }
+html[data-theme="broadsheet"] .ev__bar i { background: var(--hair); }
+html[data-theme="broadsheet"] .ev__bar i.on { background: var(--ink); }
+html[data-theme="broadsheet"] [data-ui] .ui-bar { background: var(--ink); color: var(--bg); }
+html[data-theme="broadsheet"] [data-ui] .ui-bar span:last-child { color: var(--bg); }
+html[data-theme="broadsheet"] [data-ui] .ui-row.is-on { background: var(--surface); }
+html[data-theme="broadsheet"] .calc input[type=range] { accent-color: var(--ink); }
+html[data-theme="broadsheet"] .calc__out strong { color: var(--red); }
+html[data-theme="broadsheet"] .field { border-top: 3px solid var(--line); }
+
+/* ---------- small screens ---------- */
+@media (max-width: 900px) {
+  html[data-theme="broadsheet"] .case__cluster { padding-left: 0; border-left: 0; }
+  html[data-theme="broadsheet"] .case__visual { width: 100%; }
+  html[data-theme="broadsheet"] .case__title { font-size: 9vw; }
+  html[data-theme="broadsheet"] .about__para { column-count: 1; }
+}
+@media (max-width: 600px) {
+  html[data-theme="broadsheet"] .about__para { text-align: left; hyphens: manual; -webkit-hyphens: manual; }
+}
+@media (max-width: 700px) {
+  html[data-theme="broadsheet"] .hero__mark::after { content: none; }
+  html[data-theme="broadsheet"] .hero__name { font-size: 18.5vw; }
+  html[data-theme="broadsheet"] .hero__nav .button { margin-top: 0; }
+}
+@media (max-width: 600px) {
+  html[data-theme="broadsheet"] .stats__row, html[data-theme="broadsheet"] .stats__row:first-child { padding: 1rem 0; border-left: 0; border-top: 1px solid var(--hair); }
+  html[data-theme="broadsheet"] .stats__row:first-child { border-top: 0; padding-top: 0; }
+  html[data-theme="broadsheet"] .contact__mail { font-size: 12vw; }
+}
