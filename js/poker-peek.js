@@ -365,8 +365,8 @@
   // Press, a reading lamp late: one warm bulb low from the upper left, a tight cone that pools on the
   //   paper and lets the edges of the slab fall into shade, warm bounce off the desk, long shadows.
   // Win95, Solitaire: no light at all, a flat green with a stamped shadow.
-  // Foil, the arena: a violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
-  //   horizon close, and a neon studio for the foil and the chip gilt to catch.
+  // Foil, the arena: a low violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
+  //   horizon close, and a room lit by thin colour strips alone, no softbox, for the foil and the gilt to catch.
   // key: [colour, intensity, penumbra, angle, position]; fill: [colour, intensity, position]; mirror: the smoke
   // in the glass; fog: [near, far]; neon: the arena's tubes, which the glass reflects;
   // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
@@ -375,7 +375,7 @@
     manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
     press: { hemi: [0xfff3e2, 0xcbbfa8, 0.42], key: [0xffcf92, 1.75, 0.9, 0.33, [-30, 38, 20]], fill: [0xffe6c8, 0.14], under: [0xffdcb0, 0.1], rim: [0xffffff, 0], table: 'matte', fog: [48, 130], tone: true, exposure: 1.18, shadow: 0.34, room: 'lamp', env: 0.6 },
     win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
-    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.36], key: [0xc3b4ff, 1.3, 0.7, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.45], under: [0x8fe4ff, 0.4], rim: [0x8fe4ff, 0.8], table: 'glass', mirror: 0x6a5aa0, fog: [34, 96], tone: true, exposure: 1.1, shadow: 0.55, room: 'arena', env: 1, neon: true }
+    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.24], key: [0xc3b4ff, 0.55, 0.9, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.3], under: [0x8fe4ff, 0.2], rim: [0x8fe4ff, 0.6], table: 'glass', mirror: 0x6a5aa0, fog: [34, 96], tone: true, exposure: 1.0, shadow: 0.55, room: 'arena', env: 0.9, neon: true }
   };
   function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
   // the rooms: small lit boxes rendered once into a prefiltered environment (PMREM), the vendored three has
@@ -385,7 +385,7 @@
     cardroom: { bg: 0x070707, lamps: [[4, 14, -11, 4, 2, 0xffffff, 3.4], [4, 14, 11, 4, 2, 0xffffff, 3.4], [10, 2, 0, 1, -10, 0x5a5a5a, 0.8]] },
     overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
     lamp: { bg: 0x241c12, lamps: [[5, 5, -8, 7, 4, 0xffd29a, 5.5], [14, 6, 4, -2, 6, 0xd9c7a6, 1.0], [8, 3, 0, 4, -9, 0x6a5840, 0.8], [3, 8, 9, 3, 0, 0x8a7458, 0.6]] },
-    arena: { bg: 0x14102a, lamps: [[14, 4, 0, 9, 2, 0xfff4e0, 5], [3, 10, -9, 2, 3, 0x8fe4ff, 2.5], [3, 10, 9, 3, -2, 0xff9df0, 2.5], [10, 2, 0, 1, -9, 0xc3b4ff, 1.8]] }
+    arena: { bg: 0x0e0a20, lamps: [[16, 0.5, 0, 8, 3, 0x6fd8f4, 2.6], [16, 0.5, 0, 6.5, -4, 0xe88ad8, 2.4], [0.5, 12, -10, 3, 2, 0xe88ad8, 2.0], [0.5, 12, 10, 3, -1, 0x6fd8f4, 2.0], [14, 0.5, 0, 2, -10, 0xb9a6ff, 1.6]] }   // strip lights, no softbox
   };
   const envs = {};
   function roomEnv(name) {
@@ -620,7 +620,7 @@
   }
   // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
   const take = (m, gain) => { m.userData.envGain = gain; lit.push(m); };
-  take(foilMat, 1.2); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
+  take(foilMat, 0.8); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
   take(sheen.material, 1); take(rail.material, 0.8); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
   [chipMain, chipCap].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
