@@ -352,39 +352,40 @@
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
   key.shadow.camera.near = 20; key.shadow.camera.far = 110;
-  key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+  key.shadow.bias = -0.0003; key.shadow.normalBias = 0.008;
   scene.add(key, key.target);
   const fill = new THREE.PointLight(0xdcdcdc, 0.26, 0, 2); fill.position.set(30, 18, 42); scene.add(fill);
   const under = new THREE.PointLight(0xffffff, 0.38, 0, 2); under.position.set(2, 8, 26); scene.add(under);
   const rim = new THREE.DirectionalLight(0xbfbfbf, 0.3); rim.position.set(0, 14, -40); scene.add(rim);
   // The light sets the mood, and the table carries it. Each look is a place:
-  // Charcoal, a card room after hours: one white softbox high front-left over smoked glass, a cool strip
-  //   behind, the rest of the room black, so the glass holds a single long streak and the chips a hard edge.
+  // Charcoal, a card room after hours: a tall white softbox on each side of the table, nothing overhead,
+  //   the rest of the room black, so the glass holds two long streaks and the chips take a hard edge each side.
   // Manual, a copy desk under a skylight: flat overcast daylight from straight above, a wide cone, one
   //   soft-edged shadow, no film curve and no gloss, print as print.
   // Press, a reading lamp late: one warm bulb low from the upper left, a tight cone that pools on the
   //   paper and lets the edges of the slab fall into shade, warm bounce off the desk, long shadows.
   // Win95, Solitaire: no light at all, a flat green with a stamped shadow.
-  // Foil, the arena: a violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
-  //   horizon close, and a neon studio for the foil and the chip gilt to catch.
-  // key: [colour, intensity, penumbra, angle, position]; mirror: the smoke in the glass; fog: [near, far];
+  // Foil, the arena: a low violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
+  //   horizon close, and a room lit by thin colour strips alone, no softbox, for the foil and the gilt to catch.
+  // key: [colour, intensity, penumbra, angle, position]; fill: [colour, intensity, position]; mirror: the smoke
+  // in the glass; fog: [near, far]; neon: the arena's tubes, which the glass reflects;
   // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
   const RIGS = {
-    default: { hemi: [0x9a9a9a, 0x101010, 0.3], key: [0xffffff, 1.7, 0.6, 0.5, [-18, 56, 22]], fill: [0xdcdcdc, 0.18], under: [0xffffff, 0.3], rim: [0xaab6c4, 0.4], table: 'glass', mirror: 0x4a4a4a, fog: [42, 120], tone: true, exposure: 1.05, shadow: 0.5, room: 'cardroom', env: 0.7 },
+    default: { hemi: [0x9a9a9a, 0x101010, 0.3], key: [0xffffff, 1.55, 0.7, 0.5, [-46, 36, 16]], fill: [0xffffff, 0.75, [46, 34, 16]], under: [0xffffff, 0.22], rim: [0xaab6c4, 0.3], table: 'glass', mirror: 0x4a4a4a, fog: [42, 120], tone: true, exposure: 1.05, shadow: 0.5, room: 'cardroom', env: 0.7 },
     manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
     press: { hemi: [0xfff3e2, 0xcbbfa8, 0.42], key: [0xffcf92, 1.75, 0.9, 0.33, [-30, 38, 20]], fill: [0xffe6c8, 0.14], under: [0xffdcb0, 0.1], rim: [0xffffff, 0], table: 'matte', fog: [48, 130], tone: true, exposure: 1.18, shadow: 0.34, room: 'lamp', env: 0.6 },
     win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
-    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.36], key: [0xc3b4ff, 1.3, 0.7, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.45], under: [0x8fe4ff, 0.4], rim: [0x8fe4ff, 0.8], table: 'glass', mirror: 0x5a4c8e, fog: [34, 96], tone: true, exposure: 1.1, shadow: 0.55, room: 'arena', env: 1 }
+    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.24], key: [0xc3b4ff, 0.55, 0.9, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.3], under: [0x8fe4ff, 0.2], rim: [0x8fe4ff, 0.6], table: 'glass', mirror: 0x6a5aa0, fog: [34, 96], tone: true, exposure: 1.0, shadow: 0.55, room: 'arena', env: 0.9, neon: true }
   };
   function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
   // the rooms: small lit boxes rendered once into a prefiltered environment (PMREM), the vendored three has
   // no HDR loader and the page needs no download for this. Each lamp is a plane facing the centre:
   // [width, height, x, y, z, colour, gain]. Built on first use, kept for the tab.
   const ROOMS = {
-    cardroom: { bg: 0x070707, lamps: [[16, 5, -5, 10, 4, 0xffffff, 4.2], [2.5, 12, 10, 3, -6, 0x9fb4c8, 1.4], [10, 2, 0, 1, -10, 0x5a5a5a, 1.0], [6, 3, 8, 2, 8, 0xffe9d2, 0.45]] },
+    cardroom: { bg: 0x070707, lamps: [[4, 14, -11, 4, 2, 0xffffff, 3.4], [4, 14, 11, 4, 2, 0xffffff, 3.4], [10, 2, 0, 1, -10, 0x5a5a5a, 0.8]] },
     overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
     lamp: { bg: 0x241c12, lamps: [[5, 5, -8, 7, 4, 0xffd29a, 5.5], [14, 6, 4, -2, 6, 0xd9c7a6, 1.0], [8, 3, 0, 4, -9, 0x6a5840, 0.8], [3, 8, 9, 3, 0, 0x8a7458, 0.6]] },
-    arena: { bg: 0x14102a, lamps: [[14, 4, 0, 9, 2, 0xfff4e0, 5], [3, 10, -9, 2, 3, 0x8fe4ff, 2.5], [3, 10, 9, 3, -2, 0xff9df0, 2.5], [10, 2, 0, 1, -9, 0xc3b4ff, 1.8]] }
+    arena: { bg: 0x0e0a20, lamps: [[16, 0.5, 0, 8, 3, 0x6fd8f4, 2.6], [16, 0.5, 0, 6.5, -4, 0xe88ad8, 2.4], [0.5, 12, -10, 3, 2, 0xe88ad8, 2.0], [0.5, 12, 10, 3, -1, 0x6fd8f4, 2.0], [14, 0.5, 0, 2, -10, 0xb9a6ff, 1.6]] }   // strip lights, no softbox
   };
   const envs = {};
   function roomEnv(name) {
@@ -443,6 +444,16 @@
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
   matte.material.bumpMap = feltBump; matte.material.bumpScale = 0.012;
 
+  // the arena's neon: tubes across the back of the table and up each side, unlit and unfogged so they burn,
+  // put there for the glass to reflect; shown by the foil look alone
+  const neon = new THREE.Group(); neon.visible = false; scene.add(neon);
+  function tube(len, x, y, z, ry, hex) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, len, 10, 1), new THREE.MeshBasicMaterial({ color: hex, fog: false }));
+    m.rotation.z = Math.PI / 2; m.rotation.y = ry; m.position.set(x, y, z); neon.add(m); return m;
+  }
+  tube(140, 0, 4.5, -44, 0, 0x6fd8f4); tube(140, 0, 8, -45, 0, 0xe88ad8); tube(140, 0, 11.5, -46, 0, 0xb9a6ff);   // three lines across the back
+  tube(80, -60, 8, -4, Math.PI / 2, 0xe88ad8); tube(80, 60, 8, -4, Math.PI / 2, 0x6fd8f4);                     // one up each side
+
   // betting line, a faint etch in the glass just in front of the cards
   const line = new THREE.Mesh(new THREE.RingGeometry(56, 56.16, 220, 1, 0, Math.PI * 2),
     new THREE.MeshBasicMaterial({ color: 0xf4f4f4, transparent: true, opacity: 0.22, depthWrite: false }));
@@ -493,7 +504,7 @@
   chips.forEach(m => { m.userData.rest = m.position.clone(); m.userData.restRot = m.rotation.y; });
 
   // cards
-  const CARD_W = 6.35, CARD_H = 8.89, CARD_T = 0.045;
+  const CARD_W = 6.35, CARD_H = 8.89, CARD_T = 0.12;   // a 1.2 mm stock at this scale, so the edge reads and the card grounds
   const backCanvas = mkCanvas(CW, CH), faceA = mkCanvas(CW, CH), faceK = mkCanvas(CW, CH);
   drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club');
   const backTex = new THREE.CanvasTexture(backCanvas); backTex.encoding = THREE.sRGBEncoding; backTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -609,7 +620,7 @@
   }
   // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
   const take = (m, gain) => { m.userData.envGain = gain; lit.push(m); };
-  take(foilMat, 1.2); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
+  take(foilMat, 0.8); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
   take(sheen.material, 1); take(rail.material, 0.8); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
   [chipMain, chipCap].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
@@ -629,7 +640,8 @@
     // the light
     setLight(hemi, rig.hemi[0], rig.hemi[2]); hemi.groundColor.setHex(rig.hemi[1]);
     setLight(key, rig.key[0], rig.key[1], rig.key[2]); key.angle = rig.key[3]; key.position.fromArray(rig.key[4]);
-    setLight(fill, rig.fill[0], rig.fill[1]);
+    setLight(fill, rig.fill[0], rig.fill[1]); fill.position.fromArray(rig.fill[2] || [30, 18, 42]);
+    neon.visible = !!rig.neon;
     setLight(under, rig.under[0], rig.under[1]); setLight(rim, rig.rim[0], rig.rim[1]);
     // the glass takes the look's smoke, the horizon its fog
     if (glass.mirror && rig.mirror !== undefined) glass.mirror.material.uniforms.color.value.setHex(rig.mirror);
