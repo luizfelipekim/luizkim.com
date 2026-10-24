@@ -186,7 +186,10 @@ html[data-theme="windows95"] .ball__meter i { background: repeating-linear-gradi
 html[data-theme="windows95"] .claw { padding-left: 0; gap: 6px; }
 html[data-theme="windows95"] .claw__stage { border: 0; box-shadow: var(--sunken); padding: 2px; }
 html[data-theme="windows95"] .claw__hint { background: var(--chrome); box-shadow: var(--sunken); padding: 4px 8px; color: #000000; }
-/* the peek hint sits over the dark felt, so it takes white */
+/* the poker peek is Solitaire: the flat green of the 95 table, no vignette over it (the scene reads the
+   colour from here for its horizon). The peek hint sits over that green, so it keeps white. */
+html[data-theme="windows95"] .case__visual--peek { background: #008000; }
+html[data-theme="windows95"] .peek__vignette { display: none; }
 
 /* ---------- about ---------- */
 html[data-theme="windows95"] .about { padding-top: 28px; padding-bottom: 48px; gap: 28px; }
