@@ -48,20 +48,22 @@
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;   // the plain PCF map honours shadow.radius, so the edges can be blurred
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
   var camTarget = new THREE.Vector3(0, 2.05, 0);
   var camDir = new THREE.Vector3(0.38, 0.4, 1).normalize();   // a three-quarter view, so the perspective has faces to work on
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.3));
-  var key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(3, 9, 4); scene.add(key);
-  key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+  // a soft studio: the key is high and only a little to the side so the frame's shadows fall short, the
+  // hemisphere and fill carry the rest, and the shadow edge is blurred rather than cut
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.5));
+  var key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(2, 10, 3); scene.add(key);
+  key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.radius = 6;
   key.shadow.camera.left = key.shadow.camera.bottom = -4.5; key.shadow.camera.right = key.shadow.camera.top = 4.5;
   key.shadow.camera.near = 2; key.shadow.camera.far = 25;
-  key.shadow.bias = -0.0005; key.shadow.normalBias = 0.02;
-  var fill = new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-6, 3, 6); scene.add(fill);
+  key.shadow.bias = -0.0008; key.shadow.normalBias = 0.03;
+  var fill = new THREE.DirectionalLight(0xffffff, 0.4); fill.position.set(-6, 3, 6); scene.add(fill);
   // everything solid casts and receives; the glass and the lines are left out
   function shadowed(obj) { obj.traverse(function (o) { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } }); return obj; }
 
@@ -89,13 +91,28 @@
   var FLOOR = new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 0.95 });
   var BODY = new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 0.9 });
   var LINE = new THREE.LineBasicMaterial({ color: 0x4a4a46 });
-  // the plate palette: solid ink cabinet, pale floor so the white prizes sit on a field of light lines
-  var PALETTE = {
-    normal: { body: 0x202020, floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, white: 0xdedbd4, bone: 0xb8b4ac },
-    plate: { body: 0x080808, floor: 0xa8a6a0, hole: 0x060606, steel: 0x303030, white: 0xc8c4bc, bone: 0x9c9890 }   // mid-tones everywhere, so the engraving has something to hatch; shadows become line density
+  /* ---------- finishes ----------
+     One neutral cabinet, dressed per look. Each look names the colours of the procedural parts (floor,
+     chute, steel, prizes) and of the model's three materials (body, paper, ink), the surface (roughness,
+     metalness, how much of the environment shows), the glass, and which ornament set of the model to show.
+     Looks are keyed by --look, which each theme stylesheet sets on <html>; they inherit from the default
+     (charcoal) and override what they need. The plate (engraving pass) is a separate
+     flag the theme sets in CSS, so a look can be dressed without being engraved. */
+  var FINISH = {
+    default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, white: 0xdedbd4, bone: 0xb8b4ac,
+                  body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null },
+    manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
+    win95:      { body: 0xc0c0c0, paper: 0xffffff, ink: 0x000000, floor: 0x808080, roughness: 0.95, env: 0, steelEnv: 0.3, glass: 0.1 }, // flat grey chrome
+    press:      { floor: 0xa8a6a0, hole: 0x060606, steel: 0x303030, white: 0xc8c4bc, bone: 0x9c9890,                   // mid-tones everywhere, so the engraving has something to hatch
+                  body: 0x060606, paper: 0xc8c4bc, ink: 0x040404, roughness: 0.85, env: 0.3, steelEnv: 0.3, glass: 0.03, ornament: 'broadsheet' },
+    foil:       { body: 0x2a1c6e, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, floor: 0x1a1040, roughness: 0.35, metalness: 0.6, env: 1.2, glass: 0.2 }
   };
+  // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
+  function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
+  function finish() { var f = Object.assign({}, FINISH.default); Object.assign(f, FINISH[look()] || {}); return f; }
   var plate = false;
-  var deco = new THREE.Group();   // the art deco front: coin panel, prize hatch, crest; shown on the plate
+  var shell = new THREE.Group();  // the procedural cabinet: plinth, posts, frame; stands in until the modelled one loads
+  var cabinet = null, cabMats = {}, ornaments = {}; // the modelled cabinet (models/claw-cabinet.glb), its body / paper / ink materials, its ornament nodes by name
   function wantsPlate() { return getComputedStyle(root).getPropertyValue('--claw-plate').trim() !== ''; }
 
   /* ---------- cabinet ---------- */
@@ -111,20 +128,20 @@
     var hw = S.W / 2 + 0.1, hd = S.D / 2 + 0.1;
     [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (c) {
       var post = new THREE.Mesh(new THREE.BoxGeometry(0.14, S.H + 0.1, 0.14), BODY);
-      post.position.set(c[0] * hw, S.H / 2, c[1] * hd); scene.add(shadowed(post));
+      post.position.set(c[0] * hw, S.H / 2, c[1] * hd); shell.add(shadowed(post));
     });
     var topFront = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.34, 0.26, 0.16), BODY);
-    topFront.position.set(0, S.H + 0.02, hd); scene.add(shadowed(topFront));
+    topFront.position.set(0, S.H + 0.02, hd); shell.add(shadowed(topFront));
     var topBack = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.34, 0.14, 0.14), BODY);
-    topBack.position.set(0, S.H + 0.02, -hd); scene.add(shadowed(topBack));
+    topBack.position.set(0, S.H + 0.02, -hd); shell.add(shadowed(topBack));
     [-1, 1].forEach(function (sgn) {
       var side = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, S.D + 0.34), BODY);
-      side.position.set(sgn * hw, S.H + 0.02, 0); scene.add(shadowed(side));
+      side.position.set(sgn * hw, S.H + 0.02, 0); shell.add(shadowed(side));
     });
     var lip = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.6, 0.1, S.D + 0.6), BODY);
-    lip.position.y = -0.05; scene.add(shadowed(lip));
+    lip.position.y = -0.05; shell.add(shadowed(lip));
     var skirt = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.6, 0.12, S.D + 0.6), BODY);
-    skirt.position.y = -1.36; scene.add(shadowed(skirt));
+    skirt.position.y = -1.36; shell.add(shadowed(skirt));
     // tinted glass: the inside walls carry the tint (back faces), so the white claw and prizes keep their
     // brightness in front of a darkened interior; the front pane is only a faint sheen. On a light stage the
     // tint is strong enough for the machine to read as a machine, on Charcoal it is barely there.
@@ -137,21 +154,27 @@
     tintGlass = function () {
       var light = stageLuminance() > 0.35;
       plate = wantsPlate();
-      var pal = plate ? PALETTE.plate : PALETTE.normal;
-      BODY.color.setHex(pal.body); FLOOR.color.setHex(pal.floor); HOLE.color.setHex(pal.hole); STEEL.color.setHex(pal.steel); WHITE.color.setHex(pal.white); BONE.color.setHex(pal.bone);
-      // on the plate the glass stays almost clear, so the interior reads as paper
+      var f = finish();
+      BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel); WHITE.color.setHex(f.white); BONE.color.setHex(f.bone);
+      STEEL.envMapIntensity = f.steelEnv;
       inner.material.opacity = plate ? 0.1 : (light ? 0.42 : 0.08);
-      GLASS.opacity = plate ? 0.03 : 0.16;   // on the plate the sheen would hatch the paper interior
-      STEEL.envMapIntensity = plate ? 0.3 : 1; // and the reflections would wash the claw out of the cut
+      GLASS.opacity = f.glass;
       LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46);
       // the clear colour is not tone mapped; on the plate it is pure white so the engraving leaves it as clean paper
       renderer.setClearColor(plate ? new THREE.Color(0xffffff) : new THREE.Color().setStyle(stageColor()), 1);
-      deco.visible = plate;
+      if (cabinet) {
+        [['body', f.body], ['paper', f.paper], ['ink', f.ink]].forEach(function (pair) {
+          var m = cabMats[pair[0]];
+          m.color.setHex(pair[1]); m.roughness = f.roughness; m.metalness = f.metalness; m.envMapIntensity = f.env;
+        });
+        for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
+      }
       setPlate(plate);
     };
 
+    scene.add(shell);
     var body = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.4, 1.4, S.D + 0.4), BODY);
-    body.position.y = -0.7; scene.add(shadowed(body));
+    body.position.y = -0.7; shell.add(shadowed(body));
     var bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S.W + 0.4, 1.4, S.D + 0.4)), LINE);
     bodyEdges.position.y = -0.7; scene.add(bodyEdges);
 
@@ -203,68 +226,29 @@
   })();
   shadowed(clawGroup);
 
-  /* ---------- the art deco front ----------
-     After the reference engraving: a stepped control plate with a chevron motif, coin slot and dial on
-     the right of the cabinet front, the prize hatch with its tray on the left, fluted slats between,
-     and a winged crest over the glass. Paper and ink only, so the engraving cuts it as line work. */
-  (function buildDeco() {
-    var zf = S.D / 2 + 0.2;                                   // the cabinet's front face
-    function slab(w, h, d, mat, x, y, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); deco.add(m); return m; }
-    function tri(w, h, d, mat, x, y, z, flip) {               // a flat triangle, point down (or up when flipped)
-      var sh = new THREE.Shape();
-      sh.moveTo(-w / 2, flip ? 0 : h); sh.lineTo(w / 2, flip ? 0 : h); sh.lineTo(0, flip ? h : 0); sh.closePath();
-      var m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false }), mat);
-      m.position.set(x, y, z); deco.add(m); return m;
-    }
-
-    // the control plate: paper, a stepped ink frame, a paper field
-    var px = 0.7, py = -0.7;
-    slab(2.3, 0.98, 0.05, WHITE, px, py, zf + 0.025);
-    slab(2.16, 0.84, 0.03, INK, px, py, zf + 0.065);
-    slab(2.04, 0.72, 0.03, WHITE, px, py, zf + 0.095);
-    // chevrons: three nested V's cut in ink, the reference's zigzag
-    for (var i = 0; i < 3; i++) {
-      var cy = py + 0.28 - i * 0.13;
-      [-1, 1].forEach(function (sgn) {
-        var arm = slab(0.34, 0.045, 0.02, INK, px + sgn * 0.12, cy - 0.11, zf + 0.12);
-        arm.rotation.z = sgn * Math.PI / 4;
+  /* ---------- the modelled cabinet ----------
+     Built in Blender (models/claw-cabinet.blend) to the same dimensions: a neutral shell with bevels and
+     baked ambient occlusion, plus ornament nodes named deco_<set> that a look can ask for (Broadsheet's
+     1930s art deco front is the first). Loaded when the r128 GLTFLoader is on the page; until then, and if
+     it fails, the procedural shell stands in. The claw, gantry, floor and prizes stay procedural. */
+  if (THREE.GLTFLoader) {
+    new THREE.GLTFLoader().load((document.documentElement.getAttribute('data-root') || '') + 'models/claw-cabinet.glb', function (gltf) {
+      cabinet = gltf.scene;
+      cabinet.traverse(function (o) {
+        // a node with several materials arrives as a group with one mesh per material; only the top-level node is the ornament
+        if (o.parent === gltf.scene && o.name.indexOf('deco_') === 0) ornaments[o.name.slice(5)] = o;
+        if (!o.isMesh) return;
+        // ornament is dressing: it receives light but never throws shadows onto the playfield
+        var dressing = o.name.indexOf('deco_') === 0 || (o.parent && o.parent.name.indexOf('deco_') === 0);
+        o.castShadow = !dressing; o.receiveShadow = true;
+        var m = o.material; if (m && m.name) cabMats[m.name] = m;
       });
-    }
-    // the coin slot and its dial
-    slab(0.07, 0.26, 0.02, INK, px + 0.8, py + 0.08, zf + 0.12);
-    var ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 10, 32), INK);
-    ring.position.set(px + 0.8, py - 0.22, zf + 0.12); deco.add(ring);
-    slab(0.05, 0.12, 0.02, INK, px + 0.8, py - 0.2, zf + 0.12);
-    // a line of type under the field
-    slab(0.9, 0.03, 0.02, INK, px - 0.4, py - 0.24, zf + 0.12);
-    slab(0.5, 0.03, 0.02, INK, px - 0.6, py - 0.3, zf + 0.12);
-
-    // the prize hatch: a paper frame, an ink flap, a tray to collect from
-    var hx = S.chute.x, hy = -0.62;
-    slab(1.5, 0.9, 0.04, WHITE, hx, hy, zf + 0.02);
-    slab(1.3, 0.7, 0.03, INK, hx, hy - 0.02, zf + 0.055);
-    slab(0.5, 0.05, 0.03, WHITE, hx, hy + 0.2, zf + 0.085);
-    slab(1.5, 0.06, 0.34, WHITE, hx, hy - 0.48, zf + 0.17);
-
-    // fluted slats between hatch and plate, and on the far right
-    [-1.0, -0.86, -0.72].forEach(function (x) { slab(0.04, 1.1, 0.03, WHITE, x, -0.7, zf + 0.02); });
-    [2.1, 2.24, 2.38].forEach(function (x) { slab(0.04, 1.1, 0.03, WHITE, x, -0.7, zf + 0.02); });
-
-    // the crest over the glass: a winged triangle with three drops, centred on the front rail
-    var cz = S.D / 2 + 0.12, cyy = S.gantryY + 0.08;
-    tri(0.7, 0.42, 0.06, WHITE, 0, cyy - 0.42, cz);
-    tri(0.5, 0.28, 0.02, INK, 0, cyy - 0.36, cz + 0.06);
-    slab(1.6, 0.06, 0.06, WHITE, 0, cyy - 0.03, cz);
-    slab(1.1, 0.04, 0.06, WHITE, 0, cyy - 0.12, cz);
-    [-0.26, 0, 0.26].forEach(function (x, k) {
-      var L = k === 1 ? 0.36 : 0.24;
-      slab(0.02, L, 0.02, WHITE, x, cyy - 0.44 - L / 2, cz + 0.03);
-      var drop = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), WHITE);
-      drop.position.set(x, cyy - 0.46 - L, cz + 0.03); deco.add(drop);
-    });
-    deco.visible = false;
-    scene.add(shadowed(deco));
-  })();
+      if (!cabMats.body || !cabMats.paper || !cabMats.ink) { cabinet = null; console.warn('Claw cabinet: unexpected materials'); return; }
+      shell.visible = false;
+      scene.add(cabinet);
+      tintGlass();
+    }, undefined, function (e) { console.warn('Claw cabinet did not load:', e); });
+  }
 
   /* ---------- the engraved plate ----------
      The 3D frame is captured as a video stream and fed to the shader library as a live texture, then
