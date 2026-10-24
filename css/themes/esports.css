@@ -1,0 +1,246 @@
+/* E-sports: the site as a tournament platform, after the owner's references. A deep navy app shell
+   with lighter navy panels and hairline edges, a violet-to-magenta hero banner cut with diagonal
+   slashes, heavy condensed capitals for headlines, big white figures over yellow labels, and
+   rounded "featured tournament" cards with a live chip on the image. Actions are split pills:
+   yellow on the left, a dark segment with the arrow on the right. Cyan is kept for small count
+   badges only.
+   Type: Barlow Condensed (800) for headlines and figures, Plus Jakarta Sans for body and UI,
+   JetBrains Mono for chips and dates. Numerals checked in all three. Fallbacks: Impact / Arial
+   Narrow bold for the condensed capitals, the system UI sans and monospace for the rest.
+   Generated text (chips, kickers, greeting) carries empty alt text so screen readers skip it. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap");
+
+html[data-theme="esports"] {
+  color-scheme: dark;
+
+  --bg: #141d33;
+  --surface: #1f2b4a;
+  --surface-2: #263457;
+  --ink: #ffffff;
+  --muted: #a9b4d0;
+  --line: #2b3a60;
+  --accent: #ffd21f;
+  --accent-ink: #141d33;
+  --danger: #ff4d6d;
+
+  /* the ending: a violet banner, like the premium call-out */
+  --field: #2a1470;
+  --field-ink: #ffffff;
+  --field-muted: #d9ccff;
+  --field-accent: #ffd21f;
+
+  /* the shader paints violet and magenta streaks on the banner's deep end */
+  --hero-bg: #2a1470;
+  --hero-ink: #ffffff;
+  --hero-a: #c23be8;
+  --hero-b: #5b6cff;
+
+  /* the openers sit on a card panel */
+  --stage-bg: #1f2b4a;
+  --stage-ink: #ffffff;
+  --stage-muted: #a9b4d0;
+  --stage-line: #2b3a60;
+
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow Condensed", Impact, "Arial Narrow", "Helvetica Neue", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --weight: 400;
+  --weight-strong: 700;
+
+  --radius: 14px;
+  --radius-pill: 999px;
+  --border: 1px;
+
+  --yellow: #ffd21f;
+  --cyan: #22c3f0;
+  --shell: #10182b;
+  --edge: rgb(255 255 255 / 0.07);
+  --banner: linear-gradient(115deg, #24116a 0%, #4a1aa8 38%, #8a22d0 72%, #b02ad8 100%);
+  /* the contact and field blocks carry text across their whole width, so their banner stops at a
+     darker violet: the lilac caption holds 5.3:1 there, against 3.4:1 on the hero's magenta end */
+  --banner-deep: linear-gradient(115deg, #24116a 0%, #3f19a0 45%, #6d1fc4 100%);
+  --slashes: repeating-linear-gradient(118deg, transparent 0 140px, rgb(255 255 255 / 0.05) 140px 190px, transparent 190px 260px, rgb(0 0 0 / 0.12) 260px 300px);
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------- shell ---------- */
+html[data-theme="esports"] body, html[data-theme="esports"] .page { background: var(--bg); }
+html[data-theme="esports"] ::selection { background: var(--yellow); color: var(--accent-ink); }
+html[data-theme="esports"] :focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+
+/* ---------- type ---------- */
+html[data-theme="esports"] :where(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig) {
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: -0.005em; line-height: 0.92;
+}
+html[data-theme="esports"] :where(.case__title, .who__name, .decision h3, .pager b) { font-family: var(--font); text-transform: none; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+html[data-theme="esports"] :is(.ball__q, .ball__a) { font-family: var(--font); font-weight: 700; }
+html[data-theme="esports"] :is(.case__who, .top__meta, .ball__eyebrow, .ball__hint, .ball__count, .claw__hud, .peek__hint, .facts dt, .outcome__how, .pager span, .ev__label, th) {
+  font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.5;
+}
+html[data-theme="esports"] :is(.hero__nav, .bar__nav, .button, .copy-btn, .ball__btn, .claw__drop, .contact__foot, .foot, .row__word, .claw__hint) {
+  font-family: var(--font); font-weight: 600; font-size: 14px; letter-spacing: 0; text-transform: none;
+}
+
+/* ---------- actions: split pills, yellow then a dark arrow segment ---------- */
+html[data-theme="esports"] :is(.button, .copy-btn) {
+  position: relative; background: var(--yellow); color: var(--accent-ink); border-radius: 12px; border: 0;
+  min-height: 2.75rem; padding: 0 3.6rem 0 1.1rem; overflow: hidden; transition: transform 300ms var(--ease), background-color 300ms var(--ease);
+}
+html[data-theme="esports"] .copy-btn { padding-right: 1.1rem; }
+html[data-theme="esports"] .button::after {
+  content: "→"; content: "→" / ""; position: absolute; top: 0; right: 0; bottom: 0; width: 2.75rem; display: grid; place-items: center;
+  background: #263457; color: #ffffff; clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%); padding-left: 0.4rem;
+  transition: background-color 300ms var(--ease);
+}
+html[data-theme="esports"] :is(.button, .copy-btn):active { transform: scale(0.98); }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="esports"] :is(.button, .copy-btn):hover { background: #ffffff; color: var(--accent-ink); }
+  html[data-theme="esports"] .button:hover::after { background: var(--accent-ink); }
+}
+html[data-theme="esports"] .ball__btn { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); text-transform: none; letter-spacing: 0; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .ball__btn:hover { background: var(--yellow); color: var(--accent-ink); border-color: var(--yellow); } }
+
+/* ---------- hero: the top bar and the banner ---------- */
+html[data-theme="esports"] .hero { background: var(--shell); }
+html[data-theme="esports"] .hero__pic {
+  inset: 72px clamp(12px, 2vw, 28px) clamp(12px, 2vw, 28px); border-radius: 22px; overflow: hidden;
+  background: var(--slashes), var(--banner);
+}
+html[data-theme="esports"] .hero__canvas { mix-blend-mode: screen; opacity: 0.55; }
+html[data-theme="esports"] .hero__scrim {
+  left: clamp(12px, 2vw, 28px); right: clamp(12px, 2vw, 28px); bottom: clamp(12px, 2vw, 28px); height: 55%; border-radius: 0 0 22px 22px;
+  background: linear-gradient(to top, rgb(16 24 43 / 0.75), transparent);
+}
+html[data-theme="esports"] .hero__top { height: 72px; padding-top: 0; border-bottom: 1px solid var(--edge); }
+html[data-theme="esports"] .hero__mark { font-weight: 700; display: inline-flex; align-items: center; gap: 0.6rem; }
+html[data-theme="esports"] .hero__mark::before {
+  content: "LK"; content: "LK" / ""; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: var(--yellow); color: var(--accent-ink); font: 800 15px/1 var(--font-display);
+}
+html[data-theme="esports"] .hero__nav { gap: 0.4rem; }
+html[data-theme="esports"] .hero__nav a:not(.button) { opacity: 1; padding: 0.45rem 0.9rem; border-radius: 10px; color: var(--muted); }
+html[data-theme="esports"] .hero__nav a:not(.button):first-child { background: var(--surface); color: #ffffff; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .hero__nav a:not(.button):hover { background: var(--surface-2); color: #ffffff; text-decoration: none; } }
+html[data-theme="esports"] .hero__bottom { left: clamp(12px, 2vw, 28px); right: clamp(12px, 2vw, 28px); bottom: clamp(12px, 2vw, 28px); padding: 0 clamp(20px, 4vw, 64px) clamp(28px, 4vw, 56px); gap: 1rem; }
+html[data-theme="esports"] .hero__name { order: -1; font-size: clamp(72px, 12.5vw, 210px); line-height: 0.86; letter-spacing: -0.01em; margin: 0; }
+html[data-theme="esports"] .hero__name::before {
+  content: "Design Director"; content: "Design Director" / ""; display: table; margin-bottom: 0.9rem; padding: 3px 8px; border-radius: 5px;
+  background: #ffffff; color: var(--accent-ink); font: 500 12px/1.4 var(--mono); text-transform: none; letter-spacing: 0;
+}
+html[data-theme="esports"] .hero__lead { max-width: 46ch; color: #ffffff; font-size: clamp(15px, 1.15vw, 17px); }
+
+/* ---------- stats: the numbers bar ---------- */
+html[data-theme="esports"] .stats { padding-top: 5.5rem; padding-bottom: 5.5rem; }
+html[data-theme="esports"] .stats__list { grid-column: 1 / -1; }
+html[data-theme="esports"] .stats__head { font-size: clamp(2rem, 3.4vw, 3rem); margin-bottom: 0.4rem; }
+html[data-theme="esports"] .stats__head::after {
+  content: "Results from three teams, measured"; content: "Results from three teams, measured" / ""; display: block; margin-top: 0.6rem;
+  font: 500 15px/1.4 var(--font); text-transform: none; letter-spacing: 0; color: var(--muted);
+}
+html[data-theme="esports"] .stats__head { margin-bottom: 2rem; }
+html[data-theme="esports"] .stats__rows { gap: 14px; }
+html[data-theme="esports"] .stats__row {
+  background: var(--surface); border: 1px solid var(--edge); border-radius: 18px; padding: 1.5rem 1.5rem 1.6rem; gap: 0.6rem;
+  transition: transform 400ms var(--ease), border-color 300ms var(--ease);
+}
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .stats__row:hover { transform: translateY(-4px); border-color: var(--yellow); } }
+html[data-theme="esports"] .stats__fig { font-size: clamp(4rem, 6.5vw, 6rem); line-height: 0.95; }
+/* the label under each figure is yellow, as on the reference's numbers bar */
+html[data-theme="esports"] .stats__txt { color: var(--yellow); font-size: 15px; font-weight: 600; line-height: 1.45; }
+
+/* ---------- work: featured tournament cards ---------- */
+html[data-theme="esports"] .work { padding-top: 0; padding-bottom: 5.5rem; gap: 2.5rem; counter-reset: case; }
+html[data-theme="esports"] .work::before {
+  content: "Featured work"; content: "Featured work" / ""; font: 800 clamp(2rem, 3.4vw, 3rem)/0.92 var(--font-display); text-transform: uppercase;
+}
+html[data-theme="esports"] .case {
+  counter-increment: case; background: var(--surface); border: 1px solid var(--edge); border-radius: 22px; padding: 10px;
+  align-items: stretch; column-gap: 0;
+}
+html[data-theme="esports"] .case__visual { position: relative; margin-left: 0; border-radius: 16px; overflow: hidden; }
+html[data-theme="esports"] .case__visual--claw { overflow: visible; }
+html[data-theme="esports"] .case__visual::before {
+  content: "● LIVE"; content: "● LIVE" / ""; position: absolute; z-index: 4; top: 12px; left: 12px; padding: 4px 9px; border-radius: 7px;
+  background: rgb(16 24 43 / 0.85); color: #ffffff; font: 500 12px/1.4 var(--mono); pointer-events: none;
+}
+html[data-theme="esports"] .case__visual--claw::before { top: 52px; }
+html[data-theme="esports"] .case__cluster { padding: 1.5rem 1.4rem 1.25rem 1.75rem; justify-content: center; }
+html[data-theme="esports"] .case__meta { grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
+html[data-theme="esports"] .case__cluster::before {
+  font: 500 12px/1.5 var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+}
+html[data-theme="esports"] .case__cluster::before { content: "Case " counter(case) " of 3"; content: "Case " counter(case) " of 3" / ""; }
+html[data-theme="esports"] .case__title { font-size: clamp(1.5rem, 2.1vw, 2rem); }
+html[data-theme="esports"] .case__desc { color: var(--muted); font-size: 15px; }
+html[data-theme="esports"] .case__who { color: var(--muted); }
+html[data-theme="esports"] .ball { border-radius: 16px; padding-top: 3.25rem; }
+html[data-theme="esports"] .ball__meter i, html[data-theme="esports"] .peek__meter i { background: var(--yellow); }
+html[data-theme="esports"] .claw { padding-left: 0; border-radius: 16px; overflow: hidden; padding-bottom: 12px; }
+html[data-theme="esports"] .claw__stage { border: 0; }
+html[data-theme="esports"] .claw__hud span { background: rgb(16 24 43 / 0.85); border-radius: 7px; font-size: 12px; }
+html[data-theme="esports"] .claw__hud b { color: var(--yellow); }
+html[data-theme="esports"] .claw__key { background: var(--surface-2); border-color: var(--edge); border-radius: 10px; }
+html[data-theme="esports"] .claw__drop { background: var(--yellow); color: var(--accent-ink); border: 0; border-radius: 16px; }
+html[data-theme="esports"] .claw__hint { padding: 0 1rem; color: #ffffff; }
+html[data-theme="esports"] .peek__hint { color: #ffffff; }
+
+/* ---------- about: a profile panel ---------- */
+html[data-theme="esports"] .about { gap: 2.5rem; }
+html[data-theme="esports"] .about__row { background: var(--surface); border: 1px solid var(--edge); border-radius: 22px; padding: 2rem; align-items: center; column-gap: 2rem; }
+html[data-theme="esports"] .who { align-items: flex-start; text-align: left; }
+html[data-theme="esports"] .who__pics { background: #232324; border-radius: 50%; box-shadow: 0 0 0 3px var(--yellow); width: 112px; margin-bottom: 1rem; }
+html[data-theme="esports"] .who__name { font-size: 1.5rem; }
+html[data-theme="esports"] .who__name::before { content: "Good morning,"; content: "Good morning," / ""; display: block; font: 500 14px/1.4 var(--font); color: var(--muted); }
+html[data-theme="esports"] .who__link { color: var(--cyan); }
+html[data-theme="esports"] .about__para { font-weight: 500; font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem); line-height: 1.4; letter-spacing: -0.01em; max-width: 46ch; }
+
+/* ---------- contact: the violet call-out ---------- */
+html[data-theme="esports"] .contact {
+  margin: 0 clamp(12px, 2vw, 28px) clamp(12px, 2vw, 28px); border-radius: 22px; height: auto; min-height: 86svh;
+  background: var(--slashes), var(--banner-deep); padding-top: 3rem; padding-bottom: 2rem;
+}
+html[data-theme="esports"] .contact__intro { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: clamp(2.5rem, 5.5vw, 5.5rem); line-height: 0.9; max-width: 16ch; }
+html[data-theme="esports"] .contact__intro::before {
+  content: "Open to roles"; content: "Open to roles" / ""; display: table; margin-bottom: 1rem; padding: 3px 8px; border-radius: 5px;
+  background: #ffffff; color: var(--accent-ink); font: 500 12px/1.4 var(--mono); text-transform: none;
+}
+html[data-theme="esports"] .contact__mail { font-family: var(--font); font-weight: 700; text-transform: none; letter-spacing: -0.03em; font-size: clamp(2.25rem, 6.2vw, 6.5rem); }
+html[data-theme="esports"] .contact__foot { border-top: 1px solid rgb(255 255 255 / 0.15); padding-top: 1rem; }
+
+/* ---------- case pages ---------- */
+html[data-theme="esports"] .bar { background: var(--shell); border-bottom: 1px solid var(--edge); }
+html[data-theme="esports"] .top__title { font-size: clamp(3rem, 1.5rem + 5vw, 6.5rem); line-height: 0.88; }
+html[data-theme="esports"] .top__summary { color: var(--muted); }
+html[data-theme="esports"] .outcome__fig::after { content: ""; display: block; width: 32px; height: 3px; margin-top: 0.6rem; background: var(--yellow); border-radius: 2px; }
+html[data-theme="esports"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap, .pager a) { background: var(--surface); border: 1px solid var(--edge); border-radius: 18px; }
+html[data-theme="esports"] .cover { border-radius: 22px; margin-inline: clamp(12px, 2vw, 28px); }
+html[data-theme="esports"] th { background: var(--surface-2); }
+html[data-theme="esports"] :is(th, td) { border-bottom-color: var(--line); }
+html[data-theme="esports"] [data-ui] { border-radius: 12px; overflow: hidden; }
+html[data-theme="esports"] [data-ui] .ui-bars i, html[data-theme="esports"] .ev__bar i.on { background: var(--yellow); }
+html[data-theme="esports"] .calc input[type=range] { accent-color: var(--yellow); }
+html[data-theme="esports"] .calc__out strong { color: var(--yellow); }
+html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); border-radius: 22px; background: var(--slashes), var(--banner-deep); }
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .pager a:hover { background: var(--surface-2); border-color: var(--yellow); } }
+
+/* ---------- small screens ---------- */
+@media (max-width: 900px) {
+  html[data-theme="esports"] .case { padding: 8px; }
+  html[data-theme="esports"] .case__visual { width: 100%; }
+  html[data-theme="esports"] .case__cluster { padding: 0.75rem 0.75rem 1rem; }
+  html[data-theme="esports"] .case__title { font-size: 1.5rem; }
+  html[data-theme="esports"] .about__row { padding: 1.5rem; }
+}
+@media (max-width: 700px) {
+  html[data-theme="esports"] .hero__pic { inset: 64px 8px 8px; }
+  html[data-theme="esports"] .hero__scrim { left: 8px; right: 8px; bottom: 8px; }
+  html[data-theme="esports"] .hero__top { height: 64px; }
+  html[data-theme="esports"] .hero__bottom { left: 8px; right: 8px; bottom: 8px; padding: 0 18px 24px; }
+  html[data-theme="esports"] .hero__name { font-size: 24vw; }
+  html[data-theme="esports"] .contact { margin: 0 8px 8px; }
+  html[data-theme="esports"] .contact__mail { font-size: 10.5vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="esports"] :is(.stats__row, .button, .copy-btn, .button::after) { transition: none; }
+}
