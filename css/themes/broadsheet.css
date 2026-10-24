@@ -78,7 +78,7 @@ html[data-theme="broadsheet"] :is(.hero__name, .stats__head, .stats__fig, .case_
   font-family: var(--font-display); font-weight: 900; letter-spacing: -0.01em; font-variant-numeric: lining-nums;
 }
 html[data-theme="broadsheet"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
-  .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ball__count, .claw__hint, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
   font-family: var(--sans); font-weight: 600; font-size: 11px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase;
 }
@@ -149,7 +149,6 @@ html[data-theme="broadsheet"] .ball__q { font-size: clamp(22px, 2.2vw, 30px); li
 html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
 html[data-theme="broadsheet"] .claw { padding-left: 0; }
 html[data-theme="broadsheet"] .claw__stage { border: 1px solid var(--line); }
-html[data-theme="broadsheet"] .claw__hud span { background: var(--bg); border: 1px solid var(--line); }
 html[data-theme="broadsheet"] .claw__key { background: var(--bg); }
 html[data-theme="broadsheet"] .claw__hint { font-family: var(--font); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; }
 /* the peek hint sits over the dark felt, so it takes the paper colour */

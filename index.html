@@ -199,9 +199,6 @@ p { max-width: 62ch; text-wrap: pretty; }
 .claw__stage { position: relative; width: 100%; aspect-ratio: 20 / 11; max-width: 100%; border: var(--border) solid var(--surface-2); overflow: hidden; outline: none; background: var(--bg); }
 .claw__stage:focus-visible { border-color: var(--ink); }
 .claw__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-.claw__hud { position: absolute; inset: 10px 10px auto 10px; display: flex; justify-content: space-between; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
-.claw__hud span { background: color-mix(in srgb, var(--bg) 75%, transparent); padding: 4px 8px; border-radius: var(--radius); }
-.claw__hud b { font-weight: var(--weight-strong); color: var(--ink); font-variant-numeric: tabular-nums; }
 .claw__controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; gap: 12px; pointer-events: none; }
 .claw__controls > * { pointer-events: auto; }
 .claw__pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 3px; }
@@ -214,7 +211,11 @@ p { max-width: 62ch; text-wrap: pretty; }
 .claw__drop:active { transform: scale(0.96); }
 .claw__drop:disabled { background: color-mix(in srgb, var(--bg) 75%, transparent); color: color-mix(in srgb, var(--muted) 75%, var(--bg)); border-color: var(--line); cursor: default; }
 .claw__drop:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-.claw__hint { font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-height: 1.4em; }
+/* the invitation sits inside the glass, top left, and doubles as the aria-live line for a catch; on phones the glass is
+   too small to share with the claw, so it sits under the stage instead */
+.claw__box { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.claw__hint { position: absolute; top: 14px; left: 14px; z-index: 1; max-width: min(30ch, calc(100% - 28px)); margin: 0; padding: 10px 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--bg) 72%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--ink); font-size: var(--step-small); line-height: 1.4; pointer-events: none; }
+.claw__hint b { display: block; font-size: var(--step-body); font-weight: var(--weight-strong); line-height: 1.25; margin-bottom: 2px; }
 .claw__flat { display: none; font-size: var(--step-body); color: var(--muted); max-width: 40ch; }
 .claw.is-flat > :not(.claw__flat) { display: none; }
 .claw.is-flat .claw__flat { display: block; }
@@ -223,6 +224,7 @@ p { max-width: 62ch; text-wrap: pretty; }
   .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
   .claw { padding-left: 0; }
   .claw__stage { aspect-ratio: 1 / 1; }
+  .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* ---------- about: side facts, wide paragraph ---------- */
@@ -381,9 +383,9 @@ p { max-width: 62ch; text-wrap: pretty; }
     <article class="case case--2" id="case-2">
       <div class="case__visual case__visual--claw" data-reveal>
         <section class="claw" aria-label="Claw machine. Catch the system's foundational components.">
+          <div class="claw__box">
           <div class="claw__stage" tabindex="0" role="application" aria-label="Claw machine. Use arrow keys to move, space to drop.">
             <canvas class="claw__canvas" aria-hidden="true"></canvas>
-            <div class="claw__hud" aria-hidden="true"><span>Tries <b data-claw-tries>0</b></span><span>Caught <b data-claw-caught>0</b></span></div>
             <div class="claw__controls">
               <div class="claw__pad" aria-label="Move the claw">
                 <button class="claw__key claw__key--u" type="button" data-claw-dir="up" aria-label="Move back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
@@ -394,7 +396,8 @@ p { max-width: 62ch; text-wrap: pretty; }
               <button class="claw__drop" type="button" data-claw-drop>Drop</button>
             </div>
           </div>
-          <p class="claw__hint" aria-live="polite">Catch one and the whole site changes</p>
+          <p class="claw__hint" aria-live="polite"><b>Catch one. The whole site changes.</b> <span>Steer, drop, and each prize dresses the site in a new look. Five to find.</span></p>
+          </div>
           <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
         </section>
       </div>

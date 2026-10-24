@@ -72,7 +72,10 @@
   function announce(prize, name) {
     var el = document.querySelector('.claw__hint');
     if (!el) return;
-    el.textContent = 'Got the ' + prize + '. ' + (name === 'charcoal' ? 'The site is back to its default look.' : 'The site is now ' + (LABELS[name] || name) + '.');
+    var line = name === 'charcoal' ? 'The site is back to its default look.' : 'The site is now ' + (LABELS[name] || name) + '.';
+    var head = el.querySelector('b'), tail = el.querySelector('span');
+    if (head && tail) { head.textContent = 'Got the ' + prize + '.'; tail.textContent = line + ' Catch another to change it again.'; }
+    else el.textContent = 'Got the ' + prize + '. ' + line;
   }
 
   /* ---------- hold the page still through a swap ----------
