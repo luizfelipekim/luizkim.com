@@ -633,9 +633,27 @@ if (canvas && !saveData && 'gpu' in navigator) {
         onReady: () => { canvas.classList.add('is-ready'); if (still) setTimeout(() => shader && shader.pause(), 1500); else setTimeout(ramp, 400); },
         onError: () => canvas.classList.remove('is-ready')
       });
+      // The library sizes the canvas once, in pixels, at start-up. Keep it matched to the hero from here on:
+      // window resizes, the phone's toolbar, and looks that change the hero's height.
+      const box = canvas.parentElement;
+      let queued = false;
+      new ResizeObserver(() => {
+        if (queued) return; queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          const r = box.getBoundingClientRect();
+          if (shader && r.width > 0 && r.height > 0) shader.resize(Math.round(r.width), Math.round(r.height));
+        });
+      }).observe(box);
     } catch (e) { console.warn('Hero shader did not start:', e); }
   };
-  if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+  // A look can hide the canvas (Broadsheet does); a hidden canvas measures nothing and the shader cannot start
+  // from it. Start once it is visible, which may be at load or after the next change of look.
+  let started = false;
+  const visible = () => { const r = canvas.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const tryStart = () => { if (started || !visible()) return; started = true; start(); };
+  document.addEventListener('theme:change', () => requestAnimationFrame(tryStart));
+  if (document.readyState === 'complete') tryStart(); else addEventListener('load', tryStart, { once: true });
 }
 </script>
 <script src="js/claw-machine.js" defer></script>
