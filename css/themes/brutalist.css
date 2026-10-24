@@ -9,6 +9,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@500&display=swap");
 
 html[data-theme="brutalist"] {
+  /* the look the 3D scenes (poker peek, fortune ball, claw) deal under this theme: the machine manual: paper, carbon rules, one hazard red.
+     Scripts read --look, never the theme name, so a new theme can reuse a look without a script change. */
+  --look: manual;
   color-scheme: light;
 
   --bg: #efede7;
