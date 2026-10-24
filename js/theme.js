@@ -71,18 +71,73 @@
 
   function announce(prize, name) {
     var el = document.querySelector('.claw__hint');
-    if (el) el.textContent = 'Got the ' + prize + '. The site is now ' + (LABELS[name] || name) + '.';
+    if (!el) return;
+    el.textContent = 'Got the ' + prize + '. ' + (name === 'charcoal' ? 'The site is back to its default look.' : 'The site is now ' + (LABELS[name] || name) + '.');
+  }
+
+  /* ---------- hold the page still through a swap ----------
+     A look changes section heights, so a swap would move the page under the reader. `keep` measures an
+     anchor just before the swap and returns a function that puts it back where it was (or, for the claw,
+     centres it). It runs once more when the look's web fonts arrive, since they shift layout a second
+     time, unless the reader has scrolled in the meantime. */
+  function keep(anchor, align) {
+    if (!anchor || typeof anchor.getBoundingClientRect !== 'function') return function () {};
+    var before = anchor.getBoundingClientRect().top, lastY = null;
+    function fix() {
+      if (lastY !== null && Math.abs(window.scrollY - lastY) > 2) return;   // the reader moved on
+      var r = anchor.getBoundingClientRect();
+      var dy = align === 'center' ? r.top + r.height / 2 - window.innerHeight / 2 : r.top - before;
+      if (Math.abs(dy) > 1) window.scrollBy({ top: dy, left: 0, behavior: 'instant' });
+      lastY = window.scrollY;
+    }
+    return function () {
+      fix();
+      // the look's web fonts arrive after its stylesheet and shift layout again; hold the anchor through that too
+      [250, 1000, 2500].forEach(function (ms) { setTimeout(fix, ms); });
+      if (document.fonts && document.fonts.ready) requestAnimationFrame(function () { document.fonts.ready.then(fix); });
+    };
   }
 
   var busy = false;
+  function switchTo(name, opts) {
+    opts = opts || {};
+    if (busy) return false; busy = true;
+    ensure(name, function () {
+      shutter(function () {
+        var settle = keep(opts.anchor, opts.align);
+        apply(name); settle();
+        if (opts.after) opts.after();
+        busy = false;
+      });
+    });
+    return true;
+  }
+
   document.addEventListener('claw:caught', function (e) {
-    if (busy) return; busy = true;
+    if (busy) return;
     var prize = (e.detail && e.detail.label) || 'prize';
     var next = pick();
-    ensure(next, function () {
-      shutter(function () { apply(next); announce(prize, next); busy = false; });
-    });
+    switchTo(next, { anchor: document.querySelector('.claw__stage'), align: 'center', after: function () { announce(prize, next); } });
   });
+
+  /* ---------- the picker in the header: one per page, options written in the HTML ---------- */
+  function current() { return html.getAttribute('data-theme') || 'charcoal'; }
+  function picks() { return Array.prototype.slice.call(document.querySelectorAll('[data-theme-pick]')); }
+  function syncPicks(name) { picks().forEach(function (s) { if (s.value !== name) s.value = name; }); }
+  function wirePicks() {
+    picks().forEach(function (s) {
+      s.addEventListener('change', function () {
+        var name = valid(s.value);
+        if (name === current()) return;
+        // whatever sits mid-screen stays there through the swap
+        var anchor = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+        if (!switchTo(name, { anchor: anchor, align: 'keep' })) syncPicks(current());
+      });
+    });
+    syncPicks(current());
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePicks); else wirePicks();
+  document.addEventListener('theme:change', function (e) { syncPicks(e.detail.theme); });
 
   window.siteTheme = { looks: LOOKS, set: function (n) { n = valid(n); ensure(n, function () { apply(n); }); } };
 })();
