@@ -123,22 +123,60 @@
     switchTo(next, { anchor: document.querySelector('.claw__stage'), align: 'center', after: function () { announce(prize, next); } });
   });
 
-  /* ---------- the picker in the header: one per page, options written in the HTML ---------- */
+  /* ---------- the picker in the header: an icon button that opens a menu of the looks ----------
+     One per page, items written in the HTML. A menu button pattern: the button names the current look for
+     screen readers; arrows, Home and End move through the items, Enter or Space picks, Escape closes and
+     hands focus back, and a click outside or tabbing away closes it. */
   function current() { return html.getAttribute('data-theme') || 'charcoal'; }
   function picks() { return Array.prototype.slice.call(document.querySelectorAll('[data-theme-pick]')); }
-  function syncPicks(name) { picks().forEach(function (s) { if (s.value !== name) s.value = name; }); }
-  function wirePicks() {
-    picks().forEach(function (s) {
-      s.addEventListener('change', function () {
-        var name = valid(s.value);
+  function itemsOf(p) { return Array.prototype.slice.call(p.querySelectorAll('[data-look]')); }
+  function syncPicks(name) {
+    picks().forEach(function (p) {
+      itemsOf(p).forEach(function (it) { it.setAttribute('aria-checked', it.getAttribute('data-look') === name ? 'true' : 'false'); });
+      var on = p.querySelector('[data-look="' + name + '"]');
+      p.querySelector('.pick__btn').setAttribute('aria-label', 'Theme: ' + (on ? on.textContent : name));
+    });
+  }
+  function wirePick(p) {
+    var btn = p.querySelector('.pick__btn'), menu = p.querySelector('.pick__menu'), items = itemsOf(p);
+    function isOpen() { return btn.getAttribute('aria-expanded') === 'true'; }
+    function open(focusLast) {
+      menu.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      var at = items.filter(function (it) { return it.getAttribute('aria-checked') === 'true'; })[0];
+      (focusLast ? items[items.length - 1] : at || items[0]).focus();
+    }
+    function close(refocus) {
+      if (!isOpen()) return;
+      menu.hidden = true; btn.setAttribute('aria-expanded', 'false');
+      if (refocus) btn.focus();
+    }
+    btn.addEventListener('click', function () { if (isOpen()) close(false); else open(); });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); open(e.key === 'ArrowUp'); }
+    });
+    items.forEach(function (it, i) {
+      it.addEventListener('click', function () {
+        var name = valid(it.getAttribute('data-look'));
+        close(true);
         if (name === current()) return;
         // whatever sits mid-screen stays there through the swap
         var anchor = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-        if (!switchTo(name, { anchor: anchor, align: 'keep' })) syncPicks(current());
+        switchTo(name, { anchor: anchor, align: 'keep' });
+      });
+      it.addEventListener('keydown', function (e) {
+        var to = null;
+        if (e.key === 'ArrowDown') to = items[(i + 1) % items.length];
+        else if (e.key === 'ArrowUp') to = items[(i - 1 + items.length) % items.length];
+        else if (e.key === 'Home') to = items[0];
+        else if (e.key === 'End') to = items[items.length - 1];
+        else if (e.key === 'Escape') { e.preventDefault(); close(true); return; }
+        else if (e.key === 'Tab') { close(false); return; }
+        if (to) { e.preventDefault(); to.focus(); }
       });
     });
-    syncPicks(current());
+    document.addEventListener('pointerdown', function (e) { if (isOpen() && !p.contains(e.target)) close(false); });
   }
+  function wirePicks() { picks().forEach(wirePick); syncPicks(current()); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePicks); else wirePicks();
   document.addEventListener('theme:change', function (e) { syncPicks(e.detail.theme); });
 

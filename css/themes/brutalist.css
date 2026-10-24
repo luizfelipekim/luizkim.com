@@ -223,3 +223,12 @@ html[data-theme="brutalist"] .field h2 { font-size: clamp(2.25rem, 5vw, 4.5rem);
 @media (prefers-reduced-motion: reduce) {
   html[data-theme="brutalist"] .stats__row { transition: none; }
 }
+
+/* ---------- theme picker: a square stamp; the menu is a ruled slip, inverse on hover ---------- */
+html[data-theme="brutalist"] { --icon-stroke: 2.5; --icon-cap: square; --icon-join: miter; }
+html[data-theme="brutalist"] .pick__btn { border-width: var(--border); border-color: currentColor; }
+html[data-theme="brutalist"] .pick__menu { border: var(--border) solid var(--carbon); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--page-bg); padding: 0; animation: none; }
+html[data-theme="brutalist"] .pick__item { border-radius: 0; border-top: 1px solid var(--carbon); font-family: var(--mono); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+html[data-theme="brutalist"] .pick__item:first-child { border-top: 0; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="brutalist"] .pick__item:hover { background: var(--carbon); color: var(--page-bg); } }
+html[data-theme="brutalist"] .pick__item[aria-checked="true"] { color: var(--accent); }

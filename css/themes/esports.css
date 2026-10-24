@@ -276,3 +276,14 @@ html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); --cut
 @media (prefers-reduced-motion: reduce) {
   html[data-theme="esports"] :is(.button, .copy-btn, .stats__row) { transition: none; }
 }
+
+/* ---------- theme picker: the icon in a pale-foil tab; the menu is a die-cut card in the sleeve ---------- */
+html[data-theme="esports"] { --icon-stroke: 2; }
+html[data-theme="esports"] .pick__btn { border: 0; border-radius: 10px; background: var(--surface-2); color: var(--ink); }
+html[data-theme="esports"] .hero__top:not(.is-stuck) .pick__btn:not([aria-expanded="true"]) { background: rgb(255 255 255 / 0.08); }
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .hero__top .pick__btn:hover, html[data-theme="esports"] .pick__btn:hover { background: var(--accent); color: var(--accent-ink); } }
+html[data-theme="esports"] .pick__btn[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+html[data-theme="esports"] .pick__menu { padding: 8px; border: 0; border-radius: 0; background: var(--surface); color: var(--ink); --cut: 12px; clip-path: var(--die); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-theme="esports"] .pick__item { border-radius: 8px; font-family: var(--font); font-weight: 600; font-size: 15px; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="esports"] .pick__item:hover { background: var(--surface-2); } }
+html[data-theme="esports"] .pick__item[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); }
