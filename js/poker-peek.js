@@ -24,10 +24,21 @@
   }
   function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
-  // The deck follows the site theme. Charcoal, brutalist and broadsheet deal the LK back; windows95
-  // deals Solitaire, a pixel beach on a white card over flat green; esports deals holographic foil.
-  // The two image-based backs load the first time their theme is seen; the LK back stands in until then.
-  const LOOKS = { windows95: 'win95', esports: 'foil' };
+  // The deck follows the site theme: every look deals its own back, its own chips, and its own light.
+  // Charcoal: the LK back on dark glass. Brutalist ("manual"): a machine-manual card on unbleached
+  // paper. Broadsheet ("press"): an engraved card on newsprint. Windows 95 ("win95"): Solitaire, a
+  // pixel beach on a white card over flat green. Esports ("foil"): holographic foil. The two
+  // image-based backs load the first time their theme is seen; the LK back stands in until then.
+  // Each look's type comes from its theme's own faces, loaded by the theme stylesheet.
+  const ARCHIVO = 'condensed 900 ', ARCHIVO_F = '"Archivo","Helvetica Neue",Arial,sans-serif';
+  const MONO = '"IBM Plex Mono",ui-monospace,Menlo,monospace';
+  const PLAYFAIR = '"Playfair Display",Georgia,"Times New Roman",serif';
+  const SERIF = '"Source Serif 4",Georgia,"Times New Roman",serif';
+  const FONTS = {
+    manual: ['condensed 900 100px "Archivo"', '500 20px "IBM Plex Mono"'],
+    press: ['900 100px "Playfair Display"', '400 20px "Source Serif 4"']
+  };
+  const LOOKS = { windows95: 'win95', esports: 'foil', brutalist: 'manual', broadsheet: 'press' };
   const look = () => LOOKS[document.documentElement.getAttribute('data-theme')] || 'default';
   const ART = { win95: 'img/poker/back-beach.png', foil: 'img/poker/back-foil.jpg', foilBump: 'img/poker/back-foil-bump.jpg' };
   const images = {};
@@ -42,7 +53,91 @@
     const l = look();
     if (l === 'win95') return drawBackWin95(c);
     if (l === 'foil') return drawBackFoil(c);
+    if (l === 'manual') return drawBackManual(c);
+    if (l === 'press') return drawBackPress(c);
     drawBackLK(c);
+  }
+
+  // Brutalist: a page of the machine manual. Unbleached paper, carbon rules boxing every zone,
+  // stencil-mono labels like a crate marking, the LK stacked in condensed capitals, one hazard red block.
+  const PAPER = '#efede7', CARBON = '#0c0c0c', HAZARD = '#c4161c';
+  function drawBackManual(c) {
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, CW, CH);
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = PAPER; ctx.fill();
+    const m = 44, w = CW - 2 * m, h = CH - 2 * m;
+    ctx.strokeStyle = CARBON; ctx.fillStyle = CARBON; ctx.lineWidth = 8;
+    ctx.strokeRect(m, m, w, h);
+    // the grid: a header band, the figure, a footer of fields
+    const top = m + 96, bot = CH - m - 150;
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(m, top); ctx.lineTo(CW - m, top); ctx.moveTo(m, bot); ctx.lineTo(CW - m, bot); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CW / 2, bot); ctx.lineTo(CW / 2, CH - m); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(m + w * 0.62, m); ctx.lineTo(m + w * 0.62, top); ctx.stroke();
+    // header: part number, the hazard block on the right
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.font = '500 26px ' + MONO;
+    ctx.fillText('LK-001  \u00b7  CARD, BACK', m + 28, m + 48);
+    ctx.fillStyle = HAZARD; ctx.fillRect(m + w * 0.62 + 4, m + 4, w * 0.38 - 4, 96 - 8);
+    ctx.save(); ctx.beginPath(); ctx.rect(m + w * 0.62 + 4, m + 4, w * 0.38 - 4, 88); ctx.clip();
+    ctx.strokeStyle = PAPER; ctx.lineWidth = 10;
+    for (let x = -120; x < w * 0.4 + 120; x += 44) { ctx.beginPath(); ctx.moveTo(m + w * 0.62 + x, m + 100); ctx.lineTo(m + w * 0.62 + x + 90, m); ctx.stroke(); }
+    ctx.restore();
+    // the figure: L over K, stacked capitals, condensed and heavy
+    ctx.fillStyle = CARBON; ctx.textAlign = 'center';
+    ctx.font = ARCHIVO + '640px ' + ARCHIVO_F;
+    ctx.fillText('L', CW / 2, top + (bot - top) * 0.30);
+    ctx.fillText('K', CW / 2, top + (bot - top) * 0.72);
+    ctx.font = '500 22px ' + MONO; ctx.textAlign = 'left';
+    ctx.fillText('FIG. 1', m + 28, top + 34);
+    ctx.textAlign = 'right'; ctx.fillText('63.5 \u00d7 88.9 MM', CW - m - 28, top + 34);
+    // footer fields
+    ctx.textAlign = 'left'; ctx.font = '500 20px ' + MONO;
+    ctx.fillText('MAKER', m + 28, bot + 36); ctx.fillText('ORIGIN', CW / 2 + 28, bot + 36);
+    ctx.font = ARCHIVO + '44px ' + ARCHIVO_F;
+    ctx.fillText('LUIZ KIM', m + 28, bot + 96); ctx.fillText('LONDON', CW / 2 + 28, bot + 96);
+    ctx.font = '500 20px ' + MONO; ctx.fillText('\u00ae', CW - m - 52, bot + 36);
+  }
+
+  // Broadsheet: an engraved card. Cream newsprint, a hatched border band between rules, the
+  // nameplate LK in the Playfair black, a line of small capitals with hairlines, as a masthead.
+  const CREAM = '#faf8f4', INK = '#1a1715';
+  function hatch(ctx, x, y, w, h, step, alpha, both) {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.strokeStyle = INK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
+    for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke(); }
+    if (both) for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d + h, y); ctx.lineTo(x + d, y + h); ctx.stroke(); }
+    ctx.restore();
+  }
+  function drawBackPress(c) {
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, CW, CH);
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = CREAM; ctx.fill();
+    const m = 40, w = CW - 2 * m, h = CH - 2 * m, band = 54;
+    // the border: rule, hatched band, rule; cross-hatched in the corners
+    ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
+    hatch(ctx, m, m, w, band, 7, 0.55, false); hatch(ctx, m, CH - m - band, w, band, 7, 0.55, false);
+    hatch(ctx, m, m + band, band, h - 2 * band, 7, 0.55, false); hatch(ctx, CW - m - band, m + band, band, h - 2 * band, 7, 0.55, false);
+    [[m, m], [CW - m - band, m], [m, CH - m - band], [CW - m - band, CH - m - band]].forEach(([x, y]) => hatch(ctx, x, y, band, band, 7, 0.5, true));
+    ctx.lineWidth = 1.5; ctx.strokeRect(m + band, m + band, w - 2 * band, h - 2 * band);
+    // the masthead: nameplate over a double rule, small capitals under
+    const cx = CW / 2, cy = CH / 2;
+    // a fine sunburst of hairlines behind the plate
+    ctx.save(); ctx.strokeStyle = INK; ctx.globalAlpha = 0.28; ctx.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 36) {
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 250, cy - 40 + Math.sin(a) * 250); ctx.lineTo(cx + Math.cos(a) * 330, cy - 40 + Math.sin(a) * 330); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '900 400px ' + PLAYFAIR;
+    ctx.fillText('LK', cx, cy - 40);
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx - 300, cy + 190); ctx.lineTo(cx + 300, cy + 190); ctx.stroke();
+    ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - 300, cy + 200); ctx.lineTo(cx + 300, cy + 200); ctx.stroke();
+    ctx.font = '600 24px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif';
+    ctx.fillText('L U I Z   K I M   \u00b7   L O N D O N', cx, cy + 244);
+    ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - 300, cy - 290); ctx.lineTo(cx + 300, cy - 290); ctx.stroke();
+    ctx.font = 'italic 400 30px ' + SERIF;
+    ctx.fillText('Est. London', cx, cy - 330);
   }
 
   // Windows Solitaire: a white card with a black hairline; the art is scaled by a whole number so every
@@ -162,14 +257,19 @@
     const ctx = c.getContext('2d');
     const pip = suit === 'club' ? club : spade;
     ctx.clearRect(0, 0, CW, CH);
-    const solitaire = look() === 'win95';
-    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = solitaire ? '#ffffff' : WHITE; ctx.fill();
+    const l = look(), solitaire = l === 'win95';
+    const stock = { win95: '#ffffff', manual: PAPER, press: CREAM }[l] || WHITE;
+    const inkOf = { win95: '#000000', manual: CARBON, press: INK }[l] || BLACK;
+    const rankFont = l === 'manual' ? ARCHIVO + '150px ' + ARCHIVO_F : l === 'press' ? '900 150px ' + PLAYFAIR : '900 150px ' + DISPLAY;
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = stock; ctx.fill();
     if (solitaire) { ctx.lineWidth = 8; ctx.strokeStyle = '#000000'; roundRect(ctx, 4, 4, CW - 8, CH - 8, R - 4); ctx.stroke(); }
-    ctx.fillStyle = solitaire ? '#000000' : BLACK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (l === 'manual') { ctx.lineWidth = 8; ctx.strokeStyle = CARBON; ctx.strokeRect(44, 44, CW - 88, CH - 88); }
+    if (l === 'press') { ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.strokeRect(40, 40, CW - 80, CH - 80); ctx.lineWidth = 1.5; ctx.strokeRect(52, 52, CW - 104, CH - 104); }
+    ctx.fillStyle = inkOf; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     // standard two-corner index: top-left upright, bottom-right rotated
     const idx = (x, y, rot) => {
       ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
-      ctx.font = '900 150px ' + DISPLAY; ctx.fillText(rank, 0, 0);
+      ctx.font = rankFont; ctx.fillText(rank, 0, 0);
       pip(ctx, 0, 124, 96);
       ctx.restore();
     };
@@ -190,20 +290,34 @@
     ctx.putImageData(img, 0, 0);
     return c;
   }
-  function chipTextures(base, stripe) {
-    const side = mkCanvas(512, 64), s = side.getContext('2d');
-    s.fillStyle = base; s.fillRect(0, 0, 512, 64);
-    s.fillStyle = stripe;
+  // The chips match the deck. Each look names a base, a stripe and a mark colour, the face the mark
+  // is set in, and the finish; the capping chip may differ (the hazard red one, the gold one).
+  const CHIPS = {
+    default: { base: '#0d0d0d', stripe: '#f4f4f4', mark: '#f4f4f4', font: '900 50px ' + DISPLAY, rough: 0.45, metal: 0.05 },
+    manual: { base: PAPER, stripe: CARBON, mark: CARBON, font: ARCHIVO + '58px ' + ARCHIVO_F, rough: 0.92, metal: 0,
+      cap: { base: HAZARD, stripe: PAPER, mark: PAPER } },
+    press: { base: CREAM, stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.88, metal: 0, hatched: true },
+    win95: { base: '#ff0000', stripe: '#ffffff', mark: '#ffffff', font: '900 50px ' + DISPLAY, rough: 1, metal: 0, pixel: 8 },
+    foil: { base: '#1d1247', stripe: '#b7a2ff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.3, metal: 0.35,
+      cap: { base: '#1d1247', stripe: '#ffcf3a', mark: '#ffcf3a' } }
+  };
+  function chipTextures(pal, side, top) {
+    const s = side.getContext('2d');
+    s.clearRect(0, 0, 512, 64);
+    s.fillStyle = pal.base; s.fillRect(0, 0, 512, 64);
+    s.fillStyle = pal.stripe;
     for (let i = 0; i < 8; i++) s.fillRect(i * 64 + 18, 0, 28, 64);
-    const top = mkCanvas(256, 256), t = top.getContext('2d');
-    t.fillStyle = base; t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.fill();
-    t.fillStyle = stripe;
+    const t = top.getContext('2d');
+    t.clearRect(0, 0, 256, 256);
+    t.fillStyle = pal.base; t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.fill();
+    if (pal.hatched) { t.save(); t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.clip(); hatch(t, 0, 0, 256, 256, 5, 0.3, false); t.restore(); }
+    t.fillStyle = pal.stripe;
     for (let i = 0; i < 8; i++) {
       t.beginPath(); t.arc(128, 128, 128, i * Math.PI / 4 - 0.19, i * Math.PI / 4 + 0.19); t.arc(128, 128, 96, i * Math.PI / 4 + 0.19, i * Math.PI / 4 - 0.19, true); t.closePath(); t.fill();
     }
-    t.strokeStyle = stripe; t.globalAlpha = 0.35; t.lineWidth = 2; t.beginPath(); t.arc(128, 128, 84, 0, Math.PI * 2); t.stroke();
-    t.globalAlpha = 1; t.fillStyle = stripe; t.font = '900 50px ' + DISPLAY; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillText('LK', 128, 132);
-    return { side, top };
+    t.strokeStyle = pal.stripe; t.globalAlpha = pal.hatched ? 0.9 : 0.35; t.lineWidth = 2; t.beginPath(); t.arc(128, 128, 84, 0, Math.PI * 2); t.stroke();
+    t.globalAlpha = 1; t.fillStyle = pal.mark; t.font = pal.font; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillText('LK', 128, 132);
+    if (pal.pixel) { pixelate(side, pal.pixel / 2); pixelate(top, pal.pixel / 2); }
   }
 
   // ---------- scene ----------
@@ -229,8 +343,9 @@
   const LOOK = new THREE.Vector3(0, 0.6, 0.5);
   let camDist = CAM_BASE.distanceTo(LOOK);
 
-  // lights
-  scene.add(new THREE.HemisphereLight(0x9a9a9a, 0x141414, 0.38));
+  // lights: one fixed rig (hemisphere, key spot, fill, under, rim), so a look change never recompiles
+  // a material; each look sets the colours and intensities, and the key's penumbra.
+  const hemi = new THREE.HemisphereLight(0x9a9a9a, 0x141414, 0.38); scene.add(hemi);
   const key = new THREE.SpotLight(0xffffff, 1.6, 0, 0.55, 0.65, 1);
   key.position.set(-18, 56, 22); key.target.position.set(0, 0, 0);
   key.castShadow = true;
@@ -241,6 +356,17 @@
   const fill = new THREE.PointLight(0xdcdcdc, 0.26, 0, 2); fill.position.set(30, 18, 42); scene.add(fill);
   const under = new THREE.PointLight(0xffffff, 0.38, 0, 2); under.position.set(2, 8, 26); scene.add(under);
   const rim = new THREE.DirectionalLight(0xbfbfbf, 0.3); rim.position.set(0, 14, -40); scene.add(rim);
+  // The light sets the mood. Charcoal: a white key over smoked glass. Manual: flat overcast daylight
+  // and one hard shadow, print without gloss. Press: a warm reading lamp from the upper left over the
+  // paper. Win95: flat, no shade. Foil: a violet key with cyan and rose rims, so the foil has something to catch.
+  const RIGS = {
+    default: { hemi: [0x9a9a9a, 0x141414, 0.38], key: [0xffffff, 1.6, 0.65], fill: [0xdcdcdc, 0.26], under: [0xffffff, 0.38], rim: [0xbfbfbf, 0.3], table: 'glass', tone: true, exposure: 1.05, shadow: 0.45 },
+    manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.9, 0.05], fill: [0xffffff, 0.08], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', tone: false, exposure: 1, shadow: 0.38 },
+    press: { hemi: [0xfff3e2, 0xd9cfbc, 0.85], key: [0xffd9a8, 1.1, 1.0], fill: [0xffe6c8, 0.22], under: [0xffe6c8, 0.12], rim: [0xffffff, 0], table: 'matte', tone: true, exposure: 1.22, shadow: 0.28 },
+    win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', tone: false, exposure: 1, shadow: 0.3 },
+    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.42], key: [0xc3b4ff, 1.25, 0.7], fill: [0xff9df0, 0.5], under: [0x8fe4ff, 0.45], rim: [0x8fe4ff, 0.7], table: 'glass', tone: true, exposure: 1.1, shadow: 0.5 }
+  };
+  function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
 
   // table: dark glass. A planar mirror (THREE.Reflector, three r128 examples, vendored as js/Reflector.js)
   // held down to a smoked-glass strength, a shadow catcher so the cards and chips still ground, and an
@@ -267,9 +393,12 @@
     const slab = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.3, metalness: 0.1 }));
     slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab); glass.push(slab);
   }
-  // Solitaire's table: one flat green, unlit, no reflection; the shadow catcher above it still grounds the cards
+  // the unlit table (Solitaire's green, the manual's paper): one flat colour, no reflection; the shadow catcher above it still grounds the cards
   const felt = new THREE.Mesh(TABLE, new THREE.MeshBasicMaterial({ color: 0x008000 }));
   felt.rotation.x = -Math.PI / 2; felt.visible = false; scene.add(felt);
+  // the paper looks: a matte slab in the stage's own colour, with a fine grain, no reflection
+  const matte = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0xe4e1d9, roughness: 0.96, metalness: 0 }));
+  matte.rotation.x = -Math.PI / 2; matte.visible = false; matte.receiveShadow = true; scene.add(matte);
   const shadows = new THREE.Mesh(TABLE, new THREE.ShadowMaterial({ opacity: 0.45 }));
   shadows.rotation.x = -Math.PI / 2; shadows.position.y = 0.01; shadows.receiveShadow = true; scene.add(shadows);
   const sheen = new THREE.Mesh(TABLE, new THREE.MeshPhysicalMaterial({ color: 0x000000, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, roughness: 0.32, metalness: 0, clearcoat: 0.8, clearcoatRoughness: 0.22 }));
@@ -277,6 +406,7 @@
   // the rail keeps a fine grain
   const feltBump = new THREE.CanvasTexture(noiseCanvas(256, [128, 128, 128], 110));
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
+  matte.material.bumpMap = feltBump; matte.material.bumpScale = 0.012;
 
   // betting line, a faint etch in the glass just in front of the cards
   const line = new THREE.Mesh(new THREE.RingGeometry(56, 56.16, 220, 1, 0, Math.PI * 2),
@@ -293,23 +423,37 @@
   trim.position.set(0, 0.2, 11.4); trim.receiveShadow = true; scene.add(trim); glass.push(trim);
 
   // chips
-  function chipStack(n, base, stripe, x, z, rot) {
-    const tex = chipTextures(base, stripe);
-    const side = new THREE.CanvasTexture(tex.side); side.wrapS = THREE.RepeatWrapping; side.repeat.set(1, 1); side.encoding = THREE.sRGBEncoding;
-    const top = new THREE.CanvasTexture(tex.top); top.encoding = THREE.sRGBEncoding;
+  // two sets of chip art (the stack, and its capping chip), repainted in place when the look changes
+  function chipSet() {
+    const sideC = mkCanvas(512, 64), topC = mkCanvas(256, 256);
+    const side = new THREE.CanvasTexture(sideC); side.wrapS = THREE.RepeatWrapping; side.encoding = THREE.sRGBEncoding;
+    const top = new THREE.CanvasTexture(topC); top.encoding = THREE.sRGBEncoding;
     const mSide = new THREE.MeshStandardMaterial({ map: side, roughness: 0.45, metalness: 0.05 });
     const mTop = new THREE.MeshStandardMaterial({ map: top, roughness: 0.4, metalness: 0.05 });
+    return { sideC, topC, side, top, mats: [mSide, mTop, mTop] };
+  }
+  const chipMain = chipSet(), chipCap = chipSet();
+  function drawChips() {
+    const pal = CHIPS[look()] || CHIPS.default, cap = Object.assign({}, pal, pal.cap || {});
+    chipTextures(pal, chipMain.sideC, chipMain.topC); chipTextures(cap, chipCap.sideC, chipCap.topC);
+    [chipMain, chipCap].forEach(set => {
+      set.side.needsUpdate = set.top.needsUpdate = true;
+      set.mats.forEach(m => { m.roughness = pal.rough; m.metalness = pal.metal; });
+    });
+  }
+  function chipStack(n, x, z, rot) {
     const g = new THREE.CylinderGeometry(1.95, 1.95, 0.33, 48);
     const group = new THREE.Group();
     for (let i = 0; i < n; i++) {
-      const m = new THREE.Mesh(g, [mSide, mTop, mTop]);
+      const m = new THREE.Mesh(g, (i === n - 1 ? chipCap : chipMain).mats);
       m.position.set((Math.random() - 0.5) * 0.12, 0.165 + i * 0.33, (Math.random() - 0.5) * 0.12);
       m.rotation.y = rot + i * 0.37; m.castShadow = true; m.receiveShadow = true; group.add(m);
     }
     group.position.set(x, 0, z); scene.add(group); return group;
   }
   // one stack of seven, the one the hand riffles
-  const stack = chipStack(7, '#0d0d0d', '#f4f4f4', 8.4, 5.6, 2.0);
+  drawChips();
+  const stack = chipStack(7, 8.4, 5.6, 2.0);
   const chips = stack.children.slice();   // bottom first
   chips.forEach(m => { m.userData.rest = m.position.clone(); m.userData.restRot = m.rotation.y; });
 
@@ -440,7 +584,7 @@
     Promise.all([document.fonts.load('900 100px "Unbounded"'), document.fonts.load('800 20px "Unbounded"')]).then(redrawAll).catch(() => {});
   }
   function redrawAll() {
-    drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas);
+    drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas); drawChips();
     backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = true;
   }
   // deal the deck the theme asks for: artwork, materials, and the table under them
@@ -449,20 +593,36 @@
     const l = look();
     if (l === currentLook) return;
     currentLook = l;
-    const solitaire = l === 'win95';
-    glass.forEach(o => { o.visible = !solitaire; }); felt.visible = solitaire;
-    shadows.material.opacity = solitaire ? 0.3 : 0.45;
-    // Solitaire is flat: no film curve, so the green and the white come out as the exact 95 values
-    const tone = solitaire ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+    const solitaire = l === 'win95', paper = l === 'manual' || l === 'press';
+    const rig = RIGS[l] || RIGS.default;
+    // the table
+    // glass: the mirror and its rail. matte: a lit paper slab. felt / flat: an unlit slab in the stage's colour (Solitaire green, the manual's paper)
+    glass.forEach(o => { o.visible = rig.table === 'glass'; }); felt.visible = rig.table === 'felt' || rig.table === 'flat'; matte.visible = rig.table === 'matte';
+    if (rig.table === 'matte') matte.material.color.setStyle(stageColor());
+    if (felt.visible) felt.material.color.setStyle(stageColor());
+    shadows.material.opacity = rig.shadow;
+    // the light
+    setLight(hemi, rig.hemi[0], rig.hemi[2]); hemi.groundColor.setHex(rig.hemi[1]);
+    setLight(key, rig.key[0], rig.key[1], rig.key[2]); setLight(fill, rig.fill[0], rig.fill[1]);
+    setLight(under, rig.under[0], rig.under[1]); setLight(rim, rig.rim[0], rig.rim[1]);
+    // the film: the flat looks (Solitaire, the manual) take no curve, so their colours come out exact
+    const tone = rig.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    renderer.toneMappingExposure = rig.exposure;
     if (renderer.toneMapping !== tone) {
       renderer.toneMapping = tone;
       scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
     }
-    if (l === 'foil' && !foilMat.envMap) { foilMat.envMap = studioEnv(); foilMat.needsUpdate = true; }
-    const back = l === 'foil' ? foilMat : solitaire ? backFlat : backMat;
-    [cardA, cardK].forEach(c => { c.material[0] = back; c.material[1].roughness = solitaire ? 1 : 0.55; });
-    edgeMat.color.set(solitaire ? 0xffffff : 0xf4f4f4);
+    // the deck
+    if (l === 'foil' && !foilMat.envMap) {
+      const env = studioEnv(); foilMat.envMap = env; foilMat.needsUpdate = true;
+      [chipMain, chipCap].forEach(set => set.mats.forEach(m => { m.envMap = env; m.envMapIntensity = 0.6; m.needsUpdate = true; }));
+    }
+    const back = l === 'foil' ? foilMat : (solitaire || paper) ? backFlat : backMat;
+    [cardA, cardK].forEach(c => { c.material[0] = back; c.material[1].roughness = solitaire ? 1 : paper ? 0.9 : 0.55; });
+    edgeMat.color.set({ win95: 0xffffff, manual: 0xe6e3dc, press: 0xf3f0ea }[l] || 0xf4f4f4);
     redrawAll();
+    // the look's own type arrives with its stylesheet: draw again once it is in
+    if (FONTS[l] && document.fonts && document.fonts.load) Promise.all(FONTS[l].map(f => document.fonts.load(f))).then(redrawAll).catch(() => {});
   }
   document.addEventListener('theme:change', applyLook);
 

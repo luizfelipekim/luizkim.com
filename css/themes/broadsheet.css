@@ -168,7 +168,10 @@ html[data-theme="broadsheet"] .claw__stage::after {
 }
 html[data-theme="broadsheet"] .claw__key { background: var(--bg); }
 html[data-theme="broadsheet"] .claw__hint { top: calc(44px + 14px); font-family: var(--font); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; }
-/* the peek hint sits over the dark felt, so it takes the paper colour */
+/* the poker peek is a reading lamp over newsprint: the vignette is held back to a warm shade, and the hint and
+   cue take ink over the paper */
+html[data-theme="broadsheet"] .peek__vignette { opacity: 0.35; }
+html[data-theme="broadsheet"] .peek__cue { color: var(--ink); filter: none; }
 
 /* ---------- about: a profile in two justified columns ---------- */
 html[data-theme="broadsheet"] .about { padding-top: 0; gap: 2rem; }

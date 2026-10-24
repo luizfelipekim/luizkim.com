@@ -166,7 +166,10 @@ html[data-theme="brutalist"] .claw__drop { border-radius: 0; background: var(--a
 html[data-theme="brutalist"] .claw__drop:active { background: var(--ink); color: var(--bg); }
 html[data-theme="brutalist"] .claw__hint { color: var(--ink); }
 html[data-theme="brutalist"] .claw__hint::before { content: "▲ "; content: "▲ " / ""; color: var(--accent); }
-/* the peek hint sits over the dark felt, not the paper, so it takes the paper colour */
+/* the poker peek is a page of the manual: the table is the paper itself, no vignette (no gradients), and the
+   hint and cue take carbon over it */
+html[data-theme="brutalist"] .peek__vignette { display: none; }
+html[data-theme="brutalist"] .peek__cue { color: var(--ink); filter: none; }
 
 /* ---------- about ---------- */
 html[data-theme="brutalist"] .about { padding-top: 0; gap: 3rem; }
