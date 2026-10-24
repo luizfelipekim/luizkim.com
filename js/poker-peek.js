@@ -1,7 +1,7 @@
-/* Poker case teaser on the homepage: two cards face down on the felt. As the block
-   scrolls into view they peel up, the way a player peeks at a hand. 70 mm lens,
-   mouse parallax clamped to +-80 px. Needs js/three.min.js (r128) loaded first.
-   All artwork is drawn on canvas at load. */
+/* Poker case teaser on the homepage: two cards face down on dark glass. Drag them up (or
+   press Enter) to peek, the way a player looks at a hand; press the chip stack and lift to
+   riffle it. 70 mm lens, mouse parallax clamped to +-80 px. Needs js/three.min.js (r128) and
+   js/Reflector.js (three r128 examples) loaded first. All artwork is drawn on canvas at load. */
 (function () {
   'use strict';
   const stage = document.querySelector('.peek');
@@ -164,20 +164,42 @@
   const under = new THREE.PointLight(0xffffff, 0.38, 0, 2); under.position.set(2, 8, 26); scene.add(under);
   const rim = new THREE.DirectionalLight(0xbfbfbf, 0.3); rim.position.set(0, 14, -40); scene.add(rim);
 
-  // felt
-  const feltNoise = new THREE.CanvasTexture(noiseCanvas(512, [38, 38, 38], 22));
-  feltNoise.wrapS = feltNoise.wrapT = THREE.RepeatWrapping; feltNoise.repeat.set(14, 14);
-  feltNoise.encoding = THREE.sRGBEncoding;
+  // table: dark glass. A planar mirror (THREE.Reflector, three r128 examples, vendored as js/Reflector.js)
+  // held down to a smoked-glass strength, a shadow catcher so the cards and chips still ground, and an
+  // additive glossy sheet that carries only the key light's specular streak. Without the helper the table
+  // is a plain dark slab.
+  const TABLE = new THREE.PlaneGeometry(240, 240);
+  if (typeof THREE.Reflector === 'function') {
+    const smoked = {
+      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null } },
+      vertexShader: THREE.Reflector.ReflectorShader.vertexShader,
+      fragmentShader: `
+        uniform vec3 color; uniform sampler2D tDiffuse; varying vec4 vUv;
+        void main() {
+          vec3 base = texture2DProj(tDiffuse, vUv).rgb;
+          // the mirror pass writes linear values: bring them to screen gamma, then hold the reflection down
+          gl_FragColor = vec4(pow(base, vec3(1.0 / 2.2)) * color, 1.0);
+        }`
+    };
+    const res = matchMedia('(pointer: coarse)').matches ? 512 : 1024;
+    const mirror = new THREE.Reflector(TABLE, { shader: smoked, color: 0x4a4a4a, textureWidth: res, textureHeight: res, clipBias: 0.003 });
+    mirror.rotation.x = -Math.PI / 2; scene.add(mirror);
+  } else {
+    const slab = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.3, metalness: 0.1 }));
+    slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab);
+  }
+  const shadows = new THREE.Mesh(TABLE, new THREE.ShadowMaterial({ opacity: 0.45 }));
+  shadows.rotation.x = -Math.PI / 2; shadows.position.y = 0.01; shadows.receiveShadow = true; scene.add(shadows);
+  const sheen = new THREE.Mesh(TABLE, new THREE.MeshPhysicalMaterial({ color: 0x000000, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, roughness: 0.32, metalness: 0, clearcoat: 0.8, clearcoatRoughness: 0.22 }));
+  sheen.rotation.x = -Math.PI / 2; sheen.position.y = 0.02; scene.add(sheen);
+  // the rail keeps a fine grain
   const feltBump = new THREE.CanvasTexture(noiseCanvas(256, [128, 128, 128], 110));
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
-  const felt = new THREE.Mesh(new THREE.PlaneGeometry(240, 240),
-    new THREE.MeshStandardMaterial({ map: feltNoise, bumpMap: feltBump, bumpScale: 0.015, roughness: 0.96, metalness: 0 }));
-  felt.rotation.x = -Math.PI / 2; felt.receiveShadow = true; scene.add(felt);
 
-  // betting line painted on the felt, passing just in front of the cards
+  // betting line, a faint etch in the glass just in front of the cards
   const line = new THREE.Mesh(new THREE.RingGeometry(56, 56.16, 220, 1, 0, Math.PI * 2),
-    new THREE.MeshBasicMaterial({ color: 0xf4f4f4, transparent: true, opacity: 0.38, depthWrite: false }));
-  line.rotation.x = -Math.PI / 2; line.position.set(0, 0.012, 66); scene.add(line);
+    new THREE.MeshBasicMaterial({ color: 0xf4f4f4, transparent: true, opacity: 0.22, depthWrite: false }));
+  line.rotation.x = -Math.PI / 2; line.position.set(0, 0.03, 66); scene.add(line);
 
   // padded rail at the bottom of the frame
   const railBump = feltBump;
@@ -204,10 +226,10 @@
     }
     group.position.set(x, 0, z); scene.add(group); return group;
   }
-  chipStack(9, '#0d0d0d', '#f4f4f4', -11.2, -3.5, 0.3);
-  chipStack(5, '#f4f4f4', '#0d0d0d', -8.6, -1.2, 1.1);
-  chipStack(7, '#0d0d0d', '#f4f4f4', 11.4, 1.5, 2.0);
-  chipStack(3, '#f4f4f4', '#0d0d0d', 8.2, -5.2, 0.6);
+  // one stack of seven, the one the hand riffles
+  const stack = chipStack(7, '#0d0d0d', '#f4f4f4', 8.4, 5.6, 2.0);
+  const chips = stack.children.slice();   // bottom first
+  chips.forEach(m => { m.userData.rest = m.position.clone(); m.userData.restRot = m.rotation.y; });
 
   // cards
   const CARD_W = 6.35, CARD_H = 8.89, CARD_T = 0.045;
@@ -312,11 +334,13 @@
     camera.aspect = W / H;
     camera.setFocalLength(70);               // 70 mm look at any aspect
     const dolly = Math.min(1, Math.max(0.7, camera.aspect / 1.6));   // move in on narrow boxes
+    // a portrait box crops the sides, so the stack comes forward and in, below the hand
+    if (camera.aspect < 1.2) stack.position.set(4.8, 0, 7.6); else stack.position.set(8.4, 0, 5.6);
     camBase.copy(LOOK).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
     camDist = camBase.distanceTo(LOOK);
     camera.position.copy(camBase); camera.lookAt(LOOK);
     camera.updateProjectionMatrix();
-    dirty = true;
+    dirty = true; placeHits();
   }
   const camBase = CAM_BASE.clone();
   addEventListener('resize', resize, { passive: true });
@@ -325,7 +349,6 @@
   // ---------- parallax (mouse only, clamped to +-80 px at the card plane) ----------
   const PARALLAX_MAX = 80;
   let pxTarget = 0, px = 0;
-  const overlay = stage.querySelector('.peek__overlay');
   if (matchMedia('(pointer: fine)').matches) {
     addEventListener('pointermove', e => {
       if (e.pointerType && e.pointerType !== 'mouse') return;
@@ -335,39 +358,97 @@
     document.addEventListener('pointerleave', () => { pxTarget = 0; });
   }
 
-  // ---------- scroll progress ----------
-  const lines = Array.from(stage.querySelectorAll('.peek__line'));
-  const meter = stage.querySelector('.peek__meter i');
-  const hint = stage.querySelector('.peek__hint');
-  let curStage = 0;
-  // 0 as the block enters at the bottom of the viewport, 1 as it leaves at the top
-  function progress() {
-    const r = stage.getBoundingClientRect(), vh = innerHeight || 1;
-    return Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));
-  }
+  // ---------- hit patches: the hand and the chip stack, projected to the screen ----------
+  // Only these two patches take the touch (touch-action: none in CSS), so the page still scrolls
+  // everywhere else over the table. They are placed again after every render, so parallax keeps them true.
+  const hitCards = stage.querySelector('.peek__hit--cards'), hitChips = stage.querySelector('.peek__hit--chips'), cue = stage.querySelector('.peek__cue');
   const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const clamp01 = v => Math.min(1, Math.max(0, v));
+  const v3 = new THREE.Vector3();
+  function project(x, y, z) { v3.set(x, y, z).project(camera); return [(v3.x + 1) / 2 * W, (1 - v3.y) / 2 * H]; }
+  function bounds(points, pad) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of points) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    return { x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad };
+  }
+  function place(el, b) { el.style.left = b.x + 'px'; el.style.top = b.y + 'px'; el.style.width = b.w + 'px'; el.style.height = b.h + 'px'; }
+  function placeHits() {
+    if (!hitCards || !hitChips) return;
+    camera.updateMatrixWorld(true); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+    const hx = hand.position.x, hz = hand.position.z;
+    const xl = hx - CARD_W * 0.8, xr = hx + CARD_W * 1.15, zf = hz - CARD_H * 0.6, zn = hz + CARD_H * 0.62;
+    const cards = bounds([project(xl, 0, zf), project(xr, 0, zf), project(xl, 0, zn), project(xr, 0, zn), project(xl, CARD_H * 0.4, hz), project(xr, CARD_H * 0.4, hz)], 14);
+    place(hitCards, cards);
+    const sp = stack.position, top = 7 * 0.33 + 6 * 0.55 + 0.6;
+    place(hitChips, bounds([project(sp.x - 2.6, 0, sp.z - 2.4), project(sp.x + 2.6, 0, sp.z - 2.4), project(sp.x - 2.6, 0, sp.z + 2.4), project(sp.x + 2.6, 0, sp.z + 2.4), project(sp.x - 3.2, top, sp.z), project(sp.x + 3.2, top, sp.z)], 12));
+    if (cue) { const [cx, cy] = project(hx + CARD_W * 0.25, 0, zf); cue.style.left = cx + 'px'; cue.style.top = (cy - 46) + 'px'; }
+  }
+
+  // ---------- interaction ----------
+  // Cards: press and drag up to peek; let go and they settle back. Enter or Space peeks from the keyboard.
+  // Chips: press the stack and lift; the halves riffle apart and clack back bottom-first on release.
+  let dragPeek = null, keyPeek = false, dragLift = 0;
+  const chipS = chips.map(() => 0), chipV = chips.map(() => 0), chipHold = chips.map(() => 0);
+  function touched() { stage.classList.add('is-touched'); }
+  function grab(el, onMove, onEnd) {
+    if (!el) return;
+    el.addEventListener('pointerdown', e => {
+      if (e.button) return;
+      e.preventDefault(); touched();
+      const id = e.pointerId, y0 = e.clientY, ends = ['pointerup', 'pointercancel', 'lostpointercapture'];
+      try { el.setPointerCapture(id); } catch (_) {}
+      const move = ev => { if (ev.pointerId === id) onMove(y0 - ev.clientY); };
+      const end = ev => {
+        if (ev.pointerId !== id) return;
+        el.removeEventListener('pointermove', move); ends.forEach(n => el.removeEventListener(n, end));
+        onEnd();
+      };
+      el.addEventListener('pointermove', move); ends.forEach(n => el.addEventListener(n, end));
+      onMove(0);
+    });
+  }
+  grab(hitCards, dy => { dragPeek = clamp01(dy / 140); dirty = true; }, () => { dragPeek = null; dirty = true; });
+  grab(hitChips, dy => { dragLift = clamp01(dy / 110); dirty = true; }, () => {
+    dragLift = 0; const now = performance.now(); chips.forEach((_, i) => { chipHold[i] = now + i * 40; }); dirty = true;
+  });
+  stage.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched(); keyPeek = !keyPeek; dirty = true; } });
+
+  function updateChips(dt, now) {
+    let moving = false;
+    for (let i = 0; i < chips.length; i++) {
+      const m = chips[i], rest = m.userData.rest;
+      const target = now < chipHold[i] ? chipS[i] : dragLift;
+      if (REDUCED) { chipV[i] = 0; chipS[i] = target; }
+      else {
+        chipV[i] += ((target - chipS[i]) * 170 - chipV[i] * 13) * dt;
+        chipS[i] += chipV[i] * dt;
+        if (chipS[i] < 0) { chipS[i] = 0; chipV[i] *= -0.3; }   // the clack
+      }
+      const s = chipS[i], side = i % 2 ? 1 : -1, fan = Math.min(1, i / 2);
+      m.position.set(rest.x + s * side * 0.9 * fan, rest.y + s * i * 0.55, rest.z + s * side * 0.25 * fan);
+      m.rotation.y = m.userData.restRot + s * 0.4 * i;
+      if (Math.abs(chipV[i]) > 0.02 || Math.abs(target - s) > 0.003) moving = true;
+    }
+    return moving;
+  }
 
   // ---------- frame loop ----------
-  let dirty = true, visible = true, lastTheta = -1, lastPx = 0;
+  let dirty = true, visible = true, lastTheta = -1, lastPx = 0, peek = 0, lastT = performance.now();
   const io = new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) dirty = true; }, { threshold: 0 });
   io.observe(pin);
 
   function frame(t) {
     requestAnimationFrame(frame);
+    const dt = Math.min(0.05, Math.max(0.001, (t - lastT) / 1000)); lastT = t;
     if (!visible) return;
     const time = t * 0.001;
-    const p = progress();
-    const k = clamp01((p - 0.14) / 0.3);        // fully up once the block sits mid-screen
-    const c = ease(k);
 
-    // stage copy
-    const s = k < 0.2 ? 0 : k < 0.8 ? 1 : 2;
-    if (s !== curStage) { curStage = s; lines.forEach(l => l.classList.toggle('is-on', +l.dataset.stage === s)); }
-    meter.style.transform = 'scaleY(' + k.toFixed(3) + ')';
-    hint.style.opacity = k > 0.05 ? '0' : '1';
-
-    // peel
+    // the peek follows the drag closely, eases back down on release, toggles from the keyboard
+    const want = dragPeek !== null ? dragPeek : (keyPeek ? 1 : 0);
+    let next = REDUCED ? want : peek + (want - peek) * (1 - Math.exp(-dt * (dragPeek !== null ? 24 : 8)));
+    if (Math.abs(want - next) < 1e-3) next = want;
+    if (next !== peek) { peek = next; dirty = true; }
+    const c = ease(peek);
     let theta = c * 1.5;                      // up to ~86 deg
     if (!REDUCED && c > 0.01) theta += c * (0.012 * Math.sin(time * 7.1) + 0.008 * Math.sin(time * 11.3 + 1.7));
     if (Math.abs(theta - lastTheta) > 1e-4) {
@@ -376,17 +457,18 @@
       lastTheta = theta; dirty = true;
     }
 
+    if (updateChips(dt, t)) dirty = true;
+
     // parallax
     px += (pxTarget - px) * (REDUCED ? 1 : 0.085);
     if (Math.abs(px - lastPx) > 0.02) {
       const vfov = THREE.MathUtils.degToRad(camera.fov);
       const worldPerPx = (2 * camDist * Math.tan(vfov / 2)) / H;
       camera.position.x = camBase.x + px * worldPerPx;
-      overlay.style.transform = 'translateX(' + (-px * 0.12).toFixed(2) + 'px)';
       lastPx = px; dirty = true;
     }
 
-    if (dirty) { renderer.render(scene, camera); dirty = false; }
+    if (dirty) { renderer.render(scene, camera); placeHits(); dirty = false; }
   }
   resize();
   bendCard(cardA, 0); bendCard(cardK, 0);

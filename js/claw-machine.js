@@ -21,8 +21,7 @@
   var LABELS = { toggle: 'Toggle', pill: 'Pill', checkbox: 'Checkbox', radio: 'Radio', button: 'Button', input: 'Text input' };
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var statusEl = root.querySelector('.claw__status'), triesEl = root.querySelector('[data-claw-tries]'),
-      caughtEl = root.querySelector('[data-claw-caught]'), dropBtn = root.querySelector('[data-claw-drop]'),
+  var statusEl = root.querySelector('.claw__status'), dropBtn = root.querySelector('[data-claw-drop]'),
       refillBtn = root.querySelector('[data-claw-refill]');
   function setStatus(html) { if (statusEl) statusEl.innerHTML = html; }
 
@@ -32,7 +31,13 @@
   // the stage colour is whatever the page paints behind the machine; read it, never assume it
   function stageColor() { var c = getComputedStyle(root).backgroundColor; return (c && c.indexOf('rgba(0, 0, 0, 0)') < 0) ? c : '#1c1c1c'; /* fallback */ }
   renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1);
-  document.addEventListener('theme:change', function () { renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1); });
+  // relative luminance of the stage behind the machine: dark looks keep the glass almost clear, light looks tint it
+  function stageLuminance() {
+    var c = new THREE.Color().setStyle(stageColor());
+    return [c.r, c.g, c.b].reduce(function (sum, v, i) { v = v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); return sum + v * [0.2126, 0.7152, 0.0722][i]; }, 0);
+  }
+  var tintGlass = function () {};
+  document.addEventListener('theme:change', function () { renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1); tintGlass(); });
   renderer.outputEncoding = THREE.sRGBEncoding;
 
   var scene = new THREE.Scene();
@@ -59,8 +64,15 @@
     var glassBox = new THREE.BoxGeometry(S.W + 0.2, S.H, S.D + 0.2);
     var edges = new THREE.LineSegments(new THREE.EdgesGeometry(glassBox), LINE);
     edges.position.y = S.H / 2; scene.add(edges);
-    var glass = new THREE.Mesh(glassBox, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.025, side: THREE.DoubleSide, depthWrite: false }));
-    glass.position.y = S.H / 2; scene.add(glass);
+    // tinted glass: the inside walls carry the tint (back faces), so the white claw and prizes keep their
+    // brightness in front of a darkened interior; the front pane is only a faint sheen. On a light stage the
+    // tint is strong enough for the machine to read as a machine, on Charcoal it is barely there.
+    var inner = new THREE.Mesh(glassBox, new THREE.MeshBasicMaterial({ color: 0x0b0b0b, transparent: true, opacity: 0.08, side: THREE.BackSide, depthWrite: false }));
+    inner.position.y = S.H / 2; scene.add(inner);
+    var pane = new THREE.Mesh(glassBox, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.03, side: THREE.FrontSide, depthWrite: false }));
+    pane.position.y = S.H / 2; scene.add(pane);
+    tintGlass = function () { var light = stageLuminance() > 0.35; inner.material.opacity = light ? 0.42 : 0.08; LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46); };
+    tintGlass();
 
     var body = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.4, 1.4, S.D + 0.4), BODY);
     body.position.y = -0.7; scene.add(body);
@@ -238,7 +250,7 @@
 
   function drop() {
     if (state !== 'idle' || left === 0) return;
-    tries++; triesEl.textContent = tries;
+    tries++;
     setStatus('Dropping…');
     go('drop');
   }
@@ -278,7 +290,6 @@
     scene.remove(it.group);
     items.splice(items.indexOf(it), 1);
     caught++; left--; counts[it.type]++;
-    caughtEl.textContent = caught;
     document.dispatchEvent(new CustomEvent('claw:caught', { detail: { type: it.type, label: LABELS[it.type].toLowerCase(), caught: caught } }));
     var slot = root.querySelector('.claw__slot[data-type="' + it.type + '"]');
     if (slot) {

@@ -69,7 +69,7 @@ html[data-theme="brutalist"] :is(.hero__name, .stats__head, .stats__fig, .case__
 /* ---------- micro type: mono, tracked capitals ---------- */
 html[data-theme="brutalist"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .who__role, .who__prev, .contact__foot,
   .foot, .top__meta, .facts dt, .outcome__how, .pager span, .ev__label, .ev figcaption, .shot figcaption, .calc__note, .row__word,
-  .ball__eyebrow, .ball__hint, .ball__btn, .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, th) {
+  .ball__eyebrow, .ball__hint, .ball__btn, .ball__count, .claw__hint, .button, .copy-btn, .claw__drop, th) {
   font-family: var(--mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; line-height: 1.35;
 }
 html[data-theme="brutalist"] :is(.who__role, .who__prev, .row__word) { font-size: 0.8125rem; }
@@ -155,31 +155,25 @@ html[data-theme="brutalist"] .case__who { margin-top: 0.75rem; color: var(--mute
 
 /* stages: boxed compartments with mono readouts */
 html[data-theme="brutalist"] .ball { padding-inline: 1.25rem; }
-html[data-theme="brutalist"] .ball__q, html[data-theme="brutalist"] .ball__a { font-family: var(--font-display); font-stretch: 68%; font-weight: 800; text-transform: uppercase; line-height: 0.95; font-size: clamp(22px, 2.4vw, 34px); }
+html[data-theme="brutalist"] .ball__q { font-family: var(--font-display); font-stretch: 68%; font-weight: 800; text-transform: uppercase; line-height: 0.95; font-size: clamp(22px, 2.4vw, 34px); }
 html[data-theme="brutalist"] .ball__btn { padding: 0.6rem 0.9rem; }
 @media (hover: hover) and (pointer: fine) { html[data-theme="brutalist"] .ball__btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); } }
 html[data-theme="brutalist"] .ball__meter { height: 6px; background: var(--bg); border: 1px solid var(--line); }
 html[data-theme="brutalist"] .claw { padding-left: 0; }
 html[data-theme="brutalist"] .claw__stage { border: var(--border) solid var(--line); }
-html[data-theme="brutalist"] .claw__hud { inset: 0 0 auto 0; }
-html[data-theme="brutalist"] .claw__hud span { background: var(--ink); color: var(--bg); padding: 6px 10px; }
-html[data-theme="brutalist"] .claw__hud b { color: var(--bg); }
 html[data-theme="brutalist"] .claw__key { background: var(--bg); border-width: var(--border); }
 html[data-theme="brutalist"] .claw__drop { border-radius: 0; background: var(--accent); color: var(--accent-ink); border-color: var(--ink); }
 html[data-theme="brutalist"] .claw__drop:active { background: var(--ink); color: var(--bg); }
 html[data-theme="brutalist"] .claw__hint { color: var(--ink); }
 html[data-theme="brutalist"] .claw__hint::before { content: "▲ "; content: "▲ " / ""; color: var(--accent); }
 /* the peek hint sits over the dark felt, not the paper, so it takes the paper colour */
-html[data-theme="brutalist"] .peek__hint { color: var(--bg); }
-html[data-theme="brutalist"] .peek__meter { width: 6px; background: color-mix(in srgb, var(--bg) 35%, transparent); }
-html[data-theme="brutalist"] .peek__meter i { background: var(--accent); }
 
 /* ---------- about ---------- */
 html[data-theme="brutalist"] .about { padding-top: 0; gap: 3rem; }
 html[data-theme="brutalist"] .about__row { align-items: start; }
 html[data-theme="brutalist"] .who { align-items: flex-start; text-align: left; border: var(--border) solid var(--line); padding: 0.75rem 0.75rem 0.5rem; gap: 0.25rem; }
 /* the portrait files are dark renders made for a dark page; give them their own ground */
-html[data-theme="brutalist"] .who__pics { background: #232324; margin-bottom: 0.5rem; }
+html[data-theme="brutalist"] .who__pics { margin-bottom: 0.5rem; }
 html[data-theme="brutalist"] .who__name { font-size: 2rem; }
 html[data-theme="brutalist"] .who__link { width: auto; height: auto; margin-top: 0.4rem; }
 @media (hover: hover) and (pointer: fine) { html[data-theme="brutalist"] .who__link:hover { color: var(--accent); } }

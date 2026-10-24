@@ -17,6 +17,11 @@
   --accent: #8fa68e;
   --accent-ink: #1c1c1c;
   --danger: #e0413a;
+  /* the page pair as seen from inside a remapped area: the fixed header leaves the hero and needs it.
+     These compute on the root, so a theme's override follows and an area's remap of --bg does not. */
+  --page-bg: var(--bg);
+  --page-ink: var(--ink);
+  --page-line: var(--line);
 
   /* field: the pale block at the end of every page */
   --field: #c8c5ba;
