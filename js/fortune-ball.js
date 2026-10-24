@@ -217,7 +217,7 @@
   var visible = true;
   if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { es.forEach(function (e) { visible = e.isIntersecting; }); }, { threshold: 0.05 }).observe(view);
 
-  var lastFrame = performance.now();
+  var lastFrame = performance.now(), onScreen = new THREE.Vector3();
   function frame(now) {
     requestAnimationFrame(frame);
     if (!visible) { lastFrame = now; return; }
@@ -229,6 +229,8 @@
     var jitter = held ? energy * 0.06 : 0;
     var px = dx + shake.x + (Math.random() - 0.5) * jitter, py = dy + shake.y + (Math.random() - 0.5) * jitter;
     ball.position.set(px, py, 0);
+    // the tooltip points at the ball, which drifts on its spiral: keep its anchor over the ball's centre on screen
+    if (hint) { onScreen.copy(ball.position).project(camera); hint.style.left = ((onScreen.x + 1) / 2 * view.clientWidth).toFixed(1) + 'px'; }
     var vx = (px - prevPos.x) / Math.max(dt, 0.001), vy = (py - prevPos.y) / Math.max(dt, 0.001); prevPos = { x: px, y: py };
     body.rotation.z += ((-vx * 0.35) - body.rotation.z) * 0.08;
     body.rotation.x += ((vy * 0.35) - body.rotation.x) * 0.08;
