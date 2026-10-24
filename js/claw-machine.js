@@ -103,8 +103,8 @@
                   body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null },
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     win95:      { body: 0xc0c0c0, paper: 0xffffff, ink: 0x000000, floor: 0x808080, roughness: 0.95, env: 0, steelEnv: 0.3, glass: 0.1 }, // flat grey chrome
-    press:      { floor: 0xa8a6a0, hole: 0x060606, steel: 0x303030, white: 0xc8c4bc, bone: 0x9c9890,                   // mid-tones everywhere, so the engraving has something to hatch
-                  body: 0x060606, paper: 0xc8c4bc, ink: 0x040404, roughness: 0.85, env: 0.3, steelEnv: 0.3, glass: 0.03, ornament: 'broadsheet' },
+    press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,                     // near-black cabinet, paper trim, the deco front on
+                  roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
     foil:       { body: 0x2a1c6e, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, floor: 0x1a1040, roughness: 0.35, metalness: 0.6, env: 1.2, glass: 0.2 }
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none

@@ -150,10 +150,10 @@ html[data-theme="broadsheet"] .case__who { color: var(--muted); margin-top: 0.75
 html[data-theme="broadsheet"] .ball { padding-inline: 1rem; }
 html[data-theme="broadsheet"] .ball__q { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
 html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
-/* the claw machine as a line engraving of an arcade crane: --claw-plate asks js/claw-machine.js for the
-   ink-and-paper cabinet and, where WebGPU exists, the Engraving pass; the marquee is a plate of ink above
-   the glass with the sign in the nameplate face, and the sign's invitation is a ticket at the foot of the stage */
-html[data-theme="broadsheet"] .claw { --claw-plate: engraving; padding-left: 0; }
+/* the claw machine as a 1930s arcade crane: js/claw-machine.js dresses the cabinet near black with its art deco
+   front for this look; the marquee is a plate of ink above the glass with the sign in the nameplate face, and the
+   sign's invitation is a ticket at the foot of the stage. (--claw-plate: engraving would add the engraved line pass.) */
+html[data-theme="broadsheet"] .claw { padding-left: 0; }
 html[data-theme="broadsheet"] .claw__box { gap: 0; }
 html[data-theme="broadsheet"] .claw__box::before {
   content: "Electric travelling crane"; content: "Electric travelling crane" / "";
