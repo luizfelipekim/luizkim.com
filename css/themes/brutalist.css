@@ -69,7 +69,7 @@ html[data-theme="brutalist"] :is(.hero__name, .stats__head, .stats__fig, .case__
 /* ---------- micro type: mono, tracked capitals ---------- */
 html[data-theme="brutalist"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .who__role, .who__prev, .contact__foot,
   .foot, .top__meta, .facts dt, .outcome__how, .pager span, .ev__label, .ev figcaption, .shot figcaption, .calc__note, .row__word,
-  .ball__eyebrow, .ball__hint, .ball__btn, .ball__count, .claw__hint, .peek__hint, .button, .copy-btn, .claw__drop, th) {
+  .ball__eyebrow, .ball__hint, .ball__btn, .ball__count, .claw__hint, .button, .copy-btn, .claw__drop, th) {
   font-family: var(--mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; line-height: 1.35;
 }
 html[data-theme="brutalist"] :is(.who__role, .who__prev, .row__word) { font-size: 0.8125rem; }
@@ -167,9 +167,6 @@ html[data-theme="brutalist"] .claw__drop:active { background: var(--ink); color:
 html[data-theme="brutalist"] .claw__hint { color: var(--ink); }
 html[data-theme="brutalist"] .claw__hint::before { content: "▲ "; content: "▲ " / ""; color: var(--accent); }
 /* the peek hint sits over the dark felt, not the paper, so it takes the paper colour */
-html[data-theme="brutalist"] .peek__hint { color: var(--bg); }
-html[data-theme="brutalist"] .peek__meter { width: 6px; background: color-mix(in srgb, var(--bg) 35%, transparent); }
-html[data-theme="brutalist"] .peek__meter i { background: var(--accent); }
 
 /* ---------- about ---------- */
 html[data-theme="brutalist"] .about { padding-top: 0; gap: 3rem; }

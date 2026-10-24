@@ -165,20 +165,25 @@ p { max-width: 62ch; text-wrap: pretty; }
 .ball.is-flat .ball__flat { display: block; }
 @media (prefers-reduced-motion: reduce) { .ball__cap, .ball__q, .ball__hint { transition: none; } }
 
-/* Poker case teaser: two cards that peel up as the block scrolls in */
+/* Poker case teaser: two cards on dark glass, dragged up to peek; a chip stack that riffles */
 .case__visual--peek { position: relative; background: var(--bg); color: var(--ink); }
 .peek__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .peek__vignette { position: absolute; inset: 0; pointer-events: none; background:
   /* a shadow over the 3D scene: part of the content, not the chrome, so it is not themed */
   radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(12, 12, 12, 0.5) 100%),
   linear-gradient(180deg, rgba(12, 12, 12, 0.25) 0%, transparent 26%, transparent 66%, rgba(12, 12, 12, 0.6) 100%); }
-.peek__overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
-  padding: 1.25rem max(16px, var(--m)) 1.5rem calc(max(16px, env(safe-area-inset-left, 0px), var(--m)) + 0.5rem); will-change: transform; }
-.peek__hint { align-self: flex-end; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); transition: opacity 400ms; }
-.peek__meter { position: absolute; right: max(16px, var(--m)); bottom: 1.5rem; width: 2px; height: 72px; background: var(--surface-2); overflow: hidden; }
-.peek__meter i { display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: top; transform: scaleY(0); }
+/* the hand and the chip stack each get a hit patch, placed by script over their projection; only there does the
+   touch belong to the table, so the page still scrolls everywhere else. The cue pulses until the first touch. */
+.peek__hit { position: absolute; touch-action: none; cursor: grab; }
+.peek__hit:active { cursor: grabbing; }
+.peek__cue { position: absolute; width: 36px; height: 36px; margin-left: -18px; pointer-events: none; color: #f4f4f4; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); animation: cue 1.6s ease-in-out infinite; }
+.peek__cue svg { width: 100%; height: 100%; }
+@keyframes cue { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-6px); } }
+.peek.is-touched .peek__cue { display: none; }
+.peek:focus-visible { outline-offset: -3px; }
 .peek__flat { display: none; }
-.peek.is-flat .peek__canvas, .peek.is-flat .peek__vignette, .peek.is-flat .peek__overlay { display: none; }
+.peek.is-flat :is(.peek__canvas, .peek__vignette, .peek__hit, .peek__cue) { display: none; }
+@media (prefers-reduced-motion: reduce) { .peek__cue { animation: none; opacity: 0.9; } }
 .peek.is-flat .peek__flat { display: grid; place-items: center; height: 100%; padding: var(--m); text-align: center; color: var(--muted); max-width: none; }
 @media (max-width: 900px) {
   .work { gap: 88px; padding-top: 3rem; }
@@ -414,14 +419,13 @@ p { max-width: 62ch; text-wrap: pretty; }
     </article>
 
     <article class="case case--3" id="case-3">
-      <div class="case__visual case__visual--peek peek" data-reveal aria-label="Two poker cards face down on the felt; they peel up as you scroll">
+      <div class="case__visual case__visual--peek peek" data-reveal tabindex="0" aria-label="Two poker cards face down on a glass table. Drag them up, or press Enter, to peek.">
         <canvas class="peek__canvas" aria-hidden="true"></canvas>
         <div class="peek__vignette" aria-hidden="true"></div>
-        <div class="peek__overlay">
-          <p class="peek__hint" aria-hidden="true">Scroll to peek</p>
-          <div class="peek__meter" aria-hidden="true"><i></i></div>
-        </div>
-        <p class="peek__flat">Two cards face down on the felt. The 3D peek needs WebGL, which this browser doesn't offer.</p>
+        <div class="peek__hit peek__hit--cards" aria-hidden="true"></div>
+        <div class="peek__hit peek__hit--chips" aria-hidden="true"></div>
+        <div class="peek__cue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        <p class="peek__flat">Two cards face down on a glass table. The 3D peek needs WebGL, which this browser doesn't offer.</p>
       </div>
       <div class="case__cluster">
         <div class="case__meta">
@@ -520,6 +524,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 </script>
 
 <script src="js/three.min.js" defer></script>
+<script src="js/Reflector.js" defer></script>
 <script src="js/fortune-ball.js" defer></script>
 <script src="js/poker-peek.js" defer></script>
 

@@ -120,7 +120,7 @@ html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__
   font-family: var(--font); font-weight: 400; letter-spacing: 0; line-height: 1.17;
 }
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
-  .ball__count, .claw__hint, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ball__count, .claw__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
   font-family: var(--font); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 16.5px;
 }
@@ -187,9 +187,6 @@ html[data-theme="windows95"] .claw { padding-left: 0; gap: 6px; }
 html[data-theme="windows95"] .claw__stage { border: 0; box-shadow: var(--sunken); padding: 2px; }
 html[data-theme="windows95"] .claw__hint { background: var(--chrome); box-shadow: var(--sunken); padding: 4px 8px; color: #000000; }
 /* the peek hint sits over the dark felt, so it takes white */
-html[data-theme="windows95"] .peek__hint { color: #ffffff; }
-html[data-theme="windows95"] .peek__meter { width: 14px; background: var(--chrome); box-shadow: var(--sunken); padding: 2px; }
-html[data-theme="windows95"] .peek__meter i { background: repeating-linear-gradient(180deg, var(--title) 0 8px, transparent 8px 10px); }
 
 /* ---------- about ---------- */
 html[data-theme="windows95"] .about { padding-top: 28px; padding-bottom: 48px; gap: 28px; }
