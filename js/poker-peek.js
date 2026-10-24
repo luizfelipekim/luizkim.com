@@ -344,7 +344,8 @@
   let camDist = CAM_BASE.distanceTo(LOOK);
 
   // lights: one fixed rig (hemisphere, key spot, fill, under, rim), so a look change never recompiles
-  // a material; each look sets the colours and intensities, and the key's penumbra.
+  // a material; each look sets the colours and intensities, where the key hangs and how wide it opens,
+  // the smoke in the glass, the fog, and the room the scene sits in (an image-based environment, see RIGS).
   const hemi = new THREE.HemisphereLight(0x9a9a9a, 0x141414, 0.38); scene.add(hemi);
   const key = new THREE.SpotLight(0xffffff, 1.6, 0, 0.55, 0.65, 1);
   key.position.set(-18, 56, 22); key.target.position.set(0, 0, 0);
@@ -356,17 +357,51 @@
   const fill = new THREE.PointLight(0xdcdcdc, 0.26, 0, 2); fill.position.set(30, 18, 42); scene.add(fill);
   const under = new THREE.PointLight(0xffffff, 0.38, 0, 2); under.position.set(2, 8, 26); scene.add(under);
   const rim = new THREE.DirectionalLight(0xbfbfbf, 0.3); rim.position.set(0, 14, -40); scene.add(rim);
-  // The light sets the mood. Charcoal: a white key over smoked glass. Manual: flat overcast daylight
-  // and one hard shadow, print without gloss. Press: a warm reading lamp from the upper left over the
-  // paper. Win95: flat, no shade. Foil: a violet key with cyan and rose rims, so the foil has something to catch.
+  // The light sets the mood, and the table carries it. Each look is a place:
+  // Charcoal, a card room after hours: one white softbox high front-left over smoked glass, a cool strip
+  //   behind, the rest of the room black, so the glass holds a single long streak and the chips a hard edge.
+  // Manual, a copy desk under a skylight: flat overcast daylight from straight above, a wide cone, one
+  //   soft-edged shadow, no film curve and no gloss, print as print.
+  // Press, a reading lamp late: one warm bulb low from the upper left, a tight cone that pools on the
+  //   paper and lets the edges of the slab fall into shade, warm bounce off the desk, long shadows.
+  // Win95, Solitaire: no light at all, a flat green with a stamped shadow.
+  // Foil, the arena: a violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
+  //   horizon close, and a neon studio for the foil and the chip gilt to catch.
+  // key: [colour, intensity, penumbra, angle, position]; mirror: the smoke in the glass; fog: [near, far];
+  // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
   const RIGS = {
-    default: { hemi: [0x9a9a9a, 0x141414, 0.38], key: [0xffffff, 1.6, 0.65], fill: [0xdcdcdc, 0.26], under: [0xffffff, 0.38], rim: [0xbfbfbf, 0.3], table: 'glass', tone: true, exposure: 1.05, shadow: 0.45 },
-    manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.9, 0.05], fill: [0xffffff, 0.08], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', tone: false, exposure: 1, shadow: 0.38 },
-    press: { hemi: [0xfff3e2, 0xd9cfbc, 0.85], key: [0xffd9a8, 1.1, 1.0], fill: [0xffe6c8, 0.22], under: [0xffe6c8, 0.12], rim: [0xffffff, 0], table: 'matte', tone: true, exposure: 1.22, shadow: 0.28 },
-    win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', tone: false, exposure: 1, shadow: 0.3 },
-    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.42], key: [0xc3b4ff, 1.25, 0.7], fill: [0xff9df0, 0.5], under: [0x8fe4ff, 0.45], rim: [0x8fe4ff, 0.7], table: 'glass', tone: true, exposure: 1.1, shadow: 0.5 }
+    default: { hemi: [0x9a9a9a, 0x101010, 0.3], key: [0xffffff, 1.7, 0.6, 0.5, [-18, 56, 22]], fill: [0xdcdcdc, 0.18], under: [0xffffff, 0.3], rim: [0xaab6c4, 0.4], table: 'glass', mirror: 0x4a4a4a, fog: [42, 120], tone: true, exposure: 1.05, shadow: 0.5, room: 'cardroom', env: 0.7 },
+    manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
+    press: { hemi: [0xfff3e2, 0xcbbfa8, 0.42], key: [0xffcf92, 1.75, 0.9, 0.33, [-30, 38, 20]], fill: [0xffe6c8, 0.14], under: [0xffdcb0, 0.1], rim: [0xffffff, 0], table: 'matte', fog: [48, 130], tone: true, exposure: 1.18, shadow: 0.34, room: 'lamp', env: 0.6 },
+    win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
+    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.36], key: [0xc3b4ff, 1.3, 0.7, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.45], under: [0x8fe4ff, 0.4], rim: [0x8fe4ff, 0.8], table: 'glass', mirror: 0x5a4c8e, fog: [34, 96], tone: true, exposure: 1.1, shadow: 0.55, room: 'arena', env: 1 }
   };
   function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
+  // the rooms: small lit boxes rendered once into a prefiltered environment (PMREM), the vendored three has
+  // no HDR loader and the page needs no download for this. Each lamp is a plane facing the centre:
+  // [width, height, x, y, z, colour, gain]. Built on first use, kept for the tab.
+  const ROOMS = {
+    cardroom: { bg: 0x070707, lamps: [[16, 5, -5, 10, 4, 0xffffff, 4.2], [2.5, 12, 10, 3, -6, 0x9fb4c8, 1.4], [10, 2, 0, 1, -10, 0x5a5a5a, 1.0], [6, 3, 8, 2, 8, 0xffe9d2, 0.45]] },
+    overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
+    lamp: { bg: 0x241c12, lamps: [[5, 5, -8, 7, 4, 0xffd29a, 5.5], [14, 6, 4, -2, 6, 0xd9c7a6, 1.0], [8, 3, 0, 4, -9, 0x6a5840, 0.8], [3, 8, 9, 3, 0, 0x8a7458, 0.6]] },
+    arena: { bg: 0x14102a, lamps: [[14, 4, 0, 9, 2, 0xfff4e0, 5], [3, 10, -9, 2, 3, 0x8fe4ff, 2.5], [3, 10, 9, 3, -2, 0xff9df0, 2.5], [10, 2, 0, 1, -9, 0xc3b4ff, 1.8]] }
+  };
+  const envs = {};
+  function roomEnv(name) {
+    if (!name || !ROOMS[name]) return null;
+    if (envs[name]) return envs[name];
+    const r = ROOMS[name], s = new THREE.Scene(); s.background = new THREE.Color(r.bg);
+    r.lamps.forEach(([w, h, x, y, z, hex, gain]) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: hex, side: THREE.DoubleSide }));
+      m.material.color.multiplyScalar(gain); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m);
+    });
+    const g = new THREE.PMREMGenerator(renderer);
+    const t = g.fromScene(s, 0.04).texture; g.dispose();
+    s.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    return (envs[name] = t);
+  }
+  // everything that takes the room: set per look so a paper look stays matte while the arena blazes
+  const lit = [];
 
   // table: dark glass. A planar mirror (THREE.Reflector, three r128 examples, vendored as js/Reflector.js)
   // held down to a smoked-glass strength, a shadow catcher so the cards and chips still ground, and an
@@ -388,7 +423,7 @@
     };
     const res = matchMedia('(pointer: coarse)').matches ? 512 : 1024;
     const mirror = new THREE.Reflector(TABLE, { shader: smoked, color: 0x4a4a4a, textureWidth: res, textureHeight: res, clipBias: 0.003 });
-    mirror.rotation.x = -Math.PI / 2; scene.add(mirror); glass.push(mirror);
+    mirror.rotation.x = -Math.PI / 2; scene.add(mirror); glass.push(mirror); glass.mirror = mirror;
   } else {
     const slab = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.3, metalness: 0.1 }));
     slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab); glass.push(slab);
@@ -472,10 +507,10 @@
   // Foil: a metal with the folds as relief and a thin-film colour laid over the diffuse term. The hue
   // turns with the angle between the eye and the (bumped) surface and slides along the folds, so it
   // travels when the card lifts and when the camera drifts on parallax. The dark print is masked out
-  // by its own darkness. A small studio environment gives the silver something to reflect.
+  // by its own darkness. The arena room (RIGS.foil) gives the silver something to reflect.
   const bumpCanvas = mkCanvas(BW, BH); drawBump(bumpCanvas);
   const bumpTex = new THREE.CanvasTexture(bumpCanvas);
-  const foilMat = new THREE.MeshStandardMaterial({ map: backTex, bumpMap: bumpTex, bumpScale: 0.025, roughness: 0.3, metalness: 0.55, alphaTest: 0.5, envMapIntensity: 1.2 });
+  const foilMat = new THREE.MeshStandardMaterial({ map: backTex, bumpMap: bumpTex, bumpScale: 0.025, roughness: 0.3, metalness: 0.55, alphaTest: 0.5 });
   foilMat.onBeforeCompile = shader => {
     shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       {
@@ -488,21 +523,6 @@
         totalEmissiveRadiance += iris * foil * (0.07 + 0.25 * facing * facing);
       }`);
   };
-  function studioEnv() {
-    const s = new THREE.Scene(); s.background = new THREE.Color(0x14102a);
-    const lamp = (w, h, x, y, z, hex, gain) => {
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: hex, side: THREE.DoubleSide }));
-      m.material.color.multiplyScalar(gain); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m);
-    };
-    lamp(14, 4, 0, 9, 2, 0xfff4e0, 5);       // the key: a long warm softbox overhead
-    lamp(3, 10, -9, 2, 3, 0x8fe4ff, 2.5);     // cyan edge
-    lamp(3, 10, 9, 3, -2, 0xff9df0, 2.5);     // rose edge
-    lamp(10, 2, 0, 1, -9, 0xc3b4ff, 1.8);     // violet behind
-    const g = new THREE.PMREMGenerator(renderer);
-    const t = g.fromScene(s, 0.04).texture; g.dispose();
-    return t;
-  }
-
   // Card geometry: two subdivided planes (back +z, face -z) whose rounded corners are
   // alpha-clipped by the texture, plus a thin rim that follows the rounded outline, so
   // nothing square sticks out past the corners when the card bends.
@@ -587,6 +607,11 @@
     drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas); drawChips();
     backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = true;
   }
+  // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
+  const take = (m, gain) => { m.userData.envGain = gain; lit.push(m); };
+  take(foilMat, 1.2); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
+  take(sheen.material, 1); take(rail.material, 0.8); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
+  [chipMain, chipCap].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
   let currentLook = null;
   function applyLook() {
@@ -603,8 +628,15 @@
     shadows.material.opacity = rig.shadow;
     // the light
     setLight(hemi, rig.hemi[0], rig.hemi[2]); hemi.groundColor.setHex(rig.hemi[1]);
-    setLight(key, rig.key[0], rig.key[1], rig.key[2]); setLight(fill, rig.fill[0], rig.fill[1]);
+    setLight(key, rig.key[0], rig.key[1], rig.key[2]); key.angle = rig.key[3]; key.position.fromArray(rig.key[4]);
+    setLight(fill, rig.fill[0], rig.fill[1]);
     setLight(under, rig.under[0], rig.under[1]); setLight(rim, rig.rim[0], rig.rim[1]);
+    // the glass takes the look's smoke, the horizon its fog
+    if (glass.mirror && rig.mirror !== undefined) glass.mirror.material.uniforms.color.value.setHex(rig.mirror);
+    scene.fog.near = rig.fog[0]; scene.fog.far = rig.fog[1];
+    // the room: every standard material reflects it and takes its light; the flat looks have none
+    scene.environment = roomEnv(rig.room);
+    lit.forEach(m => { m.envMapIntensity = rig.env * m.userData.envGain; });
     // the film: the flat looks (Solitaire, the manual) take no curve, so their colours come out exact
     const tone = rig.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
     renderer.toneMappingExposure = rig.exposure;
@@ -613,10 +645,6 @@
       scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
     }
     // the deck
-    if (l === 'foil' && !foilMat.envMap) {
-      const env = studioEnv(); foilMat.envMap = env; foilMat.needsUpdate = true;
-      [chipMain, chipCap].forEach(set => set.mats.forEach(m => { m.envMap = env; m.envMapIntensity = 0.6; m.needsUpdate = true; }));
-    }
     const back = l === 'foil' ? foilMat : (solitaire || paper) ? backFlat : backMat;
     [cardA, cardK].forEach(c => { c.material[0] = back; c.material[1].roughness = solitaire ? 1 : paper ? 0.9 : 0.55; });
     edgeMat.color.set({ win95: 0xffffff, manual: 0xe6e3dc, press: 0xf3f0ea }[l] || 0xf4f4f4);
