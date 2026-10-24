@@ -47,13 +47,23 @@ p { max-width: 62ch; text-wrap: pretty; }
 }
 .button:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .button:hover { background: var(--ink); color: var(--bg); } }
-/* theme picker: a native select dressed as the site's pill; its list takes the page pair */
-.pick { position: relative; display: inline-flex; align-items: center; }
-.pick__select { appearance: none; -webkit-appearance: none; background: transparent; color: inherit; font: inherit; font-size: var(--step-small); font-weight: var(--weight-strong); line-height: 1; min-height: 2.5rem; padding: 0 2rem 0 0.9rem; border: var(--border) solid color-mix(in srgb, currentColor 35%, transparent); border-radius: var(--radius-pill); cursor: pointer; transition: border-color var(--t-hover) ease; }
-.pick__select option { color: var(--page-ink); background: var(--page-bg); }
-.pick::after { content: ""; position: absolute; right: 0.9rem; top: 50%; width: 0.4rem; height: 0.4rem; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-@media (hover: hover) and (pointer: fine) { .pick__select:hover { border-color: currentColor; } }
-@media (pointer: coarse) { .pick__select { font-size: 16px; } } /* phones zoom into smaller controls */
+/* theme picker: a palette icon (Lucide) that opens a menu of the looks. The menu takes the page pair, so it reads
+   the same over the hero and the page; each look sets the icon's line weight through --icon-stroke / --icon-cap */
+.pick { position: relative; display: inline-flex; }
+.pick__btn { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; border: var(--border) solid color-mix(in srgb, currentColor 30%, transparent); border-radius: var(--radius-pill); background: transparent; color: inherit; cursor: pointer; transition: border-color var(--t-hover) ease, background-color var(--t-hover) ease; }
+.pick__btn[aria-expanded="true"] { border-color: currentColor; }
+@media (hover: hover) and (pointer: fine) { .pick__btn:hover { border-color: currentColor; } }
+.pick__icon { width: 20px; height: 20px; stroke-width: var(--icon-stroke); stroke-linecap: var(--icon-cap); stroke-linejoin: var(--icon-join); }
+.pick__menu { position: absolute; z-index: 60; top: calc(100% + 10px); right: 0; display: grid; min-width: 13rem; padding: 6px; background: color-mix(in srgb, var(--page-bg) 94%, transparent); color: var(--page-ink); border: var(--border) solid color-mix(in srgb, var(--page-line) 80%, transparent); border-radius: calc(var(--radius) * 2); box-shadow: 0 24px 48px -20px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.12); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transform-origin: top right; animation: pick-in 180ms var(--ease-out); }
+.pick__menu[hidden] { display: none; }
+.pick__item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; padding: 0.6rem 0.75rem; border: 0; border-radius: var(--radius); background: transparent; color: inherit; font: inherit; font-size: var(--step-small); font-weight: var(--weight); text-align: left; cursor: pointer; }
+.pick__item:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) { .pick__item:hover { background: color-mix(in srgb, var(--page-ink) 9%, transparent); } }
+.pick__item[aria-checked="true"] { font-weight: var(--weight-strong); }
+.pick__item[aria-checked="true"]::after { content: ""; width: 0.6rem; height: 0.32rem; margin-top: -0.2rem; border-left: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); }
+@keyframes pick-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .pick__menu { animation: none; } }
+@media (pointer: coarse) { .pick__item { min-height: 44px; font-size: 16px; } }
 
 /* ---------- hero: film title, bottom edge ---------- */
 .hero { position: relative; z-index: 5; height: 100svh; min-height: 560px; overflow: hidden; color: var(--ink); isolation: isolate; color-scheme: light; }
@@ -357,7 +367,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
         <a href="#work">Work</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
-        <span class="pick"><select class="pick__select" data-theme-pick aria-label="Theme"><option value="charcoal">Default</option><option value="brutalist">Brutalist</option><option value="windows95">Windows 95</option><option value="broadsheet">Broadsheet</option><option value="esports">E-sports</option></select></span>
+        <span class="pick" data-theme-pick><button class="pick__btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="pick-menu" aria-label="Theme: Default"><svg class="pick__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button><span class="pick__menu" id="pick-menu" role="menu" aria-label="Theme" hidden><button class="pick__item" type="button" role="menuitemradio" aria-checked="true" data-look="charcoal">Default</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="brutalist">Brutalist</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="windows95">Windows 95</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="broadsheet">Broadsheet</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="esports">E-sports</button></span></span>
         <a class="button" href="#contact">Email me</a>
       </nav>
     </div>

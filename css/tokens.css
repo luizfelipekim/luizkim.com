@@ -56,6 +56,10 @@
   --radius: 6px;
   --radius-pill: 999px;
   --border: 1px;
+  /* icons are Lucide line drawings; each look sets their weight and line ends */
+  --icon-stroke: 1.5;
+  --icon-cap: round;
+  --icon-join: round;
 
   /* space */
   --m: clamp(1.25rem, 2.2vw, 2rem);

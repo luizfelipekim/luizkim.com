@@ -250,3 +250,14 @@ html[data-theme="windows95"] .foot a { color: #ffffff; }
   html[data-theme="windows95"] .top__title { font-size: 44px; }
   html[data-theme="windows95"] .stats__fig { font-size: 55px; }
 }
+
+/* ---------- theme picker: a raised toolbar button; the menu is a Windows 95 menu, navy selection ---------- */
+html[data-theme="windows95"] { --icon-stroke: 2; --icon-cap: square; --icon-join: miter; }
+html[data-theme="windows95"] .pick__btn { border: 0; border-radius: 0; background: var(--chrome); color: #000000; box-shadow: var(--raised); }
+html[data-theme="windows95"] .pick__btn[aria-expanded="true"], html[data-theme="windows95"] .pick__btn:active { box-shadow: var(--pressed); }
+html[data-theme="windows95"] .pick__menu { top: calc(100% + 2px); padding: 3px; border: 0; border-radius: 0; background: var(--chrome); color: #000000; box-shadow: var(--raised), 2px 2px 0 rgb(0 0 0 / 0.5); -webkit-backdrop-filter: none; backdrop-filter: none; animation: none; }
+html[data-theme="windows95"] .pick__item { border-radius: 0; padding: 5px 24px 5px 22px; font-family: var(--font); font-size: 16.5px; position: relative; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="windows95"] .pick__item:hover { background: var(--title); color: #ffffff; } }
+html[data-theme="windows95"] .pick__item:focus-visible { background: var(--title); color: #ffffff; outline: 1px dotted #ffffff; outline-offset: -3px; }
+html[data-theme="windows95"] .pick__item[aria-checked="true"] { font-weight: var(--weight); }
+html[data-theme="windows95"] .pick__item[aria-checked="true"]::after { position: absolute; left: 7px; top: 50%; width: 7px; height: 4px; margin-top: -4px; border-width: 2px; }
