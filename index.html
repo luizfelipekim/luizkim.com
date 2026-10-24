@@ -300,14 +300,17 @@ p { max-width: 62ch; text-wrap: pretty; }
    (title, then the story), no tracked label above the ball's question, and a fuller ending. */
 html:not([data-theme]) {
   --rhythm: clamp(6rem, 11vw, 10rem);
+  /* two sizes added to the scale, so the section heads and the case titles cannot drift apart */
+  --step-section: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  --step-case: clamp(2rem, 1.2rem + 2.3vw, 3.25rem);
 }
 html:not([data-theme]) .hero__lead { max-width: 34ch; font-size: var(--step-lead); line-height: 1.35; letter-spacing: -0.01em; }
 
 html:not([data-theme]) .stats { padding-top: var(--rhythm); padding-bottom: var(--rhythm); }
 html:not([data-theme]) .stats__list { grid-column: 1 / -1; }
-html:not([data-theme]) .stats__head { font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem); line-height: 1.05; letter-spacing: -0.025em; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+html:not([data-theme]) .stats__head { font-size: var(--step-section); line-height: 1.05; letter-spacing: -0.025em; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
 html:not([data-theme]) .stats__row { gap: 1rem; padding-top: 1.25rem; border-top: var(--border) solid var(--line); }
-html:not([data-theme]) .stats__fig { font-size: clamp(3.5rem, 2rem + 4.6vw, 6.5rem); font-weight: var(--weight); line-height: 0.9; letter-spacing: -0.045em; }
+html:not([data-theme]) .stats__fig { font-size: clamp(3.5rem, 2rem + 4.2vw, 6rem); font-weight: var(--weight); line-height: 0.9; letter-spacing: -0.035em; font-variant-numeric: proportional-nums; }
 html:not([data-theme]) .stats__txt { color: var(--muted); }
 html:not([data-theme]) .stats__txt strong { color: var(--ink); }
 
@@ -316,22 +319,21 @@ html:not([data-theme]) .ball__eyebrow { font-size: var(--step-small); letter-spa
 html:not([data-theme]) .work { gap: var(--rhythm); padding-top: 0; padding-bottom: var(--rhythm); }
 html:not([data-theme]) .case__cluster { gap: 0; }
 html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; max-width: 30rem; }
-html:not([data-theme]) .case__title { font-size: clamp(2rem, 1.2rem + 2.3vw, 3.25rem); line-height: 1; letter-spacing: -0.035em; }
+html:not([data-theme]) .case__title { font-size: var(--step-case); line-height: 1; letter-spacing: -0.035em; }
 html:not([data-theme]) .case__desc { color: var(--muted); }
 html:not([data-theme]) .case__who { margin-top: 0.75rem; }
 html:not([data-theme]) .case__cta { margin-top: 1.75rem; }
 
 html:not([data-theme]) .about { padding-top: 0; padding-bottom: var(--rhythm); }
-html:not([data-theme]) .about__para { font-size: clamp(1.375rem, 1.05rem + 1vw, 2rem); line-height: 1.3; letter-spacing: -0.015em; max-width: 34ch; }
+html:not([data-theme]) .about__para { font-size: var(--step-head); line-height: 1.3; letter-spacing: -0.015em; max-width: 34ch; }
 
 html:not([data-theme]) .contact { height: auto; min-height: 88svh; padding-top: clamp(3rem, 6vw, 5rem); }
-html:not([data-theme]) .contact__intro { font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem); line-height: 1.1; letter-spacing: -0.025em; max-width: 20ch; }
+html:not([data-theme]) .contact__intro { font-size: var(--step-section); line-height: 1.1; letter-spacing: -0.025em; max-width: 20ch; }
 html:not([data-theme]) .contact__foot { color: var(--muted); }
 html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
 
 @media (max-width: 900px) {
   html:not([data-theme]) .claw__box { margin-bottom: 1rem; }
-  html:not([data-theme]) .case__title { font-size: clamp(2rem, 8vw, 2.75rem); }
 }
 @media (max-width: 700px) {
   html:not([data-theme]) .hero__name { font-size: 25vw; }
