@@ -149,7 +149,7 @@ html[data-theme="broadsheet"] .ball__q { font-size: clamp(22px, 2.2vw, 30px); li
 html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
 /* the claw machine as a line engraving of an arcade crane: --claw-plate asks js/claw-machine.js for the
    ink-and-paper cabinet and, where WebGPU exists, the Engraving pass; the marquee is a plate of ink above
-   the glass with the sign in the nameplate face, and the sign's invitation is a ticket in the glass's top corner */
+   the glass with the sign in the nameplate face, and the sign's invitation is a ticket at the foot of the stage */
 html[data-theme="broadsheet"] .claw { --claw-plate: engraving; padding-left: 0; }
 html[data-theme="broadsheet"] .claw__box { gap: 0; }
 html[data-theme="broadsheet"] .claw__box::before {
@@ -162,7 +162,7 @@ html[data-theme="broadsheet"] .claw__box::before {
 html[data-theme="broadsheet"] .claw__stage { border: 1px solid var(--line); }
 html[data-theme="broadsheet"] .claw__stage::after {
   content: "See it operate · Try your skill"; content: "See it operate · Try your skill" / "";
-  position: absolute; right: 14px; top: 14px; pointer-events: none; white-space: nowrap;
+  position: absolute; left: 14px; bottom: 14px; pointer-events: none; white-space: nowrap;
   font-family: var(--sans); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
   background: var(--bg); border: 1px solid var(--line); border-bottom-width: 3px; padding: 5px 10px 6px;
 }
