@@ -1,13 +1,20 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Luiz Kim</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500&family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/tokens.css">
-<script>document.documentElement.classList.add('js')</script>
+<script>
+document.documentElement.classList.add('js');
+// The home page opens at the top. A reload or Back would otherwise restore the old scroll position
+// and land visitors on a case study; a hash in the URL still wins.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+if (!location.hash) { scrollTo(0, 0); addEventListener('pageshow', function (e) { if (e.persisted && !location.hash) scrollTo(0, 0); }); }
+</script>
 <style>
 /* Layout: the name as a monument on the bottom edge of a full-bleed photograph; after it a small, calm
    page in one grotesk at two sizes; the ending flips to a pale concrete field with the email as display type. */
@@ -21,6 +28,7 @@ body {
 h1, h2, h3, p, figure, ul, ol, dl, dd { margin: 0; }
 ul[class], ol[class] { padding: 0; list-style: none; }
 img, svg { display: block; max-width: 100%; }
+[hidden]:not([hidden="until-found" i]) { display: none !important; }
 img { height: auto; }
 a { color: inherit; }
 button, input { font: inherit; color: inherit; }
@@ -85,6 +93,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 .stats__row { display: flex; flex-direction: column; gap: 0.75rem; text-decoration: none; }
 .stats__fig { font-family: var(--font-display); font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: var(--weight-strong); line-height: 1; letter-spacing: -0.03em; }
 .stats__txt { max-width: 28ch; color: var(--ink); font-size: var(--step-body); line-height: 1.45; }
+.stats__txt strong { font-weight: calc(var(--weight-strong) + 100); }
 
 @media (max-width: 900px) {
   .stats { padding-top: 6rem; padding-bottom: 6rem; }
@@ -97,7 +106,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 }
 
 /* ---------- work: oversized visual, small cluster ---------- */
-.work { display: flex; flex-direction: column; gap: 140px; padding-top: 6rem; padding-bottom: var(--section); overflow: hidden; }
+.work { display: flex; flex-direction: column; gap: 140px; padding-top: 6rem; padding-bottom: clamp(4rem, 8vw, 7rem); overflow: hidden; }
 .case { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: end; }
 .case__visual { grid-column: 1 / 8; height: 64svh; min-height: 400px; max-height: 610px; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); overflow: hidden; }
 .case--2 .case__visual { height: 48svh; }
@@ -202,20 +211,13 @@ p { max-width: 62ch; text-wrap: pretty; }
 }
 
 /* ---------- about: side facts, wide paragraph ---------- */
-.about { padding-top: var(--section); padding-bottom: var(--section); display: flex; flex-direction: column; gap: 120px; }
+.about { padding-top: clamp(4rem, 8vw, 7rem); padding-bottom: clamp(4rem, 8vw, 7rem); display: flex; flex-direction: column; gap: 0; }
 .about__row { display: grid; grid-template-columns: 34% minmax(0, 1fr); column-gap: 0; align-items: center; }
 .who { width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; }
 .who__pics { position: relative; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.9rem;
-  /* the portrait files sit on #232324, a shade lighter than the page, so a soft edge mask hides the square frame */
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 58%, transparent 72%); mask-image: radial-gradient(circle at 50% 50%, black 58%, transparent 72%); }
-.who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: lighten; }
-/* the topology render fades in over the grey portrait as the card scrolls into view:
-   grey as its top edge appears, fully drawn by the time the whole card is on screen */
-.who__pic--mesh { opacity: 0; }
-@supports (animation-timeline: view()) {
-  .who__pic--mesh { animation: mesh-fade linear both; animation-timeline: view(); animation-range: entry 20% entry 100%; }
-}
-@keyframes mesh-fade { from { opacity: 0; } to { opacity: 1; } }
+  /* the render is cut out of its ground; only the flat crop at the shoulders is faded away */
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
+.who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .who__name { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; }
 .who__role { font-size: var(--step-body); }
 .who__prev { font-size: var(--step-body); color: var(--muted); }
@@ -228,7 +230,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 .about__list li { display: flex; justify-content: space-between; gap: 1rem; }
 .about__list li span { color: var(--muted); text-align: right; }
 @media (max-width: 800px) {
-  .about { gap: 40px; padding-top: 6rem; padding-bottom: 6rem; }
+  .about { gap: 0; padding-top: 5rem; padding-bottom: 5rem; }
   .about__row { display: flex; flex-direction: column; gap: 2rem; }
   .who { align-self: center; }
   .about__para { max-width: none; }
@@ -271,6 +273,8 @@ p { max-width: 62ch; text-wrap: pretty; }
 @keyframes rise { to { opacity: 1; transform: none; } }
 </style>
 <script src="js/theme.js"></script>
+</head>
+<body>
 
 <div class="page">
 
@@ -303,15 +307,15 @@ p { max-width: 62ch; text-wrap: pretty; }
         <div class="stats__rows">
           <a class="stats__row" href="case-ai.html" data-reveal style="--i:0">
             <span class="stats__fig nums">2.2×</span>
-            <span class="stats__txt">handoffs per designer per week, 0.8 to 1.8, same team of four</span>
+            <span class="stats__txt">handoffs per designer per week <strong>with AI in the workflow</strong>, 0.8 to 1.8, same team of four</span>
           </a>
           <a class="stats__row" href="case-system.html" data-reveal style="--i:1">
             <span class="stats__fig nums">56%</span>
-            <span class="stats__txt">faster design tasks on one design system for more than 40 brands, zeroheight Award for collaboration</span>
+            <span class="stats__txt">faster design tasks on one <strong>design system</strong> for more than 40 brands, zeroheight Award for collaboration</span>
           </a>
-          <a class="stats__row" href="case-system.html" data-reveal style="--i:2">
-            <span class="stats__fig nums">43%</span>
-            <span class="stats__txt">faster development delivery on the same system (Jira hours)</span>
+          <a class="stats__row" href="case-poker.html" data-reveal style="--i:2">
+            <span class="stats__fig nums">0 to most</span>
+            <span class="stats__txt"><strong>research</strong> studies of any product team, out-researching Sports, Casino and Core</span>
           </a>
         </div>
       </div>
@@ -347,7 +351,7 @@ p { max-width: 62ch; text-wrap: pretty; }
       </div>
       <div class="case__cluster">
         <div class="case__meta">
-          <h2 class="case__title" data-reveal style="--i:2"><a href="case-ai.html">QuintAce: asked for speed, delivered it with AI</a></h2>
+          <h2 class="case__title" data-reveal style="--i:2"><a href="case-ai.html">Asked for speed, delivered it with AI</a></h2>
           <div data-reveal style="--i:3">
             <p class="case__desc">The brief was faster design, same headcount. Handoffs per designer more than doubled, a 5-hour Figma rebuild became one click, and the time freed started the first research practice.</p>
             <p class="case__who">A5 Labs · Design Director · 2026 · Team of four</p>
@@ -417,11 +421,10 @@ p { max-width: 62ch; text-wrap: pretty; }
     <div class="about__row about__row--1">
       <div class="who" data-reveal>
         <div class="who__pics">
-          <img class="who__pic" src="img/portrait.webp" width="1240" height="1240" alt="Luiz Kim, sculpted portrait in grey" loading="lazy">
-          <img class="who__pic who__pic--mesh" src="img/portrait-mesh.webp" width="1240" height="1240" alt="" aria-hidden="true" loading="lazy">
+          <img class="who__pic who__pic--mesh" src="img/portrait-mesh.webp" width="1254" height="1254" alt="Luiz Kim, sculpted portrait: grey clay on one side, blue wireframe on the other" loading="lazy">
         </div>
         <p class="who__name">Luiz Kim</p>
-        <p class="who__role">Design Director</p>
+        <p class="who__role">Product Design leader</p>
         <p class="who__prev">prev. Entain</p>
         <a class="who__link" href="https://www.linkedin.com/in/luizkimux" rel="noopener" aria-label="Luiz Kim on LinkedIn">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
@@ -435,10 +438,10 @@ p { max-width: 62ch; text-wrap: pretty; }
 </div>
 
 <footer class="contact wrap" id="contact">
-  <p class="contact__intro">Hiring a Head of Design or UX Director? Write to me.</p>
+  <p class="contact__intro">Hiring a Product Design leader? Write to me.</p>
   <div class="contact__cta">
     <div class="contact__copy">
-      <a class="contact__mail" href="mailto:luizfelipekim@gmail.com?subject=Head%20of%20Design" id="mail-link">luizfelipekim<span class="at">@</span>gmail.com</a>
+      <a class="contact__mail" href="mailto:luizfelipekim@gmail.com?subject=Product%20Design%20leader" id="mail-link">luizfelipekim<span class="at">@</span>gmail.com</a>
       <button class="copy-btn" type="button" id="copy-mail">Copy address</button>
     </div>
   </div>
@@ -474,21 +477,6 @@ p { max-width: 62ch; text-wrap: pretty; }
       targets.forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in'); });
     }, 2500));
   } else { targets.forEach((el) => el.classList.add('is-in')); }
-
-  // scroll-linked portrait fade for browsers without scroll-driven animations
-  if (!CSS.supports('animation-timeline: view()')) {
-    const mesh = document.querySelector('.who__pic--mesh'), box = document.querySelector('.who__pics');
-    let ticking = false;
-    const fade = () => {
-      ticking = false;
-      const r = box.getBoundingClientRect(), vh = innerHeight, h = r.height;
-      const travelled = vh - r.top, start = h, end = 0.7 * (vh + h);
-      mesh.style.opacity = Math.min(1, Math.max(0, (travelled - start) / (end - start)));
-    };
-    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(fade); } }, { passive: true });
-    addEventListener('resize', fade); fade();
-  }
-
 
   // copy the address; fall back to selecting it
   const btn = document.getElementById('copy-mail'), mail = document.getElementById('mail-link');
@@ -561,4 +549,5 @@ if (canvas && !saveData && 'gpu' in navigator) {
 }
 </script>
 <script src="js/claw-machine.js" defer></script>
-</body></html>
+</body>
+</html>

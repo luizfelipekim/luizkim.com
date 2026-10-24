@@ -197,7 +197,6 @@ html[data-theme="windows95"] .about { padding-top: 28px; padding-bottom: 48px; g
 html[data-theme="windows95"] .about.wrap { padding-inline: 0; }
 html[data-theme="windows95"] .about__row { align-items: start; gap: 24px; }
 html[data-theme="windows95"] .who { background: #ffffff; box-shadow: var(--sunken); padding: 14px; }
-html[data-theme="windows95"] .who__pics { background: #232324; }
 html[data-theme="windows95"] .who__link { color: var(--title); }
 html[data-theme="windows95"] .about__para { background: #ffffff; box-shadow: var(--sunken); padding: 18px 20px; max-width: none; }
 html[data-theme="windows95"] :is(.stats, .work).wrap { padding-inline: 0; }
