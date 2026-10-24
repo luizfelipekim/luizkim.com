@@ -116,7 +116,7 @@ html[data-theme="windows95"] .results::before { content: "Results.xls"; content:
 
 /* ---------- type ---------- */
 html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
-  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q) {
   font-family: var(--font); font-weight: 400; letter-spacing: 0; line-height: 1.17;
 }
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
@@ -216,7 +216,7 @@ html[data-theme="windows95"] main { padding-top: 24px; display: flex; flex-direc
 html[data-theme="windows95"] .top__title { font-size: 66px; line-height: 1.17; }
 html[data-theme="windows95"] :is(.row__head, .led__head, .results__head, .field h2, .ev__fig) { font-size: 33px; }
 html[data-theme="windows95"] .outcome__fig { font-size: 44px; }
-html[data-theme="windows95"] :is(.who__name, .ball__q, .ball__a, .pager b, .decision h3, .about__para, .top__summary, .row__body p, .field p) { font-size: 22px; line-height: 1.25; }
+html[data-theme="windows95"] :is(.who__name, .ball__q, .pager b, .decision h3, .about__para, .top__summary, .row__body p, .field p) { font-size: 22px; line-height: 1.25; }
 html[data-theme="windows95"] .row, html[data-theme="windows95"] .led, html[data-theme="windows95"] .results, html[data-theme="windows95"] .top { padding-bottom: 24px; }
 html[data-theme="windows95"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap) { background: #ffffff; box-shadow: var(--sunken); }
 html[data-theme="windows95"] .cover { box-shadow: var(--sunken); padding: 2px; margin-inline: 0; }

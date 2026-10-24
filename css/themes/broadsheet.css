@@ -74,7 +74,7 @@ html[data-theme="broadsheet"] .link { text-decoration-thickness: 1px; text-decor
 
 /* ---------- type tiers ---------- */
 html[data-theme="broadsheet"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
-  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q) {
   font-family: var(--font-display); font-weight: 900; letter-spacing: -0.01em; font-variant-numeric: lining-nums;
 }
 html[data-theme="broadsheet"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
@@ -145,7 +145,7 @@ html[data-theme="broadsheet"] .case__desc::first-letter {
 }
 html[data-theme="broadsheet"] .case__who { color: var(--muted); margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--hair); }
 html[data-theme="broadsheet"] .ball { padding-inline: 1rem; }
-html[data-theme="broadsheet"] .ball__q, html[data-theme="broadsheet"] .ball__a { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
+html[data-theme="broadsheet"] .ball__q { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
 html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
 html[data-theme="broadsheet"] .claw { padding-left: 0; }
 html[data-theme="broadsheet"] .claw__stage { border: 1px solid var(--line); }

@@ -180,7 +180,7 @@ html[data-theme="esports"] .case__title a { text-decoration: none; }
 html[data-theme="esports"] .case__desc { color: var(--muted); font-size: 16px; }
 html[data-theme="esports"] .case__who { color: var(--muted); margin-top: 0.6rem; }
 html[data-theme="esports"] .ball { border-radius: 14px; }
-html[data-theme="esports"] .ball__q, html[data-theme="esports"] .ball__a { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 2.6vw, 36px); line-height: 0.95; }
+html[data-theme="esports"] .ball__q { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 2.6vw, 36px); line-height: 0.95; }
 html[data-theme="esports"] .ball__meter i, html[data-theme="esports"] .peek__meter i { background: #f6b8ff; }
 html[data-theme="esports"] .claw { padding: 0 0 12px; border-radius: 14px; overflow: hidden; }
 html[data-theme="esports"] .claw__stage { border: 0; }
