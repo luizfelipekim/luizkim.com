@@ -1,6 +1,6 @@
 /* Poker case teaser on the homepage: two cards face down on dark glass. Drag them up (or
    press Enter) to peek, the way a player looks at a hand; press the chip stack and lift to
-   riffle it. 70 mm lens, mouse parallax clamped to +-80 px. Needs js/three.min.js (r128) and
+   riffle it. 30 mm lens fitted to the box, mouse parallax clamped to +-80 px. Needs js/three.min.js (r128) and
    js/Reflector.js (three r128 examples) loaded first. All artwork is drawn on canvas at load. */
 (function () {
   'use strict';
@@ -24,7 +24,82 @@
   }
   function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
+  // The deck follows the site theme. Charcoal, brutalist and broadsheet deal the LK back; windows95
+  // deals Solitaire, a pixel beach on a white card over flat green; esports deals holographic foil.
+  // The two image-based backs load the first time their theme is seen; the LK back stands in until then.
+  const LOOKS = { windows95: 'win95', esports: 'foil' };
+  const look = () => LOOKS[document.documentElement.getAttribute('data-theme')] || 'default';
+  const ART = { win95: 'img/poker/back-beach.png', foil: 'img/poker/back-foil.jpg', foilBump: 'img/poker/back-foil-bump.jpg' };
+  const images = {};
+  function image(key) {
+    const im = images[key];
+    if (im) return im.complete && im.naturalWidth ? im : null;
+    const n = new Image(); n.decoding = 'async'; n.onload = () => redrawAll(); n.src = ART[key]; images[key] = n;
+    return null;
+  }
+
   function drawBack(c) {
+    const l = look();
+    if (l === 'win95') return drawBackWin95(c);
+    if (l === 'foil') return drawBackFoil(c);
+    drawBackLK(c);
+  }
+
+  // Windows Solitaire: a white card with a black hairline; the art is scaled by a whole number so every
+  // pixel stays square, inside the one-pixel black border the 95 decks had.
+  const PX = 9, AW = 100 * PX, AH = 141 * PX, AX = (CW - AW) / 2, AY = (CH - AH) / 2;
+  function drawBackWin95(c) {
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, CW, CH);
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = '#ffffff'; ctx.fill();
+    ctx.lineWidth = 8; ctx.strokeStyle = '#000000'; roundRect(ctx, 4, 4, CW - 8, CH - 8, R - 4); ctx.stroke();
+    ctx.fillStyle = '#000000'; ctx.fillRect(AX - PX, AY - PX, AW + 2 * PX, AH + 2 * PX);
+    const im = image('win95');
+    if (im) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, AX, AY, AW, AH); ctx.imageSmoothingEnabled = true; }
+    else { ctx.fillStyle = '#00aaff'; ctx.fillRect(AX, AY, AW, AH); }   // the sky, until the art arrives
+  }
+
+  // Holographic foil: dark indigo print (keyline, LK, the caps) on pale foil stock. The rainbow is not
+  // in the picture; the material makes it from the view angle and the relief, so it moves with the card.
+  function drawBackFoil(c) {
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, CW, CH);
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = '#d9d7e4'; ctx.fill();
+    const im = image('foil');
+    if (im) { ctx.save(); roundRect(ctx, 0, 0, CW, CH, R); ctx.clip(); ctx.drawImage(im, 0, 0, CW, CH); ctx.restore(); }
+    foilPrint(ctx, '#120a2c', 1);
+  }
+  function foilPrint(ctx, ink, alpha) {
+    const m = 30;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink;
+    ctx.lineWidth = 3; roundRect(ctx, m + 22, m + 22, CW - 2 * m - 44, CH - 2 * m - 44, R - 36); ctx.stroke();
+    ctx.lineWidth = 1.5; roundRect(ctx, m + 38, m + 38, CW - 2 * m - 76, CH - 2 * m - 76, R - 46); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 300px ' + DISPLAY;
+    ctx.fillText('LK', CW / 2, CH / 2 + 6);
+    ctx.font = '800 22px ' + DISPLAY; ctx.textAlign = 'left';
+    ctx.fillText('L U I Z   K I M   —   L O N D O N', m + 64, m + 94);
+    ctx.save(); ctx.translate(CW - m - 64, CH - m - 94); ctx.rotate(Math.PI); ctx.fillText('L U I Z   K I M   —   L O N D O N', 0, 0); ctx.restore();
+    ctx.restore();
+  }
+  // the relief: the foil's folds, with the print pressed into them (darker is lower)
+  const BW = 512, BH = 748;
+  function drawBump(c) {
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, BW, BH);
+    const im = look() === 'foil' ? image('foilBump') : null;   // fetched only once the foil is dealt
+    if (im) ctx.drawImage(im, 0, 0, BW, BH);
+    ctx.save(); ctx.scale(BW / CW, BH / CH); foilPrint(ctx, '#000000', 0.45); ctx.restore();
+  }
+
+  // Solitaire drew at 71 x 96; the faces go down to the same kind of grid and back up, square pixels
+  function pixelate(c, f) {
+    const small = mkCanvas(Math.round(c.width / f), Math.round(c.height / f)), s = small.getContext('2d');
+    s.drawImage(c, 0, 0, small.width, small.height);
+    const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(small, 0, 0, c.width, c.height); ctx.imageSmoothingEnabled = true;
+  }
+
+  function drawBackLK(c) {
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, CW, CH);
     roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = WHITE; ctx.fill();
@@ -87,8 +162,10 @@
     const ctx = c.getContext('2d');
     const pip = suit === 'club' ? club : spade;
     ctx.clearRect(0, 0, CW, CH);
-    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = WHITE; ctx.fill();
-    ctx.fillStyle = BLACK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const solitaire = look() === 'win95';
+    roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = solitaire ? '#ffffff' : WHITE; ctx.fill();
+    if (solitaire) { ctx.lineWidth = 8; ctx.strokeStyle = '#000000'; roundRect(ctx, 4, 4, CW - 8, CH - 8, R - 4); ctx.stroke(); }
+    ctx.fillStyle = solitaire ? '#000000' : BLACK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     // standard two-corner index: top-left upright, bottom-right rotated
     const idx = (x, y, rot) => {
       ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
@@ -100,6 +177,7 @@
     pip(ctx, CW / 2, CH / 2 - 6, 470);
     ctx.font = '800 20px ' + DISPLAY; ctx.fillStyle = 'rgba(13,13,13,.55)';
     ctx.save(); ctx.translate(CW - 60, CH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('L K', 0, 0); ctx.restore();
+    if (solitaire) pixelate(c, 8);
   }
   // ---------- noise / felt ----------
   function noiseCanvas(size, base, spread) {
@@ -169,6 +247,7 @@
   // additive glossy sheet that carries only the key light's specular streak. Without the helper the table
   // is a plain dark slab.
   const TABLE = new THREE.PlaneGeometry(240, 240);
+  const glass = [];   // everything that is the glass table, hidden under Solitaire
   if (typeof THREE.Reflector === 'function') {
     const smoked = {
       uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null } },
@@ -183,15 +262,18 @@
     };
     const res = matchMedia('(pointer: coarse)').matches ? 512 : 1024;
     const mirror = new THREE.Reflector(TABLE, { shader: smoked, color: 0x4a4a4a, textureWidth: res, textureHeight: res, clipBias: 0.003 });
-    mirror.rotation.x = -Math.PI / 2; scene.add(mirror);
+    mirror.rotation.x = -Math.PI / 2; scene.add(mirror); glass.push(mirror);
   } else {
     const slab = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.3, metalness: 0.1 }));
-    slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab);
+    slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab); glass.push(slab);
   }
+  // Solitaire's table: one flat green, unlit, no reflection; the shadow catcher above it still grounds the cards
+  const felt = new THREE.Mesh(TABLE, new THREE.MeshBasicMaterial({ color: 0x008000 }));
+  felt.rotation.x = -Math.PI / 2; felt.visible = false; scene.add(felt);
   const shadows = new THREE.Mesh(TABLE, new THREE.ShadowMaterial({ opacity: 0.45 }));
   shadows.rotation.x = -Math.PI / 2; shadows.position.y = 0.01; shadows.receiveShadow = true; scene.add(shadows);
   const sheen = new THREE.Mesh(TABLE, new THREE.MeshPhysicalMaterial({ color: 0x000000, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, roughness: 0.32, metalness: 0, clearcoat: 0.8, clearcoatRoughness: 0.22 }));
-  sheen.rotation.x = -Math.PI / 2; sheen.position.y = 0.02; scene.add(sheen);
+  sheen.rotation.x = -Math.PI / 2; sheen.position.y = 0.02; scene.add(sheen); glass.push(sheen);
   // the rail keeps a fine grain
   const feltBump = new THREE.CanvasTexture(noiseCanvas(256, [128, 128, 128], 110));
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
@@ -199,16 +281,16 @@
   // betting line, a faint etch in the glass just in front of the cards
   const line = new THREE.Mesh(new THREE.RingGeometry(56, 56.16, 220, 1, 0, Math.PI * 2),
     new THREE.MeshBasicMaterial({ color: 0xf4f4f4, transparent: true, opacity: 0.22, depthWrite: false }));
-  line.rotation.x = -Math.PI / 2; line.position.set(0, 0.03, 66); scene.add(line);
+  line.rotation.x = -Math.PI / 2; line.position.set(0, 0.03, 66); scene.add(line); glass.push(line);
 
   // padded rail at the bottom of the frame
   const railBump = feltBump;
   const rail = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 140, 56, 1),
     new THREE.MeshStandardMaterial({ color: 0x0f0f0f, roughness: 0.42, metalness: 0.05, bumpMap: railBump, bumpScale: 0.006 }));
-  rail.rotation.z = Math.PI / 2; rail.position.set(0, 1.1, 15); rail.castShadow = true; rail.receiveShadow = true; scene.add(rail);
+  rail.rotation.z = Math.PI / 2; rail.position.set(0, 1.1, 15); rail.castShadow = true; rail.receiveShadow = true; scene.add(rail); glass.push(rail);
   const trim = new THREE.Mesh(new THREE.BoxGeometry(140, 0.5, 1.2),
     new THREE.MeshStandardMaterial({ color: 0x8c8c8c, roughness: 0.35, metalness: 0.7 }));
-  trim.position.set(0, 0.2, 11.4); trim.receiveShadow = true; scene.add(trim);
+  trim.position.set(0, 0.2, 11.4); trim.receiveShadow = true; scene.add(trim); glass.push(trim);
 
   // chips
   function chipStack(n, base, stripe, x, z, rot) {
@@ -240,7 +322,42 @@
   const faceTexK = new THREE.CanvasTexture(faceK); faceTexK.encoding = THREE.sRGBEncoding; faceTexK.anisotropy = backTex.anisotropy;
   const edgeMat = new THREE.MeshStandardMaterial({ color: 0xf4f4f4, roughness: 0.85 });
   const backMat = new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.5, metalness: 0, alphaTest: 0.5 });
+  const backFlat = new THREE.MeshStandardMaterial({ map: backTex, roughness: 1, metalness: 0, alphaTest: 0.5 });   // Solitaire: no gloss
   function faceMat(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: 0.55, metalness: 0, alphaTest: 0.5 }); }
+
+  // Foil: a metal with the folds as relief and a thin-film colour laid over the diffuse term. The hue
+  // turns with the angle between the eye and the (bumped) surface and slides along the folds, so it
+  // travels when the card lifts and when the camera drifts on parallax. The dark print is masked out
+  // by its own darkness. A small studio environment gives the silver something to reflect.
+  const bumpCanvas = mkCanvas(BW, BH); drawBump(bumpCanvas);
+  const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+  const foilMat = new THREE.MeshStandardMaterial({ map: backTex, bumpMap: bumpTex, bumpScale: 0.025, roughness: 0.3, metalness: 0.55, alphaTest: 0.5, envMapIntensity: 1.2 });
+  foilMat.onBeforeCompile = shader => {
+    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      {
+        float facing = 1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0);
+        float fold = texture2D(bumpMap, vUv).r;
+        float t = facing * 1.6 + fold * 1.1 + vUv.y * 0.35 - vUv.x * 0.2;
+        vec3 iris = 0.5 + 0.5 * cos(6.2832 * (t + vec3(0.0, 0.33, 0.67)));
+        float foil = smoothstep(0.22, 0.6, dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)));
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * (0.45 + 0.85 * iris), foil);
+        totalEmissiveRadiance += iris * foil * (0.07 + 0.25 * facing * facing);
+      }`);
+  };
+  function studioEnv() {
+    const s = new THREE.Scene(); s.background = new THREE.Color(0x14102a);
+    const lamp = (w, h, x, y, z, hex, gain) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: hex, side: THREE.DoubleSide }));
+      m.material.color.multiplyScalar(gain); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m);
+    };
+    lamp(14, 4, 0, 9, 2, 0xfff4e0, 5);       // the key: a long warm softbox overhead
+    lamp(3, 10, -9, 2, 3, 0x8fe4ff, 2.5);     // cyan edge
+    lamp(3, 10, 9, 3, -2, 0xff9df0, 2.5);     // rose edge
+    lamp(10, 2, 0, 1, -9, 0xc3b4ff, 1.8);     // violet behind
+    const g = new THREE.PMREMGenerator(renderer);
+    const t = g.fromScene(s, 0.04).texture; g.dispose();
+    return t;
+  }
 
   // Card geometry: two subdivided planes (back +z, face -z) whose rounded corners are
   // alpha-clipped by the texture, plus a thin rim that follows the rounded outline, so
@@ -320,29 +437,82 @@
 
   // redraw the artwork once the display face has loaded
   if (document.fonts && document.fonts.load) {
-    Promise.all([document.fonts.load('900 100px "Unbounded"'), document.fonts.load('800 20px "Unbounded"')]).then(() => {
-      drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club');
-      backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = true; dirty = true;
-    }).catch(() => {});
+    Promise.all([document.fonts.load('900 100px "Unbounded"'), document.fonts.load('800 20px "Unbounded"')]).then(redrawAll).catch(() => {});
   }
+  function redrawAll() {
+    drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas);
+    backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = true;
+  }
+  // deal the deck the theme asks for: artwork, materials, and the table under them
+  let currentLook = null;
+  function applyLook() {
+    const l = look();
+    if (l === currentLook) return;
+    currentLook = l;
+    const solitaire = l === 'win95';
+    glass.forEach(o => { o.visible = !solitaire; }); felt.visible = solitaire;
+    shadows.material.opacity = solitaire ? 0.3 : 0.45;
+    // Solitaire is flat: no film curve, so the green and the white come out as the exact 95 values
+    const tone = solitaire ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+    if (renderer.toneMapping !== tone) {
+      renderer.toneMapping = tone;
+      scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
+    }
+    if (l === 'foil' && !foilMat.envMap) { foilMat.envMap = studioEnv(); foilMat.needsUpdate = true; }
+    const back = l === 'foil' ? foilMat : solitaire ? backFlat : backMat;
+    [cardA, cardK].forEach(c => { c.material[0] = back; c.material[1].roughness = solitaire ? 1 : 0.55; });
+    edgeMat.color.set(solitaire ? 0xffffff : 0xf4f4f4);
+    redrawAll();
+  }
+  document.addEventListener('theme:change', applyLook);
 
   // ---------- sizing ----------
+  // The frame is fitted, not fixed: from the 70 mm base view the camera dollies out along its own axis
+  // until the hand (at full lift) and the whole chip stack sit inside the box with a margin above the
+  // rail, and the look point slides sideways so the group sits centred. Parallax moves relative to this.
   let W = 1, H = 1;
+  const camBase = CAM_BASE.clone(), lookAt = LOOK.clone(), fitV = new THREE.Vector3();
+  function framePoints() {
+    const hx = hand.position.x, hz = hand.position.z, sp = stack.position, top = 7 * 0.33 + 0.5;
+    return [
+      [hx - CARD_W * 0.85, 0, hz - CARD_H * 0.55], [hx + CARD_W * 1.2, 0, hz - CARD_H * 0.55],
+      [hx - CARD_W * 0.85, 0, hz + CARD_H * 0.62], [hx + CARD_W * 1.2, 0, hz + CARD_H * 0.62],
+      [hx - CARD_W * 0.5, CARD_H * 0.92, hz], [hx + CARD_W * 1.1, CARD_H * 0.92, hz],   // the hand up
+      [sp.x - 2.5, 0, sp.z + 2.5], [sp.x + 2.5, 0, sp.z + 2.5], [sp.x + 2.5, top, sp.z - 2.5], [sp.x - 2.5, top, sp.z - 2.5]
+    ];
+  }
   function resize() {
     W = pin.clientWidth || 1; H = pin.clientHeight || 1;
     renderer.setSize(W, H, false);
     camera.aspect = W / H;
-    camera.setFocalLength(70);               // 70 mm look at any aspect
-    const dolly = Math.min(1, Math.max(0.7, camera.aspect / 1.6));   // move in on narrow boxes
+    camera.setFocalLength(30);               // 30 mm: wide, close, the table falls away in perspective
+    camera.updateProjectionMatrix();
     // a portrait box crops the sides, so the stack comes forward and in, below the hand
     if (camera.aspect < 1.2) stack.position.set(4.8, 0, 7.6); else stack.position.set(8.4, 0, 5.6);
-    camBase.copy(LOOK).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
-    camDist = camBase.distanceTo(LOOK);
-    camera.position.copy(camBase); camera.lookAt(LOOK);
-    camera.updateProjectionMatrix();
+    const pts = framePoints(), half = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    let dolly = 0.3, shift = 0;              // start close and back off only as far as the fit needs
+    for (let i = 0; i < 48; i++) {
+      lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z);
+      camBase.copy(lookAt).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
+      camera.position.copy(camBase); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
+      let x0 = 1, x1 = -1, y0 = 1, y1 = -1;
+      for (const [x, y, z] of pts) {
+        fitV.set(x, y, z).project(camera);
+        x0 = Math.min(x0, fitV.x); x1 = Math.max(x1, fitV.x); y0 = Math.min(y0, fitV.y); y1 = Math.max(y1, fitV.y);
+      }
+      const cx = (x0 + x1) / 2;
+      const over = x0 < -0.9 || x1 > 0.9 || y0 < -0.66 || y1 > 0.9;
+      if (!over && Math.abs(cx) < 0.01) break;
+      shift += cx * camBase.distanceTo(lookAt) * half * camera.aspect;
+      if (over && dolly < 1.8) dolly *= 1.03;
+    }
+    // the loop may leave the base one step ahead of the camera: settle on the base
+    lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z);
+    camBase.copy(lookAt).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
+    camera.position.copy(camBase); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
+    camDist = camBase.distanceTo(lookAt);
     dirty = true; placeHits();
   }
-  const camBase = CAM_BASE.clone();
   addEventListener('resize', resize, { passive: true });
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(stage);
 
@@ -470,6 +640,7 @@
 
     if (dirty) { renderer.render(scene, camera); placeHits(); dirty = false; }
   }
+  applyLook();
   resize();
   bendCard(cardA, 0); bendCard(cardK, 0);
   requestAnimationFrame(frame);
