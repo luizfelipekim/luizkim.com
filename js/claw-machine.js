@@ -1,11 +1,16 @@
 /* Design-system case study teaser on the homepage: a claw machine filled with the
    system's foundational components (toggle, pill, checkbox, radio, button, text input).
    Drag the glass or hold the pad to steer, press Drop, and each catch lights up a live
-   component in the tray. Needs js/three.min.js (r128) loaded first. */
+   component in the tray. Needs js/three.min.js (r128) loaded first.
+   A look can ask for the machine as an engraved plate (Broadsheet sets --claw-plate on .claw): the
+   cabinet goes to ink and paper, and on browsers with WebGPU the frame is piped through the 2D shader
+   library's Engraving effect (js/shaders.js) onto a second canvas over the first. */
 (function () {
   'use strict';
   var root = document.querySelector('.claw');
   if (!root) return;
+  // the 2D shader library sits next to this file; import() in a classic script resolves against this script's URL
+  var LIB = document.currentScript && document.currentScript.src ? new URL('shaders.js', document.currentScript.src).href : './shaders.js';
   var stage = root.querySelector('.claw__stage'), canvas = root.querySelector('.claw__canvas');
   var hasGL = (function () { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
   if (typeof THREE === 'undefined' || !hasGL) { root.classList.add('is-flat'); return; }
@@ -55,6 +60,14 @@
   var FLOOR = new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 0.95 });
   var BODY = new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 0.9 });
   var LINE = new THREE.LineBasicMaterial({ color: 0x4a4a46 });
+  // the plate palette: solid ink cabinet, pale floor so the white prizes sit on a field of light lines
+  var PALETTE = {
+    normal: { body: 0x202020, floor: 0x262626, hole: 0x0e0e0e, steel: 0xf1f1ef },
+    plate: { body: 0x0c0c0c, floor: 0xdcdcd8, hole: 0x0c0c0c, steel: 0x4a4a48 }   // the claw goes to mid-tone so it is cut as lines, not lost on the paper
+  };
+  var plate = false;
+  var deco = new THREE.Group();   // the art deco front: coin panel, prize hatch, crest; shown on the plate
+  function wantsPlate() { return getComputedStyle(root).getPropertyValue('--claw-plate').trim() !== ''; }
 
   /* ---------- cabinet ---------- */
   (function buildCabinet() {
@@ -71,8 +84,20 @@
     inner.position.y = S.H / 2; scene.add(inner);
     var pane = new THREE.Mesh(glassBox, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.03, side: THREE.FrontSide, depthWrite: false }));
     pane.position.y = S.H / 2; scene.add(pane);
-    tintGlass = function () { var light = stageLuminance() > 0.35; inner.material.opacity = light ? 0.42 : 0.08; LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46); };
-    tintGlass();
+    tintGlass = function () {
+      var light = stageLuminance() > 0.35;
+      plate = wantsPlate();
+      var pal = plate ? PALETTE.plate : PALETTE.normal;
+      BODY.color.setHex(pal.body); FLOOR.color.setHex(pal.floor); HOLE.color.setHex(pal.hole); STEEL.color.setHex(pal.steel);
+      // on the plate the glass stays almost clear, so the interior reads as paper
+      inner.material.opacity = plate ? 0.1 : (light ? 0.42 : 0.08);
+      LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46);
+      // the engraving reads the frame as linear light; without the plate the canvas is shown as is
+      var enc = plate ? THREE.LinearEncoding : THREE.sRGBEncoding;
+      if (renderer.outputEncoding !== enc) { renderer.outputEncoding = enc; scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; }); }
+      deco.visible = plate;
+      setPlate(plate);
+    };
 
     var body = new THREE.Mesh(new THREE.BoxGeometry(S.W + 0.4, 1.4, S.D + 0.4), BODY);
     body.position.y = -0.7; scene.add(body);
@@ -82,7 +107,8 @@
     var door = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.5, 0.9)), LINE);
     door.position.set(S.chute.x, -0.6, S.D / 2 + 0.201); scene.add(door);
 
-    var hole = new THREE.Mesh(new THREE.PlaneGeometry(S.chute.size, S.chute.size), new THREE.MeshBasicMaterial({ color: 0x0e0e0e }));
+    var HOLE = new THREE.MeshBasicMaterial({ color: 0x0e0e0e });
+    var hole = new THREE.Mesh(new THREE.PlaneGeometry(S.chute.size, S.chute.size), HOLE);
     hole.rotation.x = -Math.PI / 2; hole.position.set(S.chute.x, 0.004, S.chute.z); scene.add(hole);
     var holeEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(S.chute.size, S.chute.size)), new THREE.LineBasicMaterial({ color: 0xf1f1ef }));
     holeEdge.rotation.x = -Math.PI / 2; holeEdge.position.set(S.chute.x, 0.006, S.chute.z); scene.add(holeEdge);
@@ -125,6 +151,118 @@
       prongs.push(pivot);
     }
   })();
+
+  /* ---------- the art deco front ----------
+     After the reference engraving: a stepped control plate with a chevron motif, coin slot and dial on
+     the right of the cabinet front, the prize hatch with its tray on the left, fluted slats between,
+     and a winged crest over the glass. Paper and ink only, so the engraving cuts it as line work. */
+  (function buildDeco() {
+    var zf = S.D / 2 + 0.2;                                   // the cabinet's front face
+    function slab(w, h, d, mat, x, y, z) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); deco.add(m); return m; }
+    function tri(w, h, d, mat, x, y, z, flip) {               // a flat triangle, point down (or up when flipped)
+      var sh = new THREE.Shape();
+      sh.moveTo(-w / 2, flip ? 0 : h); sh.lineTo(w / 2, flip ? 0 : h); sh.lineTo(0, flip ? h : 0); sh.closePath();
+      var m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false }), mat);
+      m.position.set(x, y, z); deco.add(m); return m;
+    }
+
+    // the control plate: paper, a stepped ink frame, a paper field
+    var px = 0.7, py = -0.7;
+    slab(2.3, 0.98, 0.05, WHITE, px, py, zf + 0.025);
+    slab(2.16, 0.84, 0.03, INK, px, py, zf + 0.065);
+    slab(2.04, 0.72, 0.03, WHITE, px, py, zf + 0.095);
+    // chevrons: three nested V's cut in ink, the reference's zigzag
+    for (var i = 0; i < 3; i++) {
+      var cy = py + 0.28 - i * 0.13;
+      [-1, 1].forEach(function (sgn) {
+        var arm = slab(0.34, 0.045, 0.02, INK, px + sgn * 0.12, cy - 0.11, zf + 0.12);
+        arm.rotation.z = sgn * Math.PI / 4;
+      });
+    }
+    // the coin slot and its dial
+    slab(0.07, 0.26, 0.02, INK, px + 0.8, py + 0.08, zf + 0.12);
+    var ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 10, 32), INK);
+    ring.position.set(px + 0.8, py - 0.22, zf + 0.12); deco.add(ring);
+    slab(0.05, 0.12, 0.02, INK, px + 0.8, py - 0.2, zf + 0.12);
+    // a line of type under the field
+    slab(0.9, 0.03, 0.02, INK, px - 0.4, py - 0.24, zf + 0.12);
+    slab(0.5, 0.03, 0.02, INK, px - 0.6, py - 0.3, zf + 0.12);
+
+    // the prize hatch: a paper frame, an ink flap, a tray to collect from
+    var hx = S.chute.x, hy = -0.62;
+    slab(1.5, 0.9, 0.04, WHITE, hx, hy, zf + 0.02);
+    slab(1.3, 0.7, 0.03, INK, hx, hy - 0.02, zf + 0.055);
+    slab(0.5, 0.05, 0.03, WHITE, hx, hy + 0.2, zf + 0.085);
+    slab(1.5, 0.06, 0.34, WHITE, hx, hy - 0.48, zf + 0.17);
+
+    // fluted slats between hatch and plate, and on the far right
+    [-1.0, -0.86, -0.72].forEach(function (x) { slab(0.04, 1.1, 0.03, WHITE, x, -0.7, zf + 0.02); });
+    [2.1, 2.24, 2.38].forEach(function (x) { slab(0.04, 1.1, 0.03, WHITE, x, -0.7, zf + 0.02); });
+
+    // the crest over the glass: a winged triangle with three drops, centred on the front rail
+    var cz = S.D / 2 + 0.12, cyy = S.gantryY + 0.08;
+    tri(0.7, 0.42, 0.06, WHITE, 0, cyy - 0.42, cz);
+    tri(0.5, 0.28, 0.02, INK, 0, cyy - 0.36, cz + 0.06);
+    slab(1.6, 0.06, 0.06, WHITE, 0, cyy - 0.03, cz);
+    slab(1.1, 0.04, 0.06, WHITE, 0, cyy - 0.12, cz);
+    [-0.26, 0, 0.26].forEach(function (x, k) {
+      var L = k === 1 ? 0.36 : 0.24;
+      slab(0.02, L, 0.02, WHITE, x, cyy - 0.44 - L / 2, cz + 0.03);
+      var drop = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), WHITE);
+      drop.position.set(x, cyy - 0.46 - L, cz + 0.03); deco.add(drop);
+    });
+    deco.visible = false;
+    scene.add(deco);
+  })();
+
+  /* ---------- the engraved plate ----------
+     The 3D frame is captured as a video stream and fed to the shader library as a live texture, then
+     redrawn by its Engraving effect in the stage's ink and paper colours. Only on WebGPU; elsewhere
+     the plate palette alone carries the look. */
+  var ink = null, inkShader = null, inkVideo = null, inkStarting = false;
+  function stageInk() { var c = getComputedStyle(root); return { ink: c.color, paper: stageColor() }; }
+  // the cut is counted in lines per canvas height; keep the pitch near 3px whatever the stage's size
+  function inkLines() { return Math.round(Math.max(80, Math.min(220, stage.getBoundingClientRect().height / 3.2))); }
+  function setPlate(on) {
+    if (!on) {
+      if (ink) { ink.classList.remove('is-on'); if (inkShader) inkShader.pause(); if (inkVideo) inkVideo.pause(); }
+      return;
+    }
+    if (inkShader) {
+      var c = stageInk();
+      inkShader.update('plate', { inkColor: c.ink, paperColor: c.paper });
+      ink.classList.add('is-on'); if (inkVideo) inkVideo.play(); inkShader.resume();
+      return;
+    }
+    if (inkStarting || !('gpu' in navigator) || !canvas.captureStream || (navigator.connection && navigator.connection.saveData)) return;
+    inkStarting = true;
+    import(LIB).then(function (lib) {
+      return Promise.resolve(lib.isWebGPUSupported()).then(function (ok) { if (!ok) throw new Error('no WebGPU'); return lib; });
+    }).then(function (lib) {
+      inkVideo = document.createElement('video');
+      inkVideo.muted = true; inkVideo.playsInline = true;
+      inkVideo.srcObject = canvas.captureStream();
+      ink = document.createElement('canvas');
+      ink.className = 'claw__ink'; ink.setAttribute('aria-hidden', 'true');
+      var r = stage.getBoundingClientRect();
+      ink.style.width = Math.round(r.width) + 'px'; ink.style.height = Math.round(r.height) + 'px';
+      canvas.parentNode.insertBefore(ink, canvas.nextSibling);
+      // a media component of our own: the library's video source only takes a URL, this one hands it the element
+      var feed = { name: 'ClawFeed', boundingBoxDeclaration: { aspectRatio: null }, category: 'Textures', description: 'The claw machine, live', props: {},
+        fragment: function (e) { return e.registerExternalTexture(function () { return (inkVideo && inkVideo.readyState >= 2 && inkVideo.videoWidth) ? inkVideo : null; }).sample(e.ctx.uv); } };
+      var c = stageInk();
+      return inkVideo.play().then(function () {
+        return lib.createShader(ink, { components: [
+          { type: 'Engraving', id: 'plate', props: { style: 'line', frequency: inkLines(), angle: 0, relief: 0.7, waviness: 0.25, contrast: 1.1, inkColor: c.ink, paperColor: c.paper },
+            children: [{ type: 'ClawFeed', id: 'feed' }] }
+        ] }, { components: [feed], disableTelemetry: true, onError: function () { if (ink) ink.classList.remove('is-on'); } });
+      });
+    }).then(function (shader) {
+      inkShader = shader; inkStarting = false;
+      if (wantsPlate()) ink.classList.add('is-on'); else { shader.pause(); inkVideo.pause(); }
+    }).catch(function (e) { inkStarting = false; if (ink && ink.parentNode) ink.parentNode.removeChild(ink); ink = null; console.warn('Claw plate did not start:', e); });
+  }
+  tintGlass();
 
   /* ---------- prizes ---------- */
   function stadium(w, h) {
@@ -450,6 +588,7 @@
     var r = stage.getBoundingClientRect();
     var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false);
+    if (ink) { ink.style.width = w + 'px'; ink.style.height = h + 'px'; if (inkShader) { inkShader.resize(w, h); inkShader.update('plate', { frequency: inkLines() }); } }
     camera.aspect = w / h;
     var vf = THREE.MathUtils.degToRad(camera.fov);
     var hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);

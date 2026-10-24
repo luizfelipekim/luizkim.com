@@ -214,6 +214,9 @@ p { max-width: 62ch; text-wrap: pretty; }
 .claw__stage { position: relative; width: 100%; aspect-ratio: 20 / 11; max-width: 100%; border: var(--border) solid var(--surface-2); overflow: hidden; outline: none; background: var(--bg); }
 .claw__stage:focus-visible { border-color: var(--ink); }
 .claw__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+/* the engraved plate: a second canvas over the 3D one, drawn by the 2D shader library when a look asks for it (Broadsheet) */
+.claw__ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+.claw__ink.is-on { display: block; }
 .claw__controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; gap: 12px; pointer-events: none; }
 .claw__controls > * { pointer-events: auto; }
 .claw__pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 3px; }
