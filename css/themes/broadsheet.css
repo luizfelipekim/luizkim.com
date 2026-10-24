@@ -74,11 +74,11 @@ html[data-theme="broadsheet"] .link { text-decoration-thickness: 1px; text-decor
 
 /* ---------- type tiers ---------- */
 html[data-theme="broadsheet"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
-  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q) {
   font-family: var(--font-display); font-weight: 900; letter-spacing: -0.01em; font-variant-numeric: lining-nums;
 }
 html[data-theme="broadsheet"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
-  .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ball__count, .claw__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
   font-family: var(--sans); font-weight: 600; font-size: 11px; line-height: 1.4; letter-spacing: 0.12em; text-transform: uppercase;
 }
@@ -145,22 +145,18 @@ html[data-theme="broadsheet"] .case__desc::first-letter {
 }
 html[data-theme="broadsheet"] .case__who { color: var(--muted); margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--hair); }
 html[data-theme="broadsheet"] .ball { padding-inline: 1rem; }
-html[data-theme="broadsheet"] .ball__q, html[data-theme="broadsheet"] .ball__a { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
+html[data-theme="broadsheet"] .ball__q { font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; }
 html[data-theme="broadsheet"] .ball__meter { height: 4px; background: var(--hair); }
 html[data-theme="broadsheet"] .claw { padding-left: 0; }
 html[data-theme="broadsheet"] .claw__stage { border: 1px solid var(--line); }
-html[data-theme="broadsheet"] .claw__hud span { background: var(--bg); border: 1px solid var(--line); }
 html[data-theme="broadsheet"] .claw__key { background: var(--bg); }
 html[data-theme="broadsheet"] .claw__hint { font-family: var(--font); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; }
 /* the peek hint sits over the dark felt, so it takes the paper colour */
-html[data-theme="broadsheet"] .peek__hint { color: var(--bg); }
-html[data-theme="broadsheet"] .peek__meter i { background: var(--bg); }
 
 /* ---------- about: a profile in two justified columns ---------- */
 html[data-theme="broadsheet"] .about { padding-top: 0; gap: 2rem; }
 html[data-theme="broadsheet"] .about__row { align-items: start; padding-top: 2rem; }
 html[data-theme="broadsheet"] .who { align-items: flex-start; text-align: left; }
-html[data-theme="broadsheet"] .who__pics { background: #232324; }
 html[data-theme="broadsheet"] .who__name { font-size: 1.75rem; }
 html[data-theme="broadsheet"] .who__role { font-style: italic; }
 html[data-theme="broadsheet"] .who__prev { font-family: var(--sans); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }

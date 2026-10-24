@@ -157,6 +157,11 @@
   btnNext.addEventListener('click', next);
   view.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (state === 'idle') reveal(); else if (state === 'shown') next(); } });
 
+  // the hint is a tooltip: up until the first touch, then only on hover or focus while idle (CSS reads .is-seen)
+  function seen() { stage.classList.add('is-seen'); }
+  view.addEventListener('pointerdown', seen, { once: true });
+  view.addEventListener('keydown', seen, { once: true });
+
   view.addEventListener('pointerdown', function (e) {
     if (state !== 'idle') return;
     held = true; holdStart = performance.now(); last = { x: e.clientX, y: e.clientY, t: holdStart };

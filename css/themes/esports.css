@@ -78,10 +78,10 @@ html[data-theme="esports"] :where(.hero__name, .stats__head, .stats__fig, .case_
   font-variant-numeric: lining-nums;
 }
 html[data-theme="esports"] :where(.hero__nav, .bar__nav, .button, .copy-btn, .ball__btn, .claw__drop, .claw__hint, .case__who, .top__meta,
-  .facts dt, .outcome__how, .pager span, .ev__label, .ball__eyebrow, .ball__hint, .ball__count, .claw__hud, .peek__hint, th) {
+  .facts dt, .outcome__how, .pager span, .ev__label, .ball__eyebrow, .ball__hint, .ball__count, th) {
   font-family: var(--font); letter-spacing: 0.01em; text-transform: none;
 }
-html[data-theme="esports"] :where(.case__who, .facts dt, .outcome__how, .ev__label, .ball__hint, .claw__hud, .peek__hint, th) {
+html[data-theme="esports"] :where(.case__who, .facts dt, .outcome__how, .ev__label, .ball__hint, th) {
   font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
 }
 
@@ -180,16 +180,13 @@ html[data-theme="esports"] .case__title a { text-decoration: none; }
 html[data-theme="esports"] .case__desc { color: var(--muted); font-size: 16px; }
 html[data-theme="esports"] .case__who { color: var(--muted); margin-top: 0.6rem; }
 html[data-theme="esports"] .ball { border-radius: 14px; }
-html[data-theme="esports"] .ball__q, html[data-theme="esports"] .ball__a { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 2.6vw, 36px); line-height: 0.95; }
-html[data-theme="esports"] .ball__meter i, html[data-theme="esports"] .peek__meter i { background: #f6b8ff; }
+html[data-theme="esports"] .ball__q { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; font-size: clamp(26px, 2.6vw, 36px); line-height: 0.95; }
+html[data-theme="esports"] .ball__meter i { background: #f6b8ff; }
 html[data-theme="esports"] .claw { padding: 0 0 12px; border-radius: 14px; overflow: hidden; }
 html[data-theme="esports"] .claw__stage { border: 0; }
-html[data-theme="esports"] .claw__hud span { background: rgb(18 10 44 / 0.85); border-radius: 6px; }
-html[data-theme="esports"] .claw__hud b { color: #f6b8ff; }
 html[data-theme="esports"] .claw__key { background: var(--surface-2); border-color: var(--line); border-radius: 10px; }
 html[data-theme="esports"] .claw__drop { border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
-html[data-theme="esports"] .claw__hint { padding: 0 1rem; color: var(--ink); font-size: 14px; font-weight: 600; }
-html[data-theme="esports"] .peek__hint { color: var(--ink); }
+html[data-theme="esports"] .claw__hint { color: var(--ink); font-size: 14px; font-weight: 600; }
 
 /* ---------- about: a small card in the sleeve ---------- */
 html[data-theme="esports"] .about { gap: 3rem; padding-top: 0; }

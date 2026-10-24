@@ -116,11 +116,11 @@ html[data-theme="windows95"] .results::before { content: "Results.xls"; content:
 
 /* ---------- type ---------- */
 html[data-theme="windows95"] :is(.hero__name, .stats__head, .stats__fig, .case__title, .who__name, .contact__intro, .contact__mail,
-  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q, .ball__a) {
+  .top__title, .outcome__fig, .row__head, .led__head, .results__head, .field h2, .pager b, .decision h3, .ev__fig, .ball__q) {
   font-family: var(--font); font-weight: 400; letter-spacing: 0; line-height: 1.17;
 }
 html[data-theme="windows95"] :is(.hero__mark, .hero__nav, .bar__mark, .bar__nav, .case__who, .ball__eyebrow, .ball__hint, .ball__btn,
-  .ball__count, .claw__hint, .claw__hud, .peek__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
+  .ball__count, .claw__hint, .button, .copy-btn, .claw__drop, .top__meta, .facts dt, .outcome__how, .pager span,
   .ev__label, .contact__foot, .foot, .row__word, th) {
   font-family: var(--font); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 16.5px;
 }
@@ -185,19 +185,14 @@ html[data-theme="windows95"] .ball__meter { height: 14px; width: 160px; backgrou
 html[data-theme="windows95"] .ball__meter i { background: repeating-linear-gradient(90deg, var(--title) 0 8px, transparent 8px 10px); }
 html[data-theme="windows95"] .claw { padding-left: 0; gap: 6px; }
 html[data-theme="windows95"] .claw__stage { border: 0; box-shadow: var(--sunken); padding: 2px; }
-html[data-theme="windows95"] .claw__hud span { background: var(--chrome); box-shadow: var(--raised); color: #000000; }
 html[data-theme="windows95"] .claw__hint { background: var(--chrome); box-shadow: var(--sunken); padding: 4px 8px; color: #000000; }
 /* the peek hint sits over the dark felt, so it takes white */
-html[data-theme="windows95"] .peek__hint { color: #ffffff; }
-html[data-theme="windows95"] .peek__meter { width: 14px; background: var(--chrome); box-shadow: var(--sunken); padding: 2px; }
-html[data-theme="windows95"] .peek__meter i { background: repeating-linear-gradient(180deg, var(--title) 0 8px, transparent 8px 10px); }
 
 /* ---------- about ---------- */
 html[data-theme="windows95"] .about { padding-top: 28px; padding-bottom: 48px; gap: 28px; }
 html[data-theme="windows95"] .about.wrap { padding-inline: 0; }
 html[data-theme="windows95"] .about__row { align-items: start; gap: 24px; }
 html[data-theme="windows95"] .who { background: #ffffff; box-shadow: var(--sunken); padding: 14px; }
-html[data-theme="windows95"] .who__pics { background: #232324; }
 html[data-theme="windows95"] .who__link { color: var(--title); }
 html[data-theme="windows95"] .about__para { background: #ffffff; box-shadow: var(--sunken); padding: 18px 20px; max-width: none; }
 html[data-theme="windows95"] :is(.stats, .work).wrap { padding-inline: 0; }
@@ -217,7 +212,7 @@ html[data-theme="windows95"] main { padding-top: 24px; display: flex; flex-direc
 html[data-theme="windows95"] .top__title { font-size: 66px; line-height: 1.17; }
 html[data-theme="windows95"] :is(.row__head, .led__head, .results__head, .field h2, .ev__fig) { font-size: 33px; }
 html[data-theme="windows95"] .outcome__fig { font-size: 44px; }
-html[data-theme="windows95"] :is(.who__name, .ball__q, .ball__a, .pager b, .decision h3, .about__para, .top__summary, .row__body p, .field p) { font-size: 22px; line-height: 1.25; }
+html[data-theme="windows95"] :is(.who__name, .ball__q, .pager b, .decision h3, .about__para, .top__summary, .row__body p, .field p) { font-size: 22px; line-height: 1.25; }
 html[data-theme="windows95"] .row, html[data-theme="windows95"] .led, html[data-theme="windows95"] .results, html[data-theme="windows95"] .top { padding-bottom: 24px; }
 html[data-theme="windows95"] :is(.facts, .pair div, .decision, .panel, .ev, .tablewrap) { background: #ffffff; box-shadow: var(--sunken); }
 html[data-theme="windows95"] .cover { box-shadow: var(--sunken); padding: 2px; margin-inline: 0; }
