@@ -1,7 +1,12 @@
 /* AI case study teaser on the homepage: a fortune ball that answers the questions
    designers ask about shipping from prototypes. Press, hold and shake it (or drag,
    or shake the phone); it flips to its window and the printed answer clears through
-   the ink. Needs js/three.min.js (r128) loaded first. All artwork is drawn on canvas. */
+   the ink. Needs js/three.min.js (r128) loaded first. All artwork is drawn on canvas.
+   The ball follows the theme through --look, which each theme stylesheet sets on <html>:
+   default (charcoal) is a gloss black ball in a grey studio; foil (esports) the same ball in a
+   violet, rose and cyan studio; manual (brutalist) a matte black ball under one hard shadow;
+   press (broadsheet) the same matte ball with ink and newsprint decals; win95 a flat ball drawn through a 16-colour
+   palette with an ordered dither, at a quarter of the resolution. One fixed light rig, driven per look. */
 (function () {
   'use strict';
   var stage = document.querySelector('.ball');
@@ -16,7 +21,6 @@
     ["So you skipped Figma entirely?", "No. Figma rebuild: 5 hours to one click. Polish runs alongside."],
     ["Doesn't AI output look generic?", "Not on real components. It is wired to our design system."]
   ];
-  var FONT = '"Hanken Grotesk", "Helvetica Neue", Arial, sans-serif';
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var qEl = stage.querySelector('.ball__q'), aEl = stage.querySelector('.ball__a'), cap = stage.querySelector('.ball__cap'),
       hint = stage.querySelector('.ball__hint'), meter = stage.querySelector('.ball__meter i'),
@@ -31,31 +35,48 @@
   var camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
   camera.position.set(0, 0.15, 6.4);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+  // one fixed rig (ambient, key, rim, rim from above); each look sets colours and intensities, never the set
+  var ambient = new THREE.AmbientLight(0xffffff, 0.08); scene.add(ambient);
   var key = new THREE.DirectionalLight(0xffffff, 0.5); key.position.set(-0.5, 5, 2.5); scene.add(key);
   var rim = new THREE.DirectionalLight(0x8fa68e, 0.22); rim.position.set(3, -0.5, -2.5); scene.add(rim);
+  var rimTop = new THREE.DirectionalLight(0xe6ece4, 0.9); rimTop.position.set(0, 2.6, -4); scene.add(rimTop);
 
-  // studio environment for the reflections: a dark room with a few softboxes, baked once
-  function bakeEnv() {
+  // studio environments for the reflections: a dark room with a few softboxes, one set of panels per
+  // look that reflects, baked the first time the look is dealt and kept
+  var ENVS = {
+    default: [
+      [12, 9, [5, 5, 4.8], [0, 5.5, 2.2]],          // overhead softbox
+      [6, 1.4, [0.95, 1.0, 0.95], [0, -3.2, 0.6]],   // table bounce
+      [0.6, 5, [0.85, 0.95, 0.85], [6, 0.5, -3]],    // edge line, right
+      [14, 1.1, [7, 7.3, 7], [0, 3.6, -5.5]]         // rim strip, top
+    ],
+    foil: [
+      [12, 9, [4.2, 3.6, 6.2], [0, 5.5, 2.2]],       // overhead, violet
+      [6, 1.4, [1.3, 0.7, 1.2], [0, -3.2, 0.6]],     // table bounce, rose
+      [0.6, 5, [0.5, 1.5, 1.7], [6, 0.5, -3]],       // edge line, cyan
+      [14, 1.1, [7, 3.8, 7.2], [0, 3.6, -5.5]]       // rim strip, rose
+    ]
+  };
+  function bakeEnv(panels) {
     var room = new THREE.Scene();
     room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.035, 0.035, 0.035), side: THREE.BackSide })));
-    function panel(w, h, col, pos, look) { var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.position.set(pos[0], pos[1], pos[2]); m.lookAt(look[0], look[1], look[2]); room.add(m); }
-    panel(12, 9, new THREE.Color(5, 5, 4.8), [0, 5.5, 2.2], [0, 0, 0]);          // overhead softbox
-    panel(6, 1.4, new THREE.Color(0.95, 1.0, 0.95), [0, -3.2, 0.6], [0, 0, 0]);   // table bounce
-    panel(0.6, 5, new THREE.Color(0.85, 0.95, 0.85), [6, 0.5, -3], [0, 0, 0]);    // edge line, right
-    panel(14, 1.1, new THREE.Color(7, 7.3, 7), [0, 3.6, -5.5], [0, 0, 0]);        // rim strip, top
+    panels.forEach(function (pn) {
+      var m = new THREE.Mesh(new THREE.PlaneGeometry(pn[0], pn[1]), new THREE.MeshBasicMaterial({ color: new THREE.Color(pn[2][0], pn[2][1], pn[2][2]), side: THREE.DoubleSide }));
+      m.position.set(pn[3][0], pn[3][1], pn[3][2]); m.lookAt(0, 0, 0); room.add(m);
+    });
     var pm = new THREE.PMREMGenerator(renderer); pm.compileEquirectangularShader();
     var rt = pm.fromScene(room, 0.04); pm.dispose(); return rt.texture;
   }
-  var env = bakeEnv();
-  scene.environment = env;
-  var rimTop = new THREE.DirectionalLight(0xe6ece4, 0.9); rimTop.position.set(0, 2.6, -4); scene.add(rimTop);
+  var envs = {};
 
   var R = 1.3;
   var ball = new THREE.Group(); scene.add(ball);   // position = drift + shake
   var body = new THREE.Group(); ball.add(body);    // rotation = roll tilt + flip
-  var sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.2, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, envMap: env, envMapIntensity: 0.9 }));
+  // three finishes, one mesh: gloss (the clearcoat black), matte (paper looks), flat (the 16-colour desktop)
+  var gloss = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.2, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
+  var matte = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95, metalness: 0 });
+  var flat = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+  var sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), gloss);
   body.add(sphere);
 
   /* ---------- canvas decals: eye on the front, window on the back ---------- */
@@ -71,20 +92,102 @@
   body.add(capMesh(Math.PI / 2, eye.t, 0.6));
   body.add(capMesh(3 * Math.PI / 2, win.t));
 
-  // soft ground shadow
-  var shadow = (function () { var c = document.createElement('canvas'); c.width = c.height = 256; var x = c.getContext('2d');
-    var g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    x.fillStyle = g; x.fillRect(0, 0, 256, 256); var t = new THREE.CanvasTexture(c);
-    var sh = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.2), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
-    sh.rotation.x = -Math.PI / 2; sh.position.y = -R - 0.35; scene.add(sh); return sh; })();
+  // ground shadow: soft (a blob), hard (one cast edge), or hatched (cut in ink)
+  var shadowC = document.createElement('canvas'); shadowC.width = shadowC.height = 256;
+  var shadowT = new THREE.CanvasTexture(shadowC);
+  var shadow = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.2), new THREE.MeshBasicMaterial({ map: shadowT, transparent: true, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = -R - 0.35; scene.add(shadow);
+  function drawShadow(kind, ink) {
+    var x = shadowC.getContext('2d'); x.clearRect(0, 0, 256, 256);
+    if (kind === 'soft') {
+      var g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    } else if (kind === 'hard') {
+      x.fillStyle = ink; x.globalAlpha = 0.5; x.beginPath(); x.arc(128, 128, 104, 0, Math.PI * 2); x.fill();
+    } else {
+      x.save(); x.beginPath(); x.arc(128, 128, 106, 0, Math.PI * 2); x.clip();
+      x.strokeStyle = ink; x.globalAlpha = 0.6; x.lineWidth = 1.5;
+      for (var d = -256; d < 512; d += 6) { x.beginPath(); x.moveTo(d, 0); x.lineTo(d + 256, 256); x.stroke(); }
+      x.restore();
+    }
+    shadowT.needsUpdate = true;
+  }
+
+  /* ---------- the looks ----------
+     Keyed by --look. Finish and environment for the ball, the rig's colours and intensities, the
+     shadow's kind, and the colours and type of the two decals: paper and ink for the eye; face,
+     text, ink, ring, cover and swirl for the window. */
+  var LOOKS = {
+    default: { mat: 'gloss', env: 'default', ambient: [0xffffff, 0.08], key: [0xffffff, 0.5], rim: [0x8fa68e, 0.22], rimTop: [0xe6ece4, 0.9], shadow: 'soft',
+      paper: '#f1f1ef', ink: '#1c1c1c', face: '#1f2420', text: '#f1f1ef', ink2: '#111412', ring: 'rgba(143,166,142,0.35)', cover: 'rgba(14,18,16,', swirl: 'rgba(96,118,96,',
+      font: '500 30px "Hanken Grotesk","Helvetica Neue",Arial,sans-serif' },
+    foil: { mat: 'gloss', env: 'foil', ambient: [0xc9c3ff, 0.1], key: [0xe8e2ff, 0.45], rim: [0xf6b8ff, 0.65], rimTop: [0xc9c3ff, 0.9], shadow: 'soft',
+      paper: '#e8e2ff', ink: '#120a2c', face: '#2a1a66', text: '#f4f1ff', ink2: '#120a2c', ring: 'rgba(183,162,255,0.5)', cover: 'rgba(18,10,44,', swirl: 'rgba(246,184,255,',
+      font: '600 30px "Figtree",system-ui,sans-serif' },
+    win95: { mat: 'flat', env: null, ambient: [0xffffff, 0.35], key: [0xffffff, 0.9], rim: [0xffffff, 0], rimTop: [0xffffff, 0.5], shadow: 'hard', pixel: true,
+      paper: '#ffffff', ink: '#000000', face: '#000080', text: '#ffffff', ink2: '#000000', ring: 'rgba(255,255,255,0.6)', cover: 'rgba(0,0,0,', swirl: 'rgba(0,128,128,',
+      font: '900 38px "Arial Black","Helvetica Neue",Arial,sans-serif' },   // heavy strokes survive the 4 px blocks; the pixel face does not
+    manual: { mat: 'matte', body: 0x141414, env: null, ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'hard',
+      paper: '#efede7', ink: '#0c0c0c', face: '#efede7', text: '#0c0c0c', ink2: '#0c0c0c', ring: 'rgba(12,12,12,0.6)', cover: 'rgba(12,12,12,', swirl: 'rgba(196,22,28,',
+      font: '500 26px "IBM Plex Mono",ui-monospace,Menlo,monospace' },
+    press: { mat: 'matte', body: 0x141414, env: null, ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'hard',
+      paper: '#faf8f4', ink: '#1a1715', face: '#faf8f4', text: '#1a1715', ink2: '#1a1715', ring: 'rgba(26,23,21,0.6)', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
+      font: '400 30px "Source Serif 4",Georgia,"Times New Roman",serif' }
+  };
+  function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
+  var pal = LOOKS.default, current = null;
+  function setL(l, v) { l.color.setHex(v[0]); l.intensity = v[1]; }
+  function applyLook() {
+    var l = look(); if (l === current) return; current = l;
+    pal = LOOKS[l] || LOOKS.default;
+    var e = pal.env ? (envs[pal.env] || (envs[pal.env] = bakeEnv(ENVS[pal.env]))) : null;
+    scene.environment = e; gloss.envMap = e; gloss.needsUpdate = true;
+    if (pal.body) matte.color.setHex(pal.body);
+    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'flat' ? flat : matte;
+    setL(ambient, pal.ambient); setL(key, pal.key); setL(rim, pal.rim); setL(rimTop, pal.rimTop);
+    drawShadow(pal.shadow, pal.ink);
+    if (fit.ready) fit();
+  }
+  document.addEventListener('theme:change', applyLook);
+
+  /* ---------- the 16-colour desktop ----------
+     Under win95 the scene is drawn at a quarter of the size into a target, then put on screen through a
+     shader that snaps every block to the VGA palette after a 4 x 4 ordered dither: the gamut of the era,
+     not a filter over a smooth render. Transparent blocks stay transparent, so the page shows through. */
+  var PX = 4;
+  var rt = new THREE.WebGLRenderTarget(64, 64, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true });
+  var VGA = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0], [0, 0, 128], [128, 0, 128], [0, 128, 128], [192, 192, 192],
+             [128, 128, 128], [255, 0, 0], [0, 255, 0], [255, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255], [255, 255, 255]]
+    .map(function (c) { return new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255); });
+  var post = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  var postMat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: rt.texture }, palette: { value: VGA }, cell: { value: PX } },
+    transparent: true, depthTest: false, depthWrite: false,
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: [
+      'uniform sampler2D tDiffuse; uniform vec3 palette[16]; uniform float cell; varying vec2 vUv;',
+      'float b2(vec2 p) { float x = mod(p.x, 2.0), y = mod(p.y, 2.0); return x * 2.0 + y * 3.0 - x * y * 4.0; }',
+      'float bayer(vec2 p) { return (b2(p) * 4.0 + b2(floor(p / 2.0)) + 0.5) / 16.0; }',
+      'void main() {',
+      '  vec4 c = texture2D(tDiffuse, vUv);',
+      '  if (c.a < 0.5) discard;',
+      '  vec3 s = pow(clamp(c.rgb, 0.0, 1.0), vec3(1.0 / 2.2));',
+      '  s = clamp(s + (bayer(floor(gl_FragCoord.xy / cell)) - 0.5) * 0.24, 0.0, 1.0);',
+      '  float best = 1e9; vec3 o = vec3(0.0);',
+      '  for (int i = 0; i < 16; i++) { float d = distance(s, palette[i]); if (d < best) { best = d; o = palette[i]; } }',
+      '  gl_FragColor = vec4(o, 1.0);',
+      '}'
+    ].join('\n')
+  });
+  post.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 
   /* ---------- eye drawing (line art) ---------- */
   var pupil = { x: 0, y: 0 }, pupilT = { x: 0, y: 0 }, nextBlink = 2.5;
   function drawEye(open) {
     var ctx = eye.ctx, S = 512, cx = 256, cy = 256;
     ctx.clearRect(0, 0, S, S);
-    ctx.fillStyle = '#f1f1ef'; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#1c1c1c'; ctx.fillStyle = '#1c1c1c'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.fillStyle = pal.paper; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = pal.ink; ctx.fillStyle = pal.ink; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     var w = 140, h = 72 * open;
     function lid() { ctx.beginPath(); ctx.moveTo(cx - w, cy); ctx.quadraticCurveTo(cx, cy - h * 2, cx + w, cy); ctx.quadraticCurveTo(cx, cy + h * 2, cx - w, cy); ctx.closePath(); }
     ctx.save(); lid(); ctx.clip();
@@ -93,9 +196,9 @@
     ctx.lineWidth = 2.5;
     for (var i = 0; i < 24; i++) { var a = i / 24 * Math.PI * 2, r0 = 30 + (i % 2) * 7; ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * r0, iy + Math.sin(a) * r0); ctx.lineTo(ix + Math.cos(a) * 48, iy + Math.sin(a) * 48); ctx.stroke(); }
     ctx.beginPath(); ctx.arc(ix, iy, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f1f1ef'; ctx.beginPath(); ctx.arc(ix - 8, iy - 8, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pal.paper; ctx.beginPath(); ctx.arc(ix - 8, iy - 8, 5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
-    ctx.strokeStyle = '#1c1c1c'; ctx.lineWidth = 5; lid(); ctx.stroke();
+    ctx.strokeStyle = pal.ink; ctx.lineWidth = 5; lid(); ctx.stroke();
     ctx.lineWidth = 4;
     for (var j = 0; j < 7; j++) { var t = (j + 1) / 8, px = cx - w + t * 2 * w, py = cy - 2 * h * t * (1 - t) * 2; var dx = (t - 0.5) * 0.8;
       ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + dx * 22, py - 22 * open); ctx.stroke(); }
@@ -111,22 +214,22 @@
     if (line) lines.push(line); return lines; }
   function drawWindow() {
     var ctx = win.ctx, S = 512, cx = 256, cy = 256;
-    var faceCol = '#1f2420', textCol = '#f1f1ef', inkCol = '#111412';
+    var faceCol = pal.face, textCol = pal.text, inkCol = pal.ink2;
     ctx.clearRect(0, 0, S, S);
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.clip();
     ctx.fillStyle = inkCol; ctx.fillRect(0, 0, S, S);
     var up = 1 - cover, sc = 0.86 + 0.14 * up, ay = cy + 40 * (1 - up);
     ctx.save(); ctx.translate(cx, ay); ctx.scale(sc, sc);
     ctx.fillStyle = faceCol; ctx.beginPath(); ctx.arc(0, 0, 170, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(143,166,142,0.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 170, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = textCol; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '500 30px ' + FONT;
+    ctx.strokeStyle = pal.ring; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 170, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = textCol; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = pal.font;
     var lines = wrapText(ctx, answer, 280), lh = 36, y0 = -(lines.length - 1) * lh / 2;
     lines.forEach(function (l, i) { ctx.fillText(l, 0, y0 + i * lh); });
     ctx.restore();
-    ctx.fillStyle = 'rgba(14,18,16,' + (cover * 0.97).toFixed(3) + ')'; ctx.fillRect(0, 0, S, S);
+    ctx.fillStyle = pal.cover + (cover * 0.97).toFixed(3) + ')'; ctx.fillRect(0, 0, S, S);
     for (var i = 0; i < 9; i++) {
       var a = inkPhase * (0.6 + i * 0.07) + i * 0.7, r = 60 + i * 17, alpha = (0.12 + 0.25 * swirl) * cover;
-      ctx.strokeStyle = 'rgba(96,118,96,' + alpha.toFixed(3) + ')'; ctx.lineWidth = 14 + (i % 3) * 6;
+      ctx.strokeStyle = pal.swirl + alpha.toFixed(3) + ')'; ctx.lineWidth = 14 + (i % 3) * 6;
       ctx.beginPath(); ctx.arc(cx + Math.sin(a * 0.5) * 20, cy + Math.cos(a * 0.4) * 20, r, a, a + 1.6 + swirl); ctx.stroke();
     }
     ctx.restore();
@@ -206,12 +309,15 @@
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
   var baseZ = 6.4, zoomZ = 6.4, zoom = 0, TARGET_PX = 16, FONT_TEX = 30;
   function fit() { var w = view.clientWidth, h = view.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    fit.ready = true;
+    if (pal.pixel) { rt.setSize(Math.max(1, Math.round(w / PX)), Math.max(1, Math.round(h / PX))); postMat.uniforms.cell.value = PX * renderer.getPixelRatio(); }
     var s = Math.min(1, w / 720); baseZ = 6.4 / Math.max(0.62, s);
     var fontWorld = FONT_TEX * (R * 1.05 / 512);
-    var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * TARGET_PX);
+    // the answer is read at 16 px; under the palette, at 4 px blocks, it comes closer so each letter keeps enough blocks
+    var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 2.1 : TARGET_PX));
     zoomZ = Math.min(baseZ, R + dist);
     camera.position.z = baseZ + (zoomZ - baseZ) * zoom; }
-  fit(); window.addEventListener('resize', fit);
+  applyLook(); fit(); window.addEventListener('resize', fit);
 
   // only animate while the ball is on screen
   var visible = true;
@@ -262,7 +368,10 @@
     if (held && state === 'idle') open = Math.min(open, 1 - energy * 0.85);
     if (state === 'flip') open = 0;
     drawEye(open); drawWindow();
-    renderer.render(scene, camera);
+    if (pal.pixel) {
+      renderer.setRenderTarget(rt); renderer.render(scene, camera);
+      renderer.setRenderTarget(null); renderer.render(post, postCam);
+    } else renderer.render(scene, camera);
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWindow);
   requestAnimationFrame(frame);

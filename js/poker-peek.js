@@ -29,7 +29,8 @@
   // paper. Broadsheet ("press"): an engraved card on newsprint. Windows 95 ("win95"): Solitaire, a
   // pixel beach on a white card over flat green. Esports ("foil"): holographic foil. The two
   // image-based backs load the first time their theme is seen; the LK back stands in until then.
-  // Each look's type comes from its theme's own faces, loaded by the theme stylesheet.
+  // Each look's type comes from its theme's own faces, loaded by the theme stylesheet. Which look a theme
+  // deals is the theme's own call: its stylesheet sets --look on <html>, and this script never reads the theme name.
   const ARCHIVO = 'condensed 900 ', ARCHIVO_F = '"Archivo","Helvetica Neue",Arial,sans-serif';
   const MONO = '"IBM Plex Mono",ui-monospace,Menlo,monospace';
   const PLAYFAIR = '"Playfair Display",Georgia,"Times New Roman",serif';
@@ -38,8 +39,8 @@
     manual: ['condensed 900 100px "Archivo"', '500 20px "IBM Plex Mono"'],
     press: ['900 100px "Playfair Display"', '400 20px "Source Serif 4"']
   };
-  const LOOKS = { windows95: 'win95', esports: 'foil', brutalist: 'manual', broadsheet: 'press' };
-  const look = () => LOOKS[document.documentElement.getAttribute('data-theme')] || 'default';
+  // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
+  const look = () => getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default';
   const ART = { win95: 'img/poker/back-beach.png', foil: 'img/poker/back-foil.jpg', foilBump: 'img/poker/back-foil-bump.jpg' };
   const images = {};
   function image(key) {

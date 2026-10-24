@@ -12,6 +12,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Figtree:wght@400;500;600;700&display=swap");
 
 html[data-theme="esports"] {
+  /* the look the 3D scenes (poker peek, fortune ball, claw) deal under this theme: the foil pull: indigo, violet, rose, cyan.
+     Scripts read --look, never the theme name, so a new theme can reuse a look without a script change. */
+  --look: foil;
   color-scheme: dark;
 
   --bg: #120a2c;

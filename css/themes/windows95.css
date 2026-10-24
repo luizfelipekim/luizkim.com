@@ -22,6 +22,9 @@
 }
 
 html[data-theme="windows95"] {
+  /* the look the 3D scenes (poker peek, fortune ball, claw) deal under this theme: Solitaire and the 16-colour desktop.
+     Scripts read --look, never the theme name, so a new theme can reuse a look without a script change. */
+  --look: win95;
   color-scheme: light;
 
   /* page tokens describe a window face; the desktop behind the windows is --desktop */
