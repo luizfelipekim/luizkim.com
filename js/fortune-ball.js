@@ -6,7 +6,7 @@
    default (charcoal) is a gloss black ball in a grey studio; foil (esports) the same ball in a
    violet, rose and cyan studio; manual (brutalist) a matte black ball under one hard shadow;
    press (broadsheet) the same matte ball with ink and newsprint decals; win95 a flat ball drawn through a 16-colour
-   palette with an ordered dither, at a quarter of the resolution. One fixed light rig, driven per look. */
+   palette with an ordered dither, at half the resolution. One fixed light rig, driven per look. */
 (function () {
   'use strict';
   var stage = document.querySelector('.ball');
@@ -156,10 +156,10 @@
   document.addEventListener('theme:change', applyLook);
 
   /* ---------- the 16-colour desktop ----------
-     Under win95 the scene is drawn at a quarter of the size into a target, then put on screen through a
+     Under win95 the scene is drawn at half the size into a target, then put on screen through a
      shader that snaps every block to the VGA palette after a 4 x 4 ordered dither: the gamut of the era,
      not a filter over a smooth render. Transparent blocks stay transparent, so the page shows through. */
-  var PX = 4;
+  var PX = 2;   // one palette block per 2 CSS pixels: dense enough to read the ball, the eye and the answer, coarse enough to read as 16-colour pixels
   var rt = new THREE.WebGLRenderTarget(64, 64, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true });
   var VGA = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0], [0, 0, 128], [128, 0, 128], [0, 128, 128], [192, 192, 192],
              [128, 128, 128], [255, 0, 0], [0, 255, 0], [255, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255], [255, 255, 255]]
@@ -342,7 +342,7 @@
     var s = Math.min(1, w / 720); baseZ = 6.4 / Math.max(0.62, s);
     var fontWorld = FONT_TEX * (R * 1.05 / 512);
     // the answer is read at 16 px; under the palette, at 4 px blocks, it comes closer so each letter keeps enough blocks
-    var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 2.1 : TARGET_PX));
+    var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 1.4 : TARGET_PX));
     zoomZ = Math.min(baseZ, R + dist);
     camera.position.z = baseZ + (zoomZ - baseZ) * zoom; }
   applyLook(); fit(); window.addEventListener('resize', fit);
