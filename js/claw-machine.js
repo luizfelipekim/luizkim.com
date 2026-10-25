@@ -57,7 +57,7 @@
 
   // a soft studio: the key is high and only a little to the side so the frame's shadows fall short, the
   // hemisphere and fill carry the rest, and the shadow edge is blurred rather than cut
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.5));
+  var hemi = new THREE.HemisphereLight(0xffffff, 0x3a3a3a, 0.5); scene.add(hemi);
   var key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(2, 10, 3); scene.add(key);
   key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.radius = 6;
   key.shadow.camera.left = key.shadow.camera.bottom = -4.5; key.shadow.camera.right = key.shadow.camera.top = 4.5;
@@ -67,25 +67,45 @@
   // everything solid casts and receives; the glass and the lines are left out
   function shadowed(obj) { obj.traverse(function (o) { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } }); return obj; }
 
-  // a softbox environment, built from a few lit planes and prefiltered once: metal gets reflections, glass a sheen,
-  // and the prizes a soft top-down gradient. PMREMGenerator is in r128 core; RoomEnvironment is not.
-  (function buildEnvironment() {
-    var pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
-    es.background = new THREE.Color(0x2a2a2a);
-    function strip(w, h, x, y, z, rx, ry, tone) {
-      var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: tone }));
-      m.position.set(x, y, z); m.rotation.set(rx, ry, 0); es.add(m);
-    }
-    strip(8, 3, 0, 6, 0, Math.PI / 2, 0, 0xffffff);        // overhead softbox
-    strip(2, 6, -6, 3, 0, 0, Math.PI / 2, 0xb0b0b0);       // side strip, left
-    strip(2, 6, 6, 3, 0, 0, -Math.PI / 2, 0x707070);       // dimmer strip, right
-    strip(12, 12, 0, -3, 0, -Math.PI / 2, 0, 0x101010);    // dark floor
-    scene.environment = pm.fromScene(es, 0.04).texture;
-    pm.dispose();
-  })();
+  // the studio the fortune ball reflects (js/fortune-ball.js): a dark room with a few softboxes, one set of
+  // panels per look that has its own light, baked the first time a look asks for it and kept. The same room
+  // on both scenes, so the ball and the cabinet catch the same light under each look.
+  var ENVS = {
+    default: [
+      [12, 9, [5, 5, 4.8], [0, 5.5, 2.2]],          // overhead softbox
+      [6, 1.4, [0.95, 1.0, 0.95], [0, -3.2, 0.6]],   // table bounce
+      [0.6, 5, [0.85, 0.95, 0.85], [6, 0.5, -3]],    // edge line, right
+      [14, 1.1, [7, 7.3, 7], [0, 3.6, -5.5]]         // rim strip, top
+    ],
+    foil: [
+      [12, 9, [4.2, 3.6, 6.2], [0, 5.5, 2.2]],       // overhead, violet
+      [6, 1.4, [1.3, 0.7, 1.2], [0, -3.2, 0.6]],     // table bounce, rose
+      [0.6, 5, [0.5, 1.5, 1.7], [6, 0.5, -3]],       // edge line, cyan
+      [14, 1.1, [7, 3.8, 7.2], [0, 3.6, -5.5]]       // rim strip, rose
+    ]
+  };
+  function bakeEnv(panels) {
+    var room = new THREE.Scene();
+    room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.035, 0.035, 0.035), side: THREE.BackSide })));
+    panels.forEach(function (pn) {
+      var m = new THREE.Mesh(new THREE.PlaneGeometry(pn[0], pn[1]), new THREE.MeshBasicMaterial({ color: new THREE.Color(pn[2][0], pn[2][1], pn[2][2]), side: THREE.DoubleSide }));
+      m.position.set(pn[3][0], pn[3][1], pn[3][2]); m.lookAt(0, 0, 0); room.add(m);
+    });
+    var pm = new THREE.PMREMGenerator(renderer); pm.compileEquirectangularShader();
+    var rt = pm.fromScene(room, 0.04); pm.dispose(); return rt.texture;
+  }
+  var envs = {};
+  function setEnvironment(name) {
+    var e = envs[name] || (envs[name] = bakeEnv(ENVS[name] || ENVS.default));
+    if (scene.environment !== e) scene.environment = e;
+  }
+  setEnvironment('default');
 
   var WHITE = new THREE.MeshStandardMaterial({ color: 0xdedbd4, roughness: 0.55 });   // headroom: the tone curve brings it back to white
-  var BONE = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.6 });     // a second tone for a third of the prizes, so the pile has depth
+  var BONE = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.6 });     // a second tone for the prizes, so the pile has depth
+  var TONE3 = new THREE.MeshStandardMaterial({ color: 0xdedbd4, roughness: 0.55 });
+  var TONE4 = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.6 });
+  var PRIZE = [WHITE, BONE, TONE3, TONE4];   // dealt round the pile; each look colours the four
   var INK = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.5 });
   var STEEL = new THREE.MeshStandardMaterial({ color: 0xdedbd4, roughness: 0.35, metalness: 0.15 });
   var FLOOR = new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 0.95 });
@@ -99,21 +119,28 @@
      (charcoal) and override what they need. The plate (engraving pass) is a separate
      flag the theme sets in CSS, so a look can be dressed without being engraved. */
   var FINISH = {
-    default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, white: 0xdedbd4, bone: 0xb8b4ac,
-                  body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null },
+    default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, prizes: [0xdedbd4, 0xb8b4ac],
+                  body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null,
+                  floorRough: 0.95, floorMetal: 0, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
+                  neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     win95:      { body: 0xc0c0c0, paper: 0xffffff, ink: 0x000000, floor: 0x808080, roughness: 0.95, env: 0, steelEnv: 0.3, glass: 0.1 }, // flat grey chrome
     press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,                     // near-black cabinet, paper trim, the deco front on
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
-    foil:       { body: 0x2a1c6e, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, floor: 0x1a1040, roughness: 0.35, metalness: 0.6, env: 1.2, glass: 0.2 }
+    // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
+    // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
+    foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, prizes: [0x8f72ff, 0xff5fd6, 0x3fcfff, 0xbfb0ff],   // the iris dealt round the pile, deep enough that the lights do not bleach them
+                  floor: 0x1a0f4e, floorRough: 0.25, floorMetal: 0.5, roughness: 0.3, metalness: 0.4, env: 0.7, glass: 0.2,
+                  neonA: 0x00c8ff, neonB: 0xff00c0, glow: 0xe8e2ff, ornament: 'foil', lit: 0.6, room: 'foil', bloom: true,   // pure cyan and pink, the minor channel at zero (the sRGB curve lifts any small channel toward white); the tubes skip the tone curve
+                  rig: [0.4, 0.15, 0.22] }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
   function finish() { var f = Object.assign({}, FINISH.default); Object.assign(f, FINISH[look()] || {}); return f; }
-  var plate = false;
+  var plate = '';   // the post pass a look asks for on the overlay: '' (none), 'engraving' or 'glow'
   var shell = new THREE.Group();  // the procedural cabinet: plinth, posts, frame; stands in until the modelled one loads
   var cabinet = null, cabMats = {}, ornaments = {}; // the modelled cabinet (models/claw-cabinet.glb), its body / paper / ink materials, its ornament nodes by name
-  function wantsPlate() { return getComputedStyle(root).getPropertyValue('--claw-plate').trim() !== ''; }
+  function wantsPlate() { return getComputedStyle(root).getPropertyValue('--claw-plate').trim(); }
 
   /* ---------- cabinet ---------- */
   var HOLE = new THREE.MeshBasicMaterial({ color: 0x0e0e0e });
@@ -155,19 +182,50 @@
       var light = stageLuminance() > 0.35;
       plate = wantsPlate();
       var f = finish();
-      BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel); WHITE.color.setHex(f.white); BONE.color.setHex(f.bone);
+      BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
+      PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); });
       STEEL.envMapIntensity = f.steelEnv;
-      inner.material.opacity = plate ? 0.1 : (light ? 0.42 : 0.08);
+      FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
+      key.intensity = f.rig[0]; fill.intensity = f.rig[1]; hemi.intensity = f.rig[2];
+      setEnvironment(f.room);
+      if (f.bloom && !bloom) buildBloom();
+      if (bloom) {
+        bloom.on = !!f.bloom;
+        bloom.lit = [cabMats.neon_a, cabMats.neon_b, cabMats.glow].filter(Boolean);   // the tubes and the bar; the plaque type stays crisp
+      }
+      if (neon) {
+        neon.group.visible = (f.ornament === 'foil');
+        neon.lights.forEach(function (l) { l.color.setHex(f[l.userData.key]); });
+        neon.halos.forEach(function (h) { h.material.color.setHex(f[h.userData.key]); h.visible = !(f.bloom && bloom); h.material.opacity = 0.6; });   // the bloom replaces the halos where it runs
+      }
+      inner.material.opacity = plate === 'engraving' ? 0.1 : (light ? 0.42 : 0.08);
       GLASS.opacity = f.glass;
       LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46);
       // the clear colour is not tone mapped; on the plate it is pure white so the engraving leaves it as clean paper
-      renderer.setClearColor(plate ? new THREE.Color(0xffffff) : new THREE.Color().setStyle(stageColor()), 1);
+      renderer.setClearColor(plate === 'engraving' ? new THREE.Color(0xffffff) : new THREE.Color().setStyle(stageColor()), 1);
       if (cabinet) {
         [['body', f.body], ['paper', f.paper], ['ink', f.ink]].forEach(function (pair) {
           var m = cabMats[pair[0]];
           m.color.setHex(pair[1]); m.roughness = f.roughness; m.metalness = f.metalness; m.envMapIntensity = f.env;
         });
         for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
+        // an ornament set's lit parts: black surfaces that emit the look's colours; the tier band is gold metal
+        var lit = { neon_a: f.neonA, neon_b: f.neonB, glow: f.glow };
+        for (var ln in lit) if (cabMats[ln]) {
+          var lm = cabMats[ln];
+          lm.color.setHex(0x000000); lm.emissive.setHex(lit[ln]); lm.emissiveIntensity = f.lit; lm.roughness = 0.4;
+          // the tone curve pulls a bright saturated colour toward white; the tubes bypass it and stay cyan and pink
+          if (lm.toneMapped !== false) { lm.toneMapped = false; lm.needsUpdate = true; }
+        }
+        // the plaque's type: lit in the same colours, gently, and never bloomed, so it reads as letters
+        var type = { type_a: f.neonA, type_b: f.neonB, type_w: 0xf4f1ff };
+        for (var tn in type) if (cabMats[tn]) {
+          var tm = cabMats[tn];
+          tm.color.setHex(0x000000); tm.emissive.setHex(type[tn]); tm.emissiveIntensity = 0.85; tm.roughness = 0.5;
+          if (tm.toneMapped !== false) { tm.toneMapped = false; tm.needsUpdate = true; }
+        }
+        if (cabMats.gold) { cabMats.gold.color.setHex(f.gold); cabMats.gold.metalness = 1; cabMats.gold.roughness = 0.3; cabMats.gold.envMapIntensity = 1.2; }
+        if (cabMats.foil_body) { cabMats.foil_body.color.setHex(0x0b0820); cabMats.foil_body.roughness = 0.7; cabMats.foil_body.envMapIntensity = 0.3; }   // the sign and deck plates stay near black so the lit type carries
       }
       setPlate(plate);
     };
@@ -246,11 +304,111 @@
       if (!cabMats.body || !cabMats.paper || !cabMats.ink) { cabinet = null; console.warn('Claw cabinet: unexpected materials'); return; }
       shell.visible = false;
       scene.add(cabinet);
+      if (ornaments.foil) buildNeon();
       tintGlass();
     }, undefined, function (e) { console.warn('Claw cabinet did not load:', e); });
   }
 
-  /* ---------- the engraved plate ----------
+  /* ---------- neon falloff ----------
+     Emissive tubes light nothing on their own. For the foil ornament, each tube gets a point light that
+     throws its colour onto the posts and floor, and an additive halo plane that fades out around it,
+     the way a real tube blooms in the eye. Both take their colours from the look. */
+  var neon = null;
+  function haloTexture() {
+    var c = document.createElement('canvas'); c.width = 128; c.height = 8;
+    var x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 128, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.35, 'rgba(255,255,255,0.35)'); g.addColorStop(0.5, 'rgba(255,255,255,1)');
+    g.addColorStop(0.65, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 8);
+    var t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  }
+  function buildNeon() {
+    var g = new THREE.Group(), lights = [], halos = [], tex = haloTexture();
+    var hw = S.W / 2 + 0.1, hd = S.D / 2 + 0.1, len = S.H - 0.5, cy = S.H / 2 - 0.02;
+    function halo(w, h, key) {
+      var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      m.userData.key = key; g.add(m); halos.push(m); return m;
+    }
+    function light(x, y, z, key, power) { var l = new THREE.PointLight(0xffffff, power, 9, 2); l.position.set(x, y, z); l.userData.key = key; g.add(l); lights.push(l); return l; }
+    // the tubes: proud of the front posts, and on the outer sides of the back posts (as the model places them)
+    [{ x: -hw, z: hd + 0.11, key: 'neonA' }, { x: hw, z: hd + 0.11, key: 'neonB' },
+     { x: -(hw + 0.11), z: -hd, key: 'neonA' }, { x: hw + 0.11, z: -hd, key: 'neonB' }].forEach(function (t) {
+      halo(1.4, len + 0.6, t.key).position.set(t.x, cy, t.z);
+      // set back from the post, so its face takes the colour without blowing out to white
+      light(t.x * 0.62, cy, t.z * 0.62, t.key, 0.55);
+      light(t.x * 0.55, 0.5, t.z * 0.55 + 0.3, t.key, 0.45);  // and low, so the floor and prizes take the colour
+    });
+    // the bar under the header
+    var bar = halo(0.8, S.W + 0.2, 'glow'); bar.position.set(0, S.H - 0.2, hd - 0.2); bar.userData.flat = true;
+    light(0, S.H - 0.6, hd - 0.5, 'glow', 0.4);
+    // the plaque: a rose rim glow behind the plate, and a light in front that throws rose up the header
+    var sign = halo(1.5, S.W + 0.8, 'neonB'); sign.position.set(0, S.H + 0.08, hd + 0.04); sign.userData.flat = true;
+    light(0, S.H + 0.2, hd + 0.9, 'neonB', 0.7);
+    scene.add(g); neon = { group: g, lights: lights, halos: halos };
+    aimHalos();
+  }
+  // the halos face the camera; it never moves between resizes, so once per resize is enough
+  function aimHalos() {
+    if (!neon) return;
+    neon.halos.forEach(function (h) {
+      if (h.userData.flat) { h.lookAt(camera.position); h.rotateZ(Math.PI / 2); }
+      else h.lookAt(camera.position.x, h.position.y, camera.position.z);
+    });
+  }
+
+  /* ---------- bloom ----------
+     What the neon references are: a bright core and a wide soft falloff, done as a post-process. Only the lit
+     parts bloom: the scene is rendered once more with everything else black, the Unreal bloom pass blurs that,
+     and a final pass adds it over the normal frame. Needs js/postprocessing.js (three r128 examples). */
+  var bloom = null;
+  function buildBloom() {
+    if (!THREE.EffectComposer || !THREE.UnrealBloomPass) return;
+    var size = renderer.getDrawingBufferSize(new THREE.Vector2());
+    var glow = new THREE.EffectComposer(renderer);
+    glow.renderToScreen = false;
+    glow.addPass(new THREE.RenderPass(scene, camera));
+    var pass = new THREE.UnrealBloomPass(size, 1.1, 0.6, 0.0);
+    glow.addPass(pass);
+    var mix = new THREE.ShaderPass(new THREE.ShaderMaterial({
+      uniforms: { baseTexture: { value: null }, bloomTexture: { value: glow.renderTarget2.texture } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform sampler2D baseTexture; uniform sampler2D bloomTexture; varying vec2 vUv; void main() { gl_FragColor = texture2D(baseTexture, vUv) + texture2D(bloomTexture, vUv); }'
+    }), 'baseTexture');
+    mix.needsSwap = true;
+    var base = new THREE.EffectComposer(renderer);
+    base.addPass(new THREE.RenderPass(scene, camera));
+    base.addPass(mix);
+    // the frame is written to the targets in sRGB, as the renderer would write it to the screen
+    [glow, base].forEach(function (c) { c.renderTarget1.texture.encoding = THREE.sRGBEncoding; c.renderTarget2.texture.encoding = THREE.sRGBEncoding; });
+    bloom = { base: base, glow: glow, pass: pass, on: false, lit: [], dark: new THREE.MeshBasicMaterial({ color: 0x000000 }), swapped: [] };
+  }
+  // everything that is not lit goes black (or, if see-through, away) for the glow pass, and comes back after
+  function darken() {
+    scene.traverse(function (o) {
+      if (o.isLine || o.isLineSegments) { if (o.visible) { o.visible = false; bloom.swapped.push([o, null]); } return; }
+      if (!o.isMesh) return;
+      var m = o.material;
+      if (bloom.lit.indexOf(m) >= 0) return;
+      if (m.transparent) { if (o.visible) { o.visible = false; bloom.swapped.push([o, null]); } return; }
+      bloom.swapped.push([o, m]); o.material = bloom.dark;
+    });
+  }
+  function restore() {
+    bloom.swapped.forEach(function (p) { if (p[1]) p[0].material = p[1]; else p[0].visible = true; });
+    bloom.swapped.length = 0;
+  }
+  var clearColor = new THREE.Color();
+  function render() {
+    if (!bloom || !bloom.on) { renderer.render(scene, camera); return; }
+    darken();
+    renderer.getClearColor(clearColor); renderer.setClearColor(0x000000, 1);
+    bloom.glow.render();
+    renderer.setClearColor(clearColor, 1);
+    restore();
+    bloom.base.render();
+  }
+
+  /* ---------- the overlay passes ----------
      The 3D frame is captured as a video stream and fed to the shader library as a live texture, then
      redrawn by its Engraving effect in the stage's ink and paper colours. Only on WebGPU; elsewhere
      the plate palette alone carries the look. */
@@ -258,17 +416,27 @@
   function stageInk() { var c = getComputedStyle(root); return { ink: c.color, paper: stageColor() }; }
   // the cut is counted in lines per canvas height; keep the pitch near 3px whatever the stage's size
   function inkLines() { return Math.round(Math.max(80, Math.min(220, stage.getBoundingClientRect().height / 3.2))); }
+  var inkKind = '';
+  // what each pass is: the engraving in the stage's ink and paper; the glow a bloom on the brightest tenth of the frame
+  var PASSES = {
+    engraving: function () { var c = stageInk(); return { type: 'Engraving', id: 'plate', props: { style: 'line', frequency: inkLines(), angle: 0, relief: 0.6, waviness: 0.25, contrast: 1.45, inkColor: c.ink, paperColor: c.paper } }; },
+    glow: function () { return { type: 'Glow', id: 'plate', props: { intensity: 0.3, threshold: 0.9, size: 28 } }; }
+  };
   function setPlate(on) {
-    if (!on) {
+    if (!on || !PASSES[on]) {
       if (ink) { ink.classList.remove('is-on'); if (inkShader) inkShader.pause(); if (inkVideo) inkVideo.pause(); }
       return;
     }
+    if (inkShader && inkKind !== on) {   // a different pass: start over
+      try { inkShader.destroy(); } catch (e) {}
+      inkShader = null; if (ink && ink.parentNode) ink.parentNode.removeChild(ink); ink = null; inkVideo = null;
+    }
     if (inkShader) {
-      var c = stageInk();
-      inkShader.update('plate', { inkColor: c.ink, paperColor: c.paper });
+      if (inkKind === 'engraving') { var c = stageInk(); inkShader.update('plate', { inkColor: c.ink, paperColor: c.paper }); }
       ink.classList.add('is-on'); if (inkVideo) inkVideo.play(); inkShader.resume();
       return;
     }
+    inkKind = on;
     if (inkStarting || !('gpu' in navigator) || !canvas.captureStream || (navigator.connection && navigator.connection.saveData)) return;
     inkStarting = true;
     import(LIB).then(function (lib) {
@@ -285,16 +453,13 @@
       // a media component of our own: the library's video source only takes a URL, this one hands it the element
       var feed = { name: 'ClawFeed', boundingBoxDeclaration: { aspectRatio: null }, category: 'Textures', description: 'The claw machine, live', props: {},
         fragment: function (e) { return e.registerExternalTexture(function () { return (inkVideo && inkVideo.readyState >= 2 && inkVideo.videoWidth) ? inkVideo : null; }).sample(e.ctx.uv); } };
-      var c = stageInk();
+      var pass = PASSES[on](); pass.children = [{ type: 'ClawFeed', id: 'feed' }];
       return inkVideo.play().then(function () {
-        return lib.createShader(ink, { components: [
-          { type: 'Engraving', id: 'plate', props: { style: 'line', frequency: inkLines(), angle: 0, relief: 0.6, waviness: 0.25, contrast: 1.45, inkColor: c.ink, paperColor: c.paper },
-            children: [{ type: 'ClawFeed', id: 'feed' }] }
-        ] }, { components: [feed], disableTelemetry: true, onError: function () { if (ink) ink.classList.remove('is-on'); } });
+        return lib.createShader(ink, { components: [pass] }, { components: [feed], disableTelemetry: true, onError: function () { if (ink) ink.classList.remove('is-on'); } });
       });
     }).then(function (shader) {
       inkShader = shader; inkStarting = false;
-      if (wantsPlate()) ink.classList.add('is-on'); else { shader.pause(); inkVideo.pause(); }
+      if (wantsPlate() === inkKind) ink.classList.add('is-on'); else { shader.pause(); inkVideo.pause(); }
     }).catch(function (e) { inkStarting = false; if (ink && ink.parentNode) ink.parentNode.removeChild(ink); ink = null; console.warn('Claw plate did not start:', e); });
   }
   tintGlass();
@@ -400,7 +565,8 @@
         if (x === -2.2 && z === 1.7) return;
         var type = types[k++ % types.length];
         var group = builders[type]();
-        if (k % 3 === 0) group.traverse(function (o) { if (o.isMesh && o.material === WHITE) o.material = BONE; });
+        var pm = PRIZE[k % PRIZE.length];
+        if (pm !== WHITE) group.traverse(function (o) { if (o.isMesh && o.material === WHITE) o.material = pm; });
         var stacked = k % 4 === 0;
         group.scale.setScalar(0.74 + Math.random() * 0.24);
         var rest = stacked ? 0.16 : 0;
@@ -629,7 +795,8 @@
     var r = stage.getBoundingClientRect();
     var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false);
-    if (ink) { ink.style.width = w + 'px'; ink.style.height = h + 'px'; if (inkShader) { inkShader.resize(w, h); inkShader.update('plate', { frequency: inkLines() }); } }
+    if (bloom) { bloom.base.setSize(w, h); bloom.glow.setSize(w, h); }
+    if (ink) { ink.style.width = w + 'px'; ink.style.height = h + 'px'; if (inkShader) { inkShader.resize(w, h); if (inkKind === 'engraving') inkShader.update('plate', { frequency: inkLines() }); } }
     camera.aspect = w / h;
     var vf = THREE.MathUtils.degToRad(camera.fov);
     var hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
@@ -638,6 +805,7 @@
     camera.position.copy(camTarget).addScaledVector(camDir, dist);
     camera.lookAt(camTarget);
     camera.updateProjectionMatrix();
+    aimHalos();
   }
   if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize', resize);
   resize();
@@ -654,7 +822,7 @@
     var dt = Math.min(0.05, clock.getDelta());
     if (!visible) return;
     update(dt);
-    renderer.render(scene, camera);
+    render();
   }
   frame();
 })();
