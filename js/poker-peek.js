@@ -629,6 +629,26 @@
   // the 32-colour desktop (js/pixel-pass.js): Solitaire's table, cards and chips drawn through the 95 palette
   const pixelPass = THREE.PixelPass ? new THREE.PixelPass(renderer) : null;
   let pixelOn = false;
+  // Solitaire through the palette, with the cards left out of it: their art is already drawn as pixels, and a
+  // second pass only muddies it. The table, chips and shadows go through the pass with the cards invisible but
+  // still casting; then the cards are drawn on top at full resolution, the chips writing depth only, so a chip
+  // in front of a card still hides it.
+  function renderSolitaire() {
+    const cardMats = [cardA, cardK].reduce((all, c) => all.concat(c.material), []);
+    const chipMats = chipMain.mats.concat(chipCap.mats);
+    cardMats.forEach(m => { m.colorWrite = false; m.depthWrite = false; });
+    pixelPass.render(scene, camera);
+    cardMats.forEach(m => { m.colorWrite = true; m.depthWrite = true; });
+    const hidden = scene.children.filter(o => o !== hand && o !== stack && !o.isLight && o.visible);
+    hidden.forEach(o => { o.visible = false; });
+    chipMats.forEach(m => { m.colorWrite = false; });
+    const bg = scene.background, autoClear = renderer.autoClear, autoShadow = renderer.shadowMap.autoUpdate;
+    scene.background = null; renderer.autoClear = false; renderer.shadowMap.autoUpdate = false;   // keep the pass's shadow map
+    renderer.clearDepth(); renderer.render(scene, camera);
+    scene.background = bg; renderer.autoClear = autoClear; renderer.shadowMap.autoUpdate = autoShadow;
+    chipMats.forEach(m => { m.colorWrite = true; });
+    hidden.forEach(o => { o.visible = true; });
+  }
   function applyLook() {
     const l = look();
     if (l === currentLook) return;
@@ -850,7 +870,7 @@
       lastPx = px; dirty = true;
     }
 
-    if (dirty) { if (pixelOn) pixelPass.render(scene, camera); else renderer.render(scene, camera); placeHits(); dirty = false; }
+    if (dirty) { if (pixelOn) renderSolitaire(); else renderer.render(scene, camera); placeHits(); dirty = false; }
   }
   applyLook();
   resize();
