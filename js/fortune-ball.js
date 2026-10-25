@@ -5,7 +5,7 @@
    The ball follows the theme through --look, which each theme stylesheet sets on <html>:
    default (charcoal) is a gloss black ball in a grey studio; foil (esports) the same ball in a
    violet, rose and cyan studio; manual (brutalist) a matte black ball under one hard shadow;
-   press (broadsheet) the same matte ball with ink and newsprint decals; win95 a flat ball drawn through a 16-colour
+   press (broadsheet) the same matte ball with ink and newsprint decals; win95 a flat ball drawn through a 32-colour
    palette with an ordered dither, at half the resolution. One fixed light rig, driven per look. */
 (function () {
   'use strict';
@@ -72,7 +72,7 @@
   var R = 1.3;
   var ball = new THREE.Group(); scene.add(ball);   // position = drift + shake
   var body = new THREE.Group(); ball.add(body);    // rotation = roll tilt + flip
-  // three finishes, one mesh: gloss (the clearcoat black), matte (paper looks), flat (the 16-colour desktop)
+  // three finishes, one mesh: gloss (the clearcoat black), matte (paper looks), flat (the 32-colour desktop)
   var gloss = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.2, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
   var matte = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95, metalness: 0 });
   var flat = new THREE.MeshLambertMaterial({ color: 0x040404 });   // reads as black through the palette; only the very top of the key catches a few grey blocks
@@ -155,22 +155,33 @@
   }
   document.addEventListener('theme:change', applyLook);
 
-  /* ---------- the 16-colour desktop ----------
+  /* ---------- the 32-colour desktop ----------
      Under win95 the scene is drawn at half the size into a target, then put on screen through a
-     shader that snaps every block to the VGA palette after a 4 x 4 ordered dither: the gamut of the era,
-     not a filter over a smooth render. Transparent blocks stay transparent, so the page shows through. */
-  var PX = 2;   // one palette block per 2 CSS pixels: dense enough to read the ball, the eye and the answer, coarse enough to read as 16-colour pixels
+     shader that snaps every block to a 32-colour palette after a 4 x 4 ordered dither: the gamut of the
+     era, not a filter over a smooth render. Transparent blocks stay transparent, so the page shows through.
+     The palette is the 16 VGA colours, the four Windows system colours, and twelve picked for this
+     scene: a dark-grey ramp so the black ball keeps its roundness, and a blue ramp so the white answer
+     blends into the navy in steps instead of jumping through the greys. */
+  var PX = 2;   // one palette block per 2 CSS pixels: dense enough to read the ball, the eye and the answer, coarse enough to read as era pixels
   var rt = new THREE.WebGLRenderTarget(64, 64, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true });
-  var VGA = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0], [0, 0, 128], [128, 0, 128], [0, 128, 128], [192, 192, 192],
-             [128, 128, 128], [255, 0, 0], [0, 255, 0], [255, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255], [255, 255, 255]]
-    .map(function (c) { return new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255); });
+  var PALETTE = [
+    // the 16 VGA colours
+    [0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0], [0, 0, 128], [128, 0, 128], [0, 128, 128], [192, 192, 192],
+    [128, 128, 128], [255, 0, 0], [0, 255, 0], [255, 255, 0], [0, 0, 255], [255, 0, 255], [0, 255, 255], [255, 255, 255],
+    // the four Windows system colours: money green, sky blue, cream, medium grey
+    [192, 220, 192], [166, 202, 240], [255, 251, 240], [160, 160, 164],
+    // dark greys, for the ball's shading
+    [32, 32, 32], [64, 64, 64], [96, 96, 96], [224, 224, 224],
+    // blues between the navy and white, for the answer's edges
+    [0, 0, 64], [0, 0, 96], [0, 0, 160], [32, 32, 160], [64, 64, 192], [96, 96, 192], [128, 128, 224], [192, 192, 240]
+  ].map(function (c) { return new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255); });
   var post = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   var postMat = new THREE.ShaderMaterial({
-    uniforms: { tDiffuse: { value: rt.texture }, palette: { value: VGA }, cell: { value: PX } },
+    uniforms: { tDiffuse: { value: rt.texture }, palette: { value: PALETTE }, cell: { value: PX } },
     transparent: true, depthTest: false, depthWrite: false,
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: [
-      'uniform sampler2D tDiffuse; uniform vec3 palette[16]; uniform float cell; varying vec2 vUv;',
+      'uniform sampler2D tDiffuse; uniform vec3 palette[32]; uniform float cell; varying vec2 vUv;',
       'float b2(vec2 p) { float x = mod(p.x, 2.0), y = mod(p.y, 2.0); return x * 2.0 + y * 3.0 - x * y * 4.0; }',
       'float bayer(vec2 p) { return (b2(p) * 4.0 + b2(floor(p / 2.0)) + 0.5) / 16.0; }',
       'void main() {',
@@ -184,7 +195,7 @@
       // the nearest of black and the greys through the dither, so the ball reads black and the eye reads white with black ink
       '  if (abs(s.r - s.g) < 0.06 && abs(s.g - s.b) < 0.06 && s.r > 0.55) { gl_FragColor = vec4(1.0); return; }',
       '  float best = 1e9; vec3 o = vec3(0.0);',
-      '  for (int i = 0; i < 16; i++) { float d = distance(s, palette[i]); if (d < best) { best = d; o = palette[i]; } }',
+      '  for (int i = 0; i < 32; i++) { float d = distance(s, palette[i]); if (d < best) { best = d; o = palette[i]; } }',
       '  gl_FragColor = vec4(o, 1.0);',
       '}'
     ].join('\n')
@@ -335,17 +346,27 @@
 
   /* ---------- animation ---------- */
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
-  var baseZ = 6.4, zoomZ = 6.4, zoom = 0, TARGET_PX = 16, FONT_TEX = 30;
+  var baseZ = 6.4, baseY = 0.15, zoomZ = 6.4, zoom = 0, TARGET_PX = 16, FONT_TEX = 30;
+  var HINT_BAND = 56;   // px kept under the ball for the tooltip
   function fit() { var w = view.clientWidth, h = view.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     fit.ready = true;
     if (pal.pixel) { rt.setSize(Math.max(1, Math.round(w / PX)), Math.max(1, Math.round(h / PX))); postMat.uniforms.cell.value = PX * renderer.getPixelRatio(); }
-    var s = Math.min(1, w / 720); baseZ = 6.4 / Math.max(0.62, s);
+    // the ball fills its box: as large as fits above the tooltip's band (with room for its drift), centred in
+    // what is left. Distance and height are solved from the box, so the ball is a circle of a known size at any shape.
+    var tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    var room = Math.max(80, h - HINT_BAND);
+    var D = Math.min(room * 0.9, w * 0.84);            // the ball's diameter on screen, px
+    baseZ = (2 * R * h) / (D * 2 * tanH);
+    baseY = (room / 2 + 2 - h / 2) * (2 * baseZ * tanH / h);   // a camera below the ball's centre lifts it into the room
     var fontWorld = FONT_TEX * (R * 1.05 / 512);
     // the answer is read at 16 px; under the palette, at 4 px blocks, it comes closer so each letter keeps enough blocks
     var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 1.4 : TARGET_PX));
     zoomZ = Math.min(baseZ, R + dist);
     camera.position.z = baseZ + (zoomZ - baseZ) * zoom; }
   applyLook(); fit(); window.addEventListener('resize', fit);
+  // the view is a flexible box: it changes size when the buttons under it come and go, when fonts land, or when a
+  // theme changes its padding. Fitting only on window resize left the canvas stretched over a stale aspect (an oval).
+  if ('ResizeObserver' in window) new ResizeObserver(function () { fit(); }).observe(view);
 
   // only animate while the ball is on screen
   var visible = true;
@@ -363,8 +384,14 @@
     var jitter = held ? energy * 0.06 : 0;
     var px = dx + shake.x + (Math.random() - 0.5) * jitter, py = dy + shake.y + (Math.random() - 0.5) * jitter;
     ball.position.set(px, py, 0);
-    // the tooltip points at the ball, which drifts on its spiral: keep its anchor over the ball's centre on screen
-    if (hint) { onScreen.copy(ball.position).project(camera); hint.style.left = ((onScreen.x + 1) / 2 * view.clientWidth).toFixed(1) + 'px'; }
+    // the tooltip sits under the ball and points up at it; the ball drifts on its spiral, so it follows the
+    // ball's centre across and its lowest point down
+    if (hint) {
+      onScreen.set(ball.position.x, ball.position.y - R, 0).project(camera);
+      var half = hint.offsetWidth / 2 + 8, vw = view.clientWidth;   // kept inside the box, wherever the ball drifts
+      hint.style.left = Math.min(vw - half, Math.max(half, (onScreen.x + 1) / 2 * vw)).toFixed(1) + 'px';
+      hint.style.top = ((1 - onScreen.y) / 2 * view.clientHeight + 14).toFixed(1) + 'px';
+    }
     var vx = (px - prevPos.x) / Math.max(dt, 0.001), vy = (py - prevPos.y) / Math.max(dt, 0.001); prevPos = { x: px, y: py };
     body.rotation.z += ((-vx * 0.35) - body.rotation.z) * 0.08;
     body.rotation.x += ((vy * 0.35) - body.rotation.x) * 0.08;
@@ -387,7 +414,7 @@
     var ez = zoom * zoom * (3 - 2 * zoom);
     camera.position.z = baseZ + (zoomZ - baseZ) * ez;
     camera.position.x = ball.position.x * ez;
-    camera.position.y = 0.15 * (1 - ez) + ball.position.y * ez;
+    camera.position.y = baseY * (1 - ez) + ball.position.y * ez;
 
     if (!isTouch || held) { pupil.x += (pupilT.x - pupil.x) * 0.1; pupil.y += (pupilT.y - pupil.y) * 0.1; }
     else { pupil.x += ((dx * 4) - pupil.x) * 0.05; pupil.y += ((dy * 4) - pupil.y) * 0.05; }
