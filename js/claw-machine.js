@@ -124,7 +124,10 @@
                   floorRough: 0.95, floorMetal: 0, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
                   neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
-    win95:      { body: 0xc0c0c0, paper: 0xffffff, ink: 0x000000, floor: 0x808080, roughness: 0.95, env: 0, steelEnv: 0.3, glass: 0.1 }, // flat grey chrome
+    // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
+    // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
+    win95:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
+                  roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet', pixel: true },
     press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,                     // near-black cabinet, paper trim, the deco front on
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
@@ -185,6 +188,7 @@
       BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
       PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); });
       STEEL.envMapIntensity = f.steelEnv;
+      pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
       key.intensity = f.rig[0]; fill.intensity = f.rig[1]; hemi.intensity = f.rig[2];
       setEnvironment(f.room);
@@ -398,7 +402,10 @@
     bloom.swapped.length = 0;
   }
   var clearColor = new THREE.Color();
+  // the 32-colour desktop (js/pixel-pass.js), switched on by a look's finish
+  var pixelPass = THREE.PixelPass ? new THREE.PixelPass(renderer, { snapWhite: false }) : null, pixelOn = false;   // the tinted glass keeps its greys
   function render() {
+    if (pixelOn && pixelPass) { pixelPass.render(scene, camera); return; }
     if (!bloom || !bloom.on) { renderer.render(scene, camera); return; }
     darken();
     renderer.getClearColor(clearColor); renderer.setClearColor(0x000000, 1);
@@ -795,6 +802,7 @@
     var r = stage.getBoundingClientRect();
     var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false);
+    if (pixelPass) pixelPass.setSize(w, h);
     if (bloom) { bloom.base.setSize(w, h); bloom.glow.setSize(w, h); }
     if (ink) { ink.style.width = w + 'px'; ink.style.height = h + 'px'; if (inkShader) { inkShader.resize(w, h); if (inkKind === 'engraving') inkShader.update('plate', { frequency: inkLines() }); } }
     camera.aspect = w / h;
