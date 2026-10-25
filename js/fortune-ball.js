@@ -90,7 +90,7 @@
     return new THREE.Mesh(g, m);
   }
   var eyeCap = capMesh(Math.PI / 2, eye.t, 0.6); body.add(eyeCap);
-  body.add(capMesh(3 * Math.PI / 2, win.t));
+  var winCap = capMesh(3 * Math.PI / 2, win.t); body.add(winCap);
 
   // ground shadow: soft (a blob), hard (one cast edge), or hatched (cut in ink)
   var shadowC = document.createElement('canvas'); shadowC.width = shadowC.height = 256;
@@ -144,11 +144,11 @@
     scene.environment = e; gloss.envMap = e; gloss.needsUpdate = true;
     if (pal.body) matte.color.setHex(pal.body);
     sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'flat' ? flat : matte;
-    // under the palette the eye lights itself, so its white and black reach it as white and black
-    var em = eyeCap.material;
-    if (pal.pixel) { em.color.setHex(0x000000); em.emissiveIntensity = 1; }
-    else { em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
-    em.needsUpdate = true;
+    // under the palette both decals light themselves, so their white and black reach it as white and black
+    var wm = winCap.material, em = eyeCap.material;
+    if (pal.pixel) { wm.color.setHex(0x000000); wm.emissive.setHex(0xffffff); wm.emissiveMap = win.t; wm.emissiveIntensity = 1; em.color.setHex(0x000000); em.emissiveIntensity = 1; }
+    else { wm.color.setHex(0xffffff); wm.emissive.setHex(0x000000); wm.emissiveMap = null; wm.emissiveIntensity = 1; em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
+    wm.needsUpdate = em.needsUpdate = true;
     setL(ambient, pal.ambient); setL(key, pal.key); setL(rim, pal.rim); setL(rimTop, pal.rimTop);
     drawShadow(pal.shadow, pal.ink);
     if (fit.ready) fit();
@@ -177,7 +177,9 @@
       '  vec4 c = texture2D(tDiffuse, vUv);',
       '  if (c.a < 0.5) discard;',
       '  vec3 s = pow(clamp(c.rgb, 0.0, 1.0), vec3(1.0 / 2.2));',
-      '  s = clamp(s + (bayer(floor(gl_FragCoord.xy / cell)) - 0.5) * 0.24, 0.0, 1.0);',
+      // near-white (the answer) takes no dither, so letters land on white instead of breaking into the greys
+      '  float amp = 0.24 * (1.0 - smoothstep(0.72, 0.9, dot(s, vec3(0.299, 0.587, 0.114))));',
+      '  s = clamp(s + (bayer(floor(gl_FragCoord.xy / cell)) - 0.5) * amp, 0.0, 1.0);',
       // the eye is the same kind of print in black and white: a neutral blend lighter than mid goes to white, the rest to
       // the nearest of black and the greys through the dither, so the ball reads black and the eye reads white with black ink
       '  if (abs(s.r - s.g) < 0.06 && abs(s.g - s.b) < 0.06 && s.r > 0.55) { gl_FragColor = vec4(1.0); return; }',
