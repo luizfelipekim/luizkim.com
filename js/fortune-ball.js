@@ -75,7 +75,7 @@
   // three finishes, one mesh: gloss (the clearcoat black), matte (paper looks), flat (the 16-colour desktop)
   var gloss = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.2, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
   var matte = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95, metalness: 0 });
-  var flat = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+  var flat = new THREE.MeshLambertMaterial({ color: 0x040404 });   // reads as black through the palette; only the very top of the key catches a few grey blocks
   var sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), gloss);
   body.add(sphere);
 
@@ -89,8 +89,8 @@
     if (glow) { m.emissive = new THREE.Color(0xffffff); m.emissiveMap = tex; m.emissiveIntensity = glow; }
     return new THREE.Mesh(g, m);
   }
-  body.add(capMesh(Math.PI / 2, eye.t, 0.6));
-  body.add(capMesh(3 * Math.PI / 2, win.t));
+  var eyeCap = capMesh(Math.PI / 2, eye.t, 0.6); body.add(eyeCap);
+  var winCap = capMesh(3 * Math.PI / 2, win.t); body.add(winCap);
 
   // ground shadow: soft (a blob), hard (one cast edge), or hatched (cut in ink)
   var shadowC = document.createElement('canvas'); shadowC.width = shadowC.height = 256;
@@ -144,6 +144,11 @@
     scene.environment = e; gloss.envMap = e; gloss.needsUpdate = true;
     if (pal.body) matte.color.setHex(pal.body);
     sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'flat' ? flat : matte;
+    // under the palette both decals light themselves, so their white and black reach it as white and black
+    var wm = winCap.material, em = eyeCap.material;
+    if (pal.pixel) { wm.color.setHex(0x000000); wm.emissive.setHex(0xffffff); wm.emissiveMap = win.t; wm.emissiveIntensity = 1; em.color.setHex(0x000000); em.emissiveIntensity = 1; }
+    else { wm.color.setHex(0xffffff); wm.emissive.setHex(0x000000); wm.emissiveMap = null; wm.emissiveIntensity = 1; em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
+    wm.needsUpdate = em.needsUpdate = true;
     setL(ambient, pal.ambient); setL(key, pal.key); setL(rim, pal.rim); setL(rimTop, pal.rimTop);
     drawShadow(pal.shadow, pal.ink);
     if (fit.ready) fit();
@@ -172,7 +177,12 @@
       '  vec4 c = texture2D(tDiffuse, vUv);',
       '  if (c.a < 0.5) discard;',
       '  vec3 s = pow(clamp(c.rgb, 0.0, 1.0), vec3(1.0 / 2.2));',
-      '  s = clamp(s + (bayer(floor(gl_FragCoord.xy / cell)) - 0.5) * 0.24, 0.0, 1.0);',
+      // near-white (the answer) takes no dither, so letters land on white instead of breaking into the greys
+      '  float amp = 0.24 * (1.0 - smoothstep(0.72, 0.9, dot(s, vec3(0.299, 0.587, 0.114))));',
+      '  s = clamp(s + (bayer(floor(gl_FragCoord.xy / cell)) - 0.5) * amp, 0.0, 1.0);',
+      // the eye is the same kind of print in black and white: a neutral blend lighter than mid goes to white, the rest to
+      // the nearest of black and the greys through the dither, so the ball reads black and the eye reads white with black ink
+      '  if (abs(s.r - s.g) < 0.06 && abs(s.g - s.b) < 0.06 && s.r > 0.55) { gl_FragColor = vec4(1.0); return; }',
       '  float best = 1e9; vec3 o = vec3(0.0);',
       '  for (int i = 0; i < 16; i++) { float d = distance(s, palette[i]); if (d < best) { best = d; o = palette[i]; } }',
       '  gl_FragColor = vec4(o, 1.0);',
@@ -183,7 +193,25 @@
 
   /* ---------- eye drawing (line art) ---------- */
   var pupil = { x: 0, y: 0 }, pupilT = { x: 0, y: 0 }, nextBlink = 2.5;
+  // Under the palette one block covers some twenty texels of this drawing, so the eye is cut as a pixel
+  // sprite instead: a heavy almond lid, a solid iris with a white glint, no hairlines.
+  function drawEyeBold(open) {
+    var ctx = eye.ctx, S = 512, cx = 256, cy = 256;
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = pal.paper; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = pal.ink; ctx.fillStyle = pal.ink; ctx.lineCap = 'square'; ctx.lineJoin = 'miter';
+    var w = 168, h = Math.max(8, 84 * open);
+    function lid() { ctx.beginPath(); ctx.moveTo(cx - w, cy); ctx.quadraticCurveTo(cx, cy - h * 2, cx + w, cy); ctx.quadraticCurveTo(cx, cy + h * 2, cx - w, cy); ctx.closePath(); }
+    ctx.save(); lid(); ctx.clip();
+    var ix = cx + pupil.x * 30, iy = cy + pupil.y * 14;
+    ctx.beginPath(); ctx.arc(ix, iy, 78, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pal.paper; ctx.fillRect(ix - 40, iy - 44, 30, 30);
+    ctx.restore();
+    ctx.lineWidth = 30; lid(); ctx.stroke();
+    eye.t.needsUpdate = true;
+  }
   function drawEye(open) {
+    if (pal.pixel) return drawEyeBold(open);
     var ctx = eye.ctx, S = 512, cx = 256, cy = 256;
     ctx.clearRect(0, 0, S, S);
     ctx.fillStyle = pal.paper; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.fill();
