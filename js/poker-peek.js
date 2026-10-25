@@ -626,17 +626,27 @@
   [chipMain, chipCap].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
   let currentLook = null;
+  // the 32-colour desktop (js/pixel-pass.js): Solitaire's table, cards and chips drawn through the 95 palette
+  const pixelPass = THREE.PixelPass ? new THREE.PixelPass(renderer) : null;
+  let pixelOn = false;
   function applyLook() {
     const l = look();
     if (l === currentLook) return;
     currentLook = l;
     const solitaire = l === 'win95', paper = l === 'manual' || l === 'press';
+    pixelOn = solitaire && !!pixelPass;
     const rig = RIGS[l] || RIGS.default;
     // the table
     // glass: the mirror and its rail. matte: a lit paper slab. felt / flat: an unlit slab in the stage's colour (Solitaire green, the manual's paper)
     glass.forEach(o => { o.visible = rig.table === 'glass'; }); felt.visible = rig.table === 'felt' || rig.table === 'flat'; matte.visible = rig.table === 'matte';
     if (rig.table === 'matte') matte.material.color.setStyle(stageColor());
     if (felt.visible) felt.material.color.setStyle(stageColor());
+    // the palette pass reads the scene as linear light: the stage colour goes in linear, so Solitaire's green comes
+    // out as the palette's own 008000 instead of a dither between two greens
+    if (pixelOn) {
+      felt.material.color.convertSRGBToLinear();
+      scene.background.setStyle(stageColor()).convertSRGBToLinear(); scene.fog.color.copy(scene.background);
+    }
     shadows.material.opacity = rig.shadow;
     // the light
     setLight(hemi, rig.hemi[0], rig.hemi[2]); hemi.groundColor.setHex(rig.hemi[1]);
@@ -685,6 +695,7 @@
   function resize() {
     W = pin.clientWidth || 1; H = pin.clientHeight || 1;
     renderer.setSize(W, H, false);
+    if (pixelPass) pixelPass.setSize(W, H);
     camera.aspect = W / H;
     camera.setFocalLength(30);               // 30 mm: wide, close, the table falls away in perspective
     camera.updateProjectionMatrix();
@@ -839,7 +850,7 @@
       lastPx = px; dirty = true;
     }
 
-    if (dirty) { renderer.render(scene, camera); placeHits(); dirty = false; }
+    if (dirty) { if (pixelOn) pixelPass.render(scene, camera); else renderer.render(scene, camera); placeHits(); dirty = false; }
   }
   applyLook();
   resize();
