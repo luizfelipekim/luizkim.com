@@ -346,17 +346,27 @@
 
   /* ---------- animation ---------- */
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
-  var baseZ = 6.4, zoomZ = 6.4, zoom = 0, TARGET_PX = 16, FONT_TEX = 30;
+  var baseZ = 6.4, baseY = 0.15, zoomZ = 6.4, zoom = 0, TARGET_PX = 16, FONT_TEX = 30;
+  var HINT_BAND = 56;   // px kept under the ball for the tooltip
   function fit() { var w = view.clientWidth, h = view.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     fit.ready = true;
     if (pal.pixel) { rt.setSize(Math.max(1, Math.round(w / PX)), Math.max(1, Math.round(h / PX))); postMat.uniforms.cell.value = PX * renderer.getPixelRatio(); }
-    var s = Math.min(1, w / 720); baseZ = 6.4 / Math.max(0.62, s);
+    // the ball fills its box: as large as fits above the tooltip's band (with room for its drift), centred in
+    // what is left. Distance and height are solved from the box, so the ball is a circle of a known size at any shape.
+    var tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    var room = Math.max(80, h - HINT_BAND);
+    var D = Math.min(room * 0.9, w * 0.84);            // the ball's diameter on screen, px
+    baseZ = (2 * R * h) / (D * 2 * tanH);
+    baseY = (room / 2 + 2 - h / 2) * (2 * baseZ * tanH / h);   // a camera below the ball's centre lifts it into the room
     var fontWorld = FONT_TEX * (R * 1.05 / 512);
     // the answer is read at 16 px; under the palette, at 4 px blocks, it comes closer so each letter keeps enough blocks
     var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 1.4 : TARGET_PX));
     zoomZ = Math.min(baseZ, R + dist);
     camera.position.z = baseZ + (zoomZ - baseZ) * zoom; }
   applyLook(); fit(); window.addEventListener('resize', fit);
+  // the view is a flexible box: it changes size when the buttons under it come and go, when fonts land, or when a
+  // theme changes its padding. Fitting only on window resize left the canvas stretched over a stale aspect (an oval).
+  if ('ResizeObserver' in window) new ResizeObserver(function () { fit(); }).observe(view);
 
   // only animate while the ball is on screen
   var visible = true;
@@ -374,8 +384,14 @@
     var jitter = held ? energy * 0.06 : 0;
     var px = dx + shake.x + (Math.random() - 0.5) * jitter, py = dy + shake.y + (Math.random() - 0.5) * jitter;
     ball.position.set(px, py, 0);
-    // the tooltip points at the ball, which drifts on its spiral: keep its anchor over the ball's centre on screen
-    if (hint) { onScreen.copy(ball.position).project(camera); hint.style.left = ((onScreen.x + 1) / 2 * view.clientWidth).toFixed(1) + 'px'; }
+    // the tooltip sits under the ball and points up at it; the ball drifts on its spiral, so it follows the
+    // ball's centre across and its lowest point down
+    if (hint) {
+      onScreen.set(ball.position.x, ball.position.y - R, 0).project(camera);
+      var half = hint.offsetWidth / 2 + 8, vw = view.clientWidth;   // kept inside the box, wherever the ball drifts
+      hint.style.left = Math.min(vw - half, Math.max(half, (onScreen.x + 1) / 2 * vw)).toFixed(1) + 'px';
+      hint.style.top = ((1 - onScreen.y) / 2 * view.clientHeight + 14).toFixed(1) + 'px';
+    }
     var vx = (px - prevPos.x) / Math.max(dt, 0.001), vy = (py - prevPos.y) / Math.max(dt, 0.001); prevPos = { x: px, y: py };
     body.rotation.z += ((-vx * 0.35) - body.rotation.z) * 0.08;
     body.rotation.x += ((vy * 0.35) - body.rotation.x) * 0.08;
@@ -398,7 +414,7 @@
     var ez = zoom * zoom * (3 - 2 * zoom);
     camera.position.z = baseZ + (zoomZ - baseZ) * ez;
     camera.position.x = ball.position.x * ez;
-    camera.position.y = 0.15 * (1 - ez) + ball.position.y * ez;
+    camera.position.y = baseY * (1 - ez) + ball.position.y * ez;
 
     if (!isTouch || held) { pupil.x += (pupilT.x - pupil.x) * 0.1; pupil.y += (pupilT.y - pupil.y) * 0.1; }
     else { pupil.x += ((dx * 4) - pupil.x) * 0.05; pupil.y += ((dy * 4) - pupil.y) * 0.05; }
