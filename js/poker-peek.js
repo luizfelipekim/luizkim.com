@@ -11,6 +11,8 @@
   const hasGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
   if (typeof THREE === 'undefined' || !hasGL) { stage.classList.add('is-flat'); return; }
 
+  function start() {
+
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DISPLAY = '"Unbounded","Arial Black","Helvetica Neue",Arial,sans-serif';
   const WHITE = '#f4f4f4', BLACK = '#0d0d0d';
@@ -876,4 +878,14 @@
   resize();
   bendCard(cardA, 0); bendCard(cardK, 0);
   requestAnimationFrame(frame);
+  }
+
+  // Build the scene only when its stage is within three quarters of a screen, so a visitor who never
+  // scrolls here pays nothing, and the shaders compile one scroll ahead of the viewer rather than at load.
+  var begun = false;
+  function begin() { if (begun) return; begun = true; start(); }
+  if ('IntersectionObserver' in window) {
+    var approach = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { approach.disconnect(); begin(); } }, { rootMargin: '75% 0px' });
+    approach.observe(stage);
+  } else begin();
 })();

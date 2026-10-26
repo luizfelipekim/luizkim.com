@@ -4,9 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Luiz Kim</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/tokens.css">
 <script>
 document.documentElement.classList.add('js');
@@ -582,22 +580,36 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
 })();
 </script>
 
-<script src="js/three.min.js" defer></script>
-<script src="js/pixel-pass.js" defer></script>
-<script src="js/GLTFLoader.js" defer></script>
-<script src="js/postprocessing.js" defer></script>
-<script src="js/Reflector.js" defer></script>
-<script src="js/fortune-ball.js" defer></script>
-<script src="js/poker-peek.js" defer></script>
+<script>
+// The three 3D openers (the ball, the claw, the poker peek) and the Three.js library they share are
+// fetched only when the first stage comes within three quarters of a screen of the viewport. Each
+// scene then starts itself on the same rule, so nothing is built for a visitor who never scrolls to it.
+(() => {
+  const SCRIPTS = ['js/three.min.js', 'js/pixel-pass.js', 'js/GLTFLoader.js', 'js/postprocessing.js', 'js/Reflector.js', 'js/fortune-ball.js', 'js/poker-peek.js', 'js/claw-machine.js'];
+  const stages = document.querySelectorAll('.ball, .claw, .peek');
+  let loading = false;
+  const load = () => {
+    if (loading) return; loading = true;
+    if (io) io.disconnect();
+    for (const src of SCRIPTS) { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); }   // async=false keeps the order
+  };
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) load(); }, { rootMargin: '75% 0px' }) : null;
+  if (io) stages.forEach((s) => io.observe(s)); else addEventListener('load', load, { once: true });
+})();
+</script>
 
 <script type="module">
 // Hero background: a particle-flow shader (shaders.com, MIT licence; copy saved in js/).
-// It loads after the page is up, only on browsers with WebGPU. Everyone else, and anyone
-// who asks their device for reduced motion, keeps the plain light background underneath.
+// The library is 2.5 MB and its start-up blocks the page for a moment, so it is a treat for large
+// screens with a quick CPU on browsers with WebGPU, started only once the page has loaded and gone
+// idle. Phones, Save-Data, small or slow devices, and everyone else keep the plain light background.
+// Anyone who asks their device for reduced motion sees it still.
 const canvas = document.querySelector('.hero__canvas');
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const saveData = navigator.connection && navigator.connection.saveData;
-if (canvas && !saveData && 'gpu' in navigator) {
+const bigScreen = matchMedia('(min-width: 1024px) and (pointer: fine)').matches;
+const quick = (navigator.hardwareConcurrency || 8) >= 4 && !(navigator.deviceMemory && navigator.deviceMemory < 4);
+if (canvas && !saveData && bigScreen && quick && 'gpu' in navigator) {
   const start = async () => {
     try {
       const { createShader, isWebGPUSupported } = await import('./js/shaders.js');
@@ -660,9 +672,11 @@ if (canvas && !saveData && 'gpu' in navigator) {
   const visible = () => { const r = canvas.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const tryStart = () => { if (started || !visible()) return; started = true; start(); };
   document.addEventListener('theme:change', () => requestAnimationFrame(tryStart));
-  if (document.readyState === 'complete') tryStart(); else addEventListener('load', tryStart, { once: true });
+  // after load, and only when the browser has nothing else to do: the headline and the scrolling come first
+  const whenIdle = (fn) => ('requestIdleCallback' in window) ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
+  const afterLoad = () => whenIdle(tryStart);
+  if (document.readyState === 'complete') afterLoad(); else addEventListener('load', afterLoad, { once: true });
 }
 </script>
-<script src="js/claw-machine.js" defer></script>
 </body>
 </html>

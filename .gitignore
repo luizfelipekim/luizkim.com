@@ -1,3 +1,6 @@
 Claude outputs/
 .DS_Store
 *.blend1
+
+# raw Blender export of the cabinet; models/optimize-glb.py turns it into the two files the site loads
+models/claw-cabinet-export.glb

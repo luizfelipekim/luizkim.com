@@ -15,6 +15,8 @@
   var hasGL = (function () { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
   if (typeof THREE === 'undefined' || !hasGL) { root.classList.add('is-flat'); return; }
 
+  function start() {
+
   var S = {
     W: 6, D: 5, H: 6.2,
     topY: 5.2, grabY: 1.05, gantryY: 6.2,
@@ -212,6 +214,7 @@
           var m = cabMats[pair[0]];
           m.color.setHex(pair[1]); m.roughness = f.roughness; m.metalness = f.metalness; m.envMapIntensity = f.env;
         });
+        if (f.ornament && !ornaments[f.ornament]) loadOrnaments();   // the ornament sets live in a second file, fetched the first time a look asks
         for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
         // an ornament set's lit parts: black surfaces that emit the look's colours; the tier band is gold metal
         var lit = { neon_a: f.neonA, neon_b: f.neonB, glow: f.glow };
@@ -291,26 +294,53 @@
   /* ---------- the modelled cabinet ----------
      Built in Blender (models/claw-cabinet.blend) to the same dimensions: a neutral shell with bevels and
      baked ambient occlusion, plus ornament nodes named deco_<set> that a look can ask for (Broadsheet's
-     1930s art deco front is the first). Loaded when the r128 GLTFLoader is on the page; until then, and if
-     it fails, the procedural shell stands in. The claw, gantry, floor and prizes stay procedural. */
+     1930s art deco front is the first). models/optimize-glb.py splits the export in two: claw-cabinet.glb
+     is the shell every visitor downloads; claw-cabinet-deco.glb holds the ornament sets and is fetched the
+     first time a look asks for one. Loaded when the r128 GLTFLoader is on the page; until then, and if it
+     fails, the procedural shell stands in. The claw, gantry, floor and prizes stay procedural. */
+  var ROOT = document.documentElement.getAttribute('data-root') || '';
+  // register a node tree's meshes: shadows, and its materials by name (a name already known is shared, so
+  // the look tints one material and both files follow)
+  function adopt(node, dressing) {
+    node.traverse(function (o) {
+      if (!o.isMesh) return;
+      o.castShadow = !dressing; o.receiveShadow = true;
+      var m = o.material; if (!m || !m.name) return;
+      if (cabMats[m.name] && cabMats[m.name] !== m) o.material = cabMats[m.name]; else cabMats[m.name] = m;
+    });
+  }
   if (THREE.GLTFLoader) {
-    new THREE.GLTFLoader().load((document.documentElement.getAttribute('data-root') || '') + 'models/claw-cabinet.glb', function (gltf) {
+    new THREE.GLTFLoader().load(ROOT + 'models/claw-cabinet.glb', function (gltf) {
       cabinet = gltf.scene;
-      cabinet.traverse(function (o) {
-        // a node with several materials arrives as a group with one mesh per material; only the top-level node is the ornament
-        if (o.parent === gltf.scene && o.name.indexOf('deco_') === 0) ornaments[o.name.slice(5)] = o;
-        if (!o.isMesh) return;
-        // ornament is dressing: it receives light but never throws shadows onto the playfield
-        var dressing = o.name.indexOf('deco_') === 0 || (o.parent && o.parent.name.indexOf('deco_') === 0);
-        o.castShadow = !dressing; o.receiveShadow = true;
-        var m = o.material; if (m && m.name) cabMats[m.name] = m;
+      // a node with several materials arrives as a group with one mesh per material
+      gltf.scene.children.slice().forEach(function (n) {
+        var isDeco = n.name.indexOf('deco_') === 0;
+        if (isDeco) ornaments[n.name.slice(5)] = n;
+        adopt(n, isDeco);
       });
       if (!cabMats.body || !cabMats.paper || !cabMats.ink) { cabinet = null; console.warn('Claw cabinet: unexpected materials'); return; }
       shell.visible = false;
       scene.add(cabinet);
       if (ornaments.foil) buildNeon();
       tintGlass();
+      renderer.compile(scene, camera);   // the cabinet's shaders compile now, while the machine is still a scroll away
     }, undefined, function (e) { console.warn('Claw cabinet did not load:', e); });
+  }
+  var ornamentsState = '';   // '', 'loading' or 'done'
+  function loadOrnaments() {
+    if (ornamentsState || !cabinet || !THREE.GLTFLoader) return;
+    ornamentsState = 'loading';
+    new THREE.GLTFLoader().load(ROOT + 'models/claw-cabinet-deco.glb', function (gltf) {
+      ornamentsState = 'done';
+      // ornament is dressing: it receives light but never throws shadows onto the playfield
+      gltf.scene.children.slice().forEach(function (n) {
+        if (n.name.indexOf('deco_') !== 0) return;
+        ornaments[n.name.slice(5)] = n; adopt(n, true); n.visible = false; cabinet.add(n);
+      });
+      if (ornaments.foil && !neon) buildNeon();
+      tintGlass();
+      renderer.compile(scene, camera);
+    }, undefined, function (e) { ornamentsState = ''; console.warn('Claw ornaments did not load:', e); });
   }
 
   /* ---------- neon falloff ----------
@@ -833,4 +863,14 @@
     render();
   }
   frame();
+  }
+
+  // Build the scene only when its stage is within three quarters of a screen, so a visitor who never
+  // scrolls here pays nothing, and the shaders compile one scroll ahead of the viewer rather than at load.
+  var begun = false;
+  function begin() { if (begun) return; begun = true; start(); }
+  if ('IntersectionObserver' in window) {
+    var approach = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { approach.disconnect(); begin(); } }, { rootMargin: '75% 0px' });
+    approach.observe(root);
+  } else begin();
 })();

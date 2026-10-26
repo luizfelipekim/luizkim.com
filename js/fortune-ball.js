@@ -15,6 +15,8 @@
   var hasGL = (function () { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
   if (typeof THREE === 'undefined' || !hasGL) { stage.classList.add('is-flat'); return; }
 
+  function start() {
+
   var QA = [
     ["You hand off straight from AI?", "Yes. Five tickets were built straight from the prototype."],
     ["Same team, what actually changed?", "Handoffs per designer: 0.8 to 1.8 a week. Same four people."],
@@ -385,4 +387,14 @@
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWindow);
   requestAnimationFrame(frame);
+  }
+
+  // Build the scene only when its stage is within three quarters of a screen, so a visitor who never
+  // scrolls here pays nothing, and the shaders compile one scroll ahead of the viewer rather than at load.
+  var begun = false;
+  function begin() { if (begun) return; begun = true; start(); }
+  if ('IntersectionObserver' in window) {
+    var approach = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { approach.disconnect(); begin(); } }, { rootMargin: '75% 0px' });
+    approach.observe(view);
+  } else begin();
 })();
