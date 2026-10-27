@@ -33,7 +33,6 @@ html[data-theme="brutalist"] {
 
   --hero-bg: #efede7;
   --hero-ink: #0c0c0c;
-  --hero-a: #0c0c0c;
   --hero-b: #c4161c;
 
   /* the 3D openers sit in a slightly darker paper box, so each reads as its own compartment */
