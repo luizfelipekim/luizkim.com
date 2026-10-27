@@ -35,7 +35,6 @@ html[data-theme="esports"] {
 
   --hero-bg: #120a2c;
   --hero-ink: #f4f1ff;
-  --hero-a: #c9c3ff;
   --hero-b: #f6b8ff;
 
   --stage-bg: #1d1247;
@@ -103,7 +102,6 @@ html[data-theme="esports"] .ball__btn { border: 1px solid var(--line); border-ra
 
 /* ---------- hero: the pull ---------- */
 html[data-theme="esports"] .hero__pic { background: var(--bg); }
-html[data-theme="esports"] .hero__canvas { opacity: 0.4; mix-blend-mode: screen; }
 html[data-theme="esports"] .hero__scrim { display: none; }
 html[data-theme="esports"] .hero__nav a { opacity: 1; }
 html[data-theme="esports"] .hero__mark { font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.01em; }

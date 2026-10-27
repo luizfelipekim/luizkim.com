@@ -34,7 +34,6 @@ html[data-theme="broadsheet"] {
 
   --hero-bg: #faf8f4;
   --hero-ink: #1a1715;
-  --hero-a: #d4cfc8;
   --hero-b: #1a1715;
 
   /* the 3D openers sit in tinted plates, like photographs on the page */
@@ -103,7 +102,7 @@ html[data-theme="broadsheet"] .button::after { content: "→"; content: "→" / 
 
 /* ---------- hero: the masthead ---------- */
 html[data-theme="broadsheet"] .hero { height: auto; min-height: 0; padding-top: calc(env(safe-area-inset-top, 0px) + 88px); }
-html[data-theme="broadsheet"] .hero__canvas, html[data-theme="broadsheet"] .hero__scrim { display: none; }
+html[data-theme="broadsheet"] .hero__scrim { display: none; }
 html[data-theme="broadsheet"] .hero__pic { background: var(--bg); }
 /* the header stays the fixed bar every look shares; the masthead starts below it */
 html[data-theme="broadsheet"] .hero__top > * { border-top: 3px solid var(--line); padding-top: 8px; }

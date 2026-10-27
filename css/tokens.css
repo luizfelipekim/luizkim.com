@@ -46,10 +46,9 @@
   --field-muted: #4a4a46;
   --field-accent: #4f6a4e;
 
-  /* hero: the light opening screen on the home page; --hero-a/--hero-b feed the shader */
+  /* hero: the light opening screen on the home page; --hero-b tints its soft glow */
   --hero-bg: #ffffff;
   --hero-ink: #141414;
-  --hero-a: #ececec;
   --hero-b: #1981ae;
 
   /* stage: the chrome around each 3D opener; follows the page unless a theme says otherwise */
