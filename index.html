@@ -6,6 +6,7 @@
 <title>Luiz Kim</title>
 <link rel="preload" href="fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/tokens.css">
+<script src="js/motion.js"></script>
 <script>
 document.documentElement.classList.add('js');
 // The home page opens at the top. A reload or Back would otherwise restore the old scroll position
@@ -297,6 +298,8 @@ p { max-width: 62ch; text-wrap: pretty; }
   .js [data-rise] { opacity: 0; transform: translateY(18px); animation: rise var(--t-reveal) var(--ease-out) forwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
   .js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity 700ms var(--ease-out), transform 900ms var(--ease-out); transition-delay: calc(var(--i, 0) * 80ms); }
   .js [data-reveal].is-in { opacity: 1; transform: none; }
+  .js .hero__name[data-rise] { animation-duration: var(--t-line); animation-timing-function: var(--ease-silk); }
+  .js .case__visual[data-reveal] { transform: none; transition: opacity var(--t-stage) var(--ease-drift); }   /* a stage fades in and never moves: its scene is the motion */
   .js .shutter[data-reveal] { opacity: 1; transform: none; clip-path: inset(0 100% 0 0); transition: clip-path 1100ms var(--ease-in-out); }
   .js .shutter[data-reveal] svg { transform: scale(1.06); transform-origin: left bottom; transition: transform 1500ms var(--ease-soft); }
   .js .shutter[data-reveal].is-in { clip-path: inset(0); }
@@ -381,7 +384,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
   <section class="stats wrap" aria-labelledby="stats-head">
     <div class="stats__grid">
       <div class="stats__list">
-        <h2 class="stats__head" id="stats-head" data-reveal>What design changed</h2>
+        <h2 class="stats__head" id="stats-head" data-reveal data-lines>What design changed</h2>
         <div class="stats__rows">
           <a class="stats__row" href="case-ai.html" data-reveal style="--i:0">
             <span class="stats__fig nums">2.2×</span>
@@ -429,7 +432,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
       </div>
       <div class="case__cluster">
         <div class="case__meta">
-          <h2 class="case__title" data-reveal style="--i:2"><a href="case-ai.html">Asked for speed, delivered it with AI</a></h2>
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-ai.html">Asked for speed, delivered it with AI</a></h2>
           <div data-reveal style="--i:3">
             <p class="case__desc">The brief was faster design, same headcount. Handoffs per designer more than doubled, a 5-hour Figma rebuild became one click, and the time freed started the first research practice.</p>
             <p class="case__who">A5 Labs · Design Director · 2026 · Team of four</p>
@@ -462,7 +465,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
       </div>
       <div class="case__cluster">
         <div class="case__meta">
-          <h2 class="case__title" data-reveal style="--i:2"><a href="case-system.html">One design system for 40 brands</a></h2>
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-system.html">One design system for 40 brands</a></h2>
           <div data-reveal style="--i:3">
             <p class="case__desc">One system, 40+ brands, run as a product with ownership by market.</p>
             <p class="case__who">Entain · Product Design Manager · 2023 to 2026</p>
@@ -483,7 +486,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
       </div>
       <div class="case__cluster">
         <div class="case__meta">
-          <h2 class="case__title" data-reveal style="--i:2"><a href="case-poker.html">Poker UX research, built from zero</a></h2>
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-poker.html">Poker UX research, built from zero</a></h2>
           <div data-reveal style="--i:3">
             <p class="case__desc">A small team inside Gaming went from zero testing to out-researching Sports, Casino and Core.</p>
             <p class="case__who">Entain · Product Design Manager · Poker · 2021 to 2023</p>

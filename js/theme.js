@@ -33,7 +33,13 @@
     var link = document.createElement('link');
     link.rel = 'stylesheet'; link.href = href(name); link.setAttribute('data-theme-css', name);
     var fired = false; var finish = function () { if (!fired) { fired = true; loaded[name] = true; done(); } };
-    link.onload = finish; link.onerror = finish; setTimeout(finish, 2500);
+    // past the timeout the look is already on the page without its tokens, and the 3D scenes have read them
+    // empty; when the sheet does land they are told again
+    link.onload = function () {
+      if (fired && current() === name) document.dispatchEvent(new CustomEvent('theme:change', { detail: { theme: name } }));
+      finish();
+    };
+    link.onerror = finish; setTimeout(finish, 2500);
     document.head.appendChild(link);
   }
 
@@ -57,6 +63,7 @@
   var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function shutter(swap) {
     if (still) return swap();
+    if (document.startViewTransition) { document.startViewTransition(swap); return; }   // the dissolve in css/tokens.css
     var s = document.createElement('div');
     s.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;transition:opacity 250ms ease;background:' + getComputedStyle(document.body).color;
     document.body.appendChild(s);

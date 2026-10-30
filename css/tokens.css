@@ -89,7 +89,37 @@
   --t-press: 140ms;
   --t-hover: 180ms;
   --t-reveal: 800ms;
+  --ease-silk: cubic-bezier(0.43, 0.195, 0.02, 1);   /* a gentle start and a long settle, for what rises */
+  --ease-drift: cubic-bezier(0.37, 0, 0.63, 1);      /* even both ways, for what only fades */
+  --t-line: 1200ms;
+  --t-stage: 1400ms;
+  --t-dissolve-out: 500ms;
+  --t-dissolve-in: 700ms;
 }
+
+/* The dissolve: between pages, and between looks (js/theme.js). The ground stops a light flash mid-fade,
+   and the reader can keep clicking through it. Browsers without view transitions keep the plain cut. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition { background: var(--page-bg); pointer-events: none; }
+  ::view-transition-old(root) { animation: dissolve-out var(--t-dissolve-out) var(--ease-drift) both; }
+  ::view-transition-new(root) { animation: dissolve-in var(--t-dissolve-in) var(--ease-drift) both; }
+  .is-arriving [data-rise], .is-arriving .line { animation-play-state: paused; }
+
+  /* line by line, default look only: js/motion.js splits a data-lines heading at its reveal */
+  html.has-lines:not([data-theme]) [data-rise][data-lines] { animation: none; }
+  html.has-lines [data-lines].is-split { opacity: 1; transform: none; transition: none; animation: none; }
+  .line { display: block; white-space: nowrap; opacity: 0; transform: translateY(0.9em); animation: line-rise var(--t-line) var(--ease-silk) forwards; animation-delay: calc((var(--i, 0) + var(--l, 0)) * 80ms); }
+
+  /* one large picture per case drifts through its frame with the scroll */
+  @supports (animation-timeline: view()) {
+    html:not([data-theme]) [data-drift] > :is(img, svg) { animation: drift linear both; animation-timeline: view(); }
+  }
+}
+@keyframes dissolve-out { to { opacity: 0; } }
+@keyframes dissolve-in { from { opacity: 0; } }
+@keyframes line-rise { to { opacity: 1; transform: none; } }
+@keyframes drift { from { transform: scale(1.07) translateY(-3%); } to { transform: scale(1.07) translateY(3%); } }
 
 /* Areas with their own colour scheme map their family onto the local page tokens,
    so anything inside them (buttons, muted text, rules) needs no special rules. */
