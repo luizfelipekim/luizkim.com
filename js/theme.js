@@ -63,6 +63,7 @@
   var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function shutter(swap) {
     if (still) return swap();
+    if (document.startViewTransition) { document.startViewTransition(swap); return; }   // the dissolve in css/tokens.css
     var s = document.createElement('div');
     s.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;transition:opacity 250ms ease;background:' + getComputedStyle(document.body).color;
     document.body.appendChild(s);
