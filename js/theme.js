@@ -33,7 +33,13 @@
     var link = document.createElement('link');
     link.rel = 'stylesheet'; link.href = href(name); link.setAttribute('data-theme-css', name);
     var fired = false; var finish = function () { if (!fired) { fired = true; loaded[name] = true; done(); } };
-    link.onload = finish; link.onerror = finish; setTimeout(finish, 2500);
+    // past the timeout the look is already on the page without its tokens, and the 3D scenes have read them
+    // empty; when the sheet does land they are told again
+    link.onload = function () {
+      if (fired && current() === name) document.dispatchEvent(new CustomEvent('theme:change', { detail: { theme: name } }));
+      finish();
+    };
+    link.onerror = finish; setTimeout(finish, 2500);
     document.head.appendChild(link);
   }
 
