@@ -4,3 +4,6 @@ Claude outputs/
 
 # raw Blender export of the cabinet; models/optimize-glb.py turns it into the two files the site loads
 models/claw-cabinet-export.glb
+
+# built by scripts/build.py; the workflow uploads it, it is never committed
+dist/
