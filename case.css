@@ -76,6 +76,8 @@ h1, h2, h3 { text-wrap: balance; }
 /* a word at the left, the content from the 34% line */
 .row { display: grid; grid-template-columns: 34% minmax(0, 1fr); padding-bottom: var(--section); }
 .row__word { font-weight: var(--weight-strong); }
+/* the STAR label above a full-width section: sits close to its heading, inside the section's larger gap */
+.star { margin-bottom: -1.25rem; }
 .row__body { display: flex; flex-direction: column; gap: 1.25rem; }
 .row__head { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; max-width: 28ch; }
 .row__body p { font-size: var(--step-lead); line-height: 1.35; max-width: 48ch; }
