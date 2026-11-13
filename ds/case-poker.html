@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A design system for a poker game · Luiz Kim</title>
+<meta name="description" content="A poker design system created from scratch for about 10 brands: cards, decks and player plates as components.">
+<meta property="og:title" content="A design system for a poker game">
+<meta property="og:description" content="A poker design system created from scratch for about 10 brands: cards, decks and player plates as components.">
+<link rel="preload" href="../fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../case.css">
+<script src="../js/theme.js"></script>
+<script src="../js/motion.js"></script>
+<script>document.documentElement.classList.add('js')</script>
+<script src="../js/analytics.js" defer></script>
+
+<style>
+/* ds track: a step strip with a gate under each step, a three-tier model, bars against the old way, limits */
+:root { --rule: var(--line); }
+.lead { font-size: var(--step-lead); line-height: 1.35; max-width: 44ch; }
+.plain-w { font-size: var(--step-body); line-height: 1.5; max-width: 62ch; }
+.pipe { counter-reset: step; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem var(--gutter); padding: 0; margin: 0; list-style: none; }
+.pipe li { counter-increment: step; display: flex; flex-direction: column; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); min-width: 0; font-size: var(--step-body); }
+.pipe li::before { content: counter(step); font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1; letter-spacing: -0.02em; }
+.pipe b { font-weight: var(--weight-strong); }
+.pipe .gate { margin-top: auto; padding-top: 0.6rem; border-top: 1px dashed var(--rule); color: var(--muted); font-size: var(--step-small); }
+.pipe .gate::before { content: "Gate · "; color: var(--ink); font-weight: var(--weight-strong); }
+.pipe .opt { color: var(--muted); font-weight: var(--weight); }
+@media (max-width: 1000px) { .pipe { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .pipe { grid-template-columns: 1fr; } }
+.note { font-size: var(--step-small); color: var(--muted); max-width: 70ch; }
+.tiers { display: flex; flex-direction: column; gap: 0.75rem; max-width: 64rem; }
+.tier { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 0.5rem var(--gutter); padding: 1.25rem 1.5rem; background: var(--surface); }
+.tier h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.tier p { font-size: var(--step-body); }
+.tier .who { color: var(--muted); font-size: var(--step-small); grid-column: 1; }
+.tier--core { border-left: 4px solid var(--accent); }
+.tier__chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; padding: 0; list-style: none; }
+.tier__chips li { padding: 0.25rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-pill); font-size: var(--step-small); }
+@media (max-width: 700px) { .tier { grid-template-columns: 1fr; } }
+.bars { display: flex; flex-direction: column; gap: 1.5rem; background: var(--surface); padding: clamp(1.25rem, 3vw, 2rem); max-width: 64rem; margin: 0; }
+.gauge { display: flex; flex-direction: column; gap: 0.5rem; }
+.gauge__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; flex-wrap: wrap; }
+.gauge__label { font-size: var(--step-small); color: var(--muted); }
+.gauge__value { font-weight: var(--weight-strong); }
+.gauge__track { display: flex; }
+.gauge__fill { display: block; height: 1.5rem; width: calc(var(--d) / 5 * 100%); background: var(--muted); }
+.gauge__fill--to { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.gauge.is-key .gauge__fill { background: var(--accent); }
+.limits { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+.limits h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.limits ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); padding: 0; list-style: none; }
+.limits li { display: flex; flex-direction: column; gap: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); font-size: var(--step-body); }
+.limits b { font-weight: var(--weight-strong); }
+@media (max-width: 700px) { .limits ul { grid-template-columns: 1fr; } }
+.decisions--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 64rem; }
+@media (max-width: 800px) { .decisions--2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="bar wrap">
+  <a class="bar__mark" href="index.html">Luiz Kim</a>
+  <nav class="bar__nav" aria-label="Main">
+    <a href="index.html#work">All work</a>
+    <a href="index.html#about">About</a>
+    <span class="pick" data-theme-pick><button class="pick__btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="pick-menu" aria-label="Theme: Default"><svg class="pick__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button><span class="pick__menu" id="pick-menu" role="menu" aria-label="Theme" hidden><button class="pick__item" type="button" role="menuitemradio" aria-checked="true" data-look="charcoal">Default</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="brutalist">Brutalist</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="windows95">Windows 95</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="broadsheet">Broadsheet</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="esports">E-sports</button></span></span>
+    <a class="button" href="index.html#contact">Email me</a>
+  </nav>
+</header>
+<main>
+  <section class="top wrap">
+    <p class="top__meta" data-rise style="--i:0">Entain · Product Design Manager, Poker · 2021 to 2023</p>
+    <h1 class="top__title" data-rise data-lines style="--i:1">A design system for a poker game</h1>
+    <p class="top__summary" data-rise style="--i:2">I created the poker design system from scratch for about 10 brands. A poker client is a game, so its parts were cards, decks and player plates, not only buttons and inputs.</p>
+    <div class="outcomes">
+        <div class="outcome" data-reveal style="--i:0">
+          <span class="outcome__fig nums">0 → 1</span>
+          <span class="outcome__txt">a design system created from scratch</span>
+          <span class="outcome__how">No poker system existed before</span>
+        </div>
+        <div class="outcome" data-reveal style="--i:1">
+          <span class="outcome__fig nums">~10</span>
+          <span class="outcome__txt">poker brands on one system</span>
+          <span class="outcome__how">Each brand with its own look</span>
+        </div>
+        <div class="outcome" data-reveal style="--i:2">
+          <span class="outcome__fig nums">20 of 24</span>
+          <span class="outcome__txt">players chose the realistic, diverse avatars for the player plates</span>
+          <span class="outcome__how">Moderated study</span>
+        </div>
+    </div>
+    <dl class="facts" data-reveal><div><dt>Team</dt><dd>9 designers, 1 researcher, 1 UX writer</dd></div><div><dt>Brands</dt><dd>About 10 poker brands</dd></div><div><dt>Game parts</dt><dd>Cards, decks, player plates</dd></div><div><dt>My role</dt><dd>Created, supervised, maintained</dd></div></dl>
+    <figure class="cover" data-reveal data-drift aria-label="A poker table seen from above: player plates around the felt, a deck and a fan of cards in the middle"><svg viewBox="0 0 900 386" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A poker table seen from above: player plates around the felt, a deck and a fan of cards in the middle">
+      <rect width="900" height="386" fill="#1c1c1c"/>
+      <ellipse cx="450" cy="200" rx="380" ry="160" fill="#3b3b3b"/>
+      <ellipse cx="450" cy="196" rx="350" ry="138" fill="#8fa68e"/>
+      <g fill="#262626" stroke="#c8c5ba" stroke-width="2">
+        <rect x="100" y="70" width="130" height="44" rx="22"/><rect x="385" y="22" width="130" height="44" rx="22"/><rect x="670" y="70" width="130" height="44" rx="22"/>
+        <rect x="100" y="286" width="130" height="44" rx="22"/><rect x="385" y="330" width="130" height="44" rx="22"/><rect x="670" y="286" width="130" height="44" rx="22"/>
+      </g>
+      <g fill="#c8c5ba"><circle cx="122" cy="92" r="14"/><circle cx="407" cy="44" r="14"/><circle cx="692" cy="92" r="14"/><circle cx="122" cy="308" r="14"/><circle cx="407" cy="352" r="14"/><circle cx="692" cy="308" r="14"/></g>
+      <g fill="#f1f1ef"><rect x="144" y="84" width="70" height="7"/><rect x="429" y="36" width="70" height="7"/><rect x="714" y="84" width="70" height="7"/><rect x="144" y="300" width="70" height="7"/><rect x="429" y="344" width="70" height="7"/><rect x="714" y="300" width="70" height="7"/></g>
+      <g fill="#8fa68e" opacity="0.9"><rect x="144" y="97" width="44" height="6"/><rect x="429" y="49" width="44" height="6"/><rect x="714" y="97" width="44" height="6"/><rect x="144" y="313" width="44" height="6"/><rect x="429" y="357" width="44" height="6"/><rect x="714" y="313" width="44" height="6"/></g>
+      <g fill="#262626"><rect x="262" y="158" width="58" height="82" rx="5"/><rect x="266" y="154" width="58" height="82" rx="5"/></g>
+      <rect x="270" y="150" width="58" height="82" rx="5" fill="#3b3b3b" stroke="#c8c5ba" stroke-width="2"/>
+      <path d="M282 162h34v58h-34z" fill="none" stroke="#c8c5ba" stroke-width="1.5"/>
+      <g stroke="#1c1c1c" stroke-width="1.5">
+        <rect x="380" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/><rect x="446" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/><rect x="512" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/>
+      </g>
+      <g fill="#1c1c1c"><rect x="388" y="158" width="12" height="16"/><rect x="454" y="158" width="12" height="16"/><rect x="520" y="158" width="12" height="16"/></g>
+      <g fill="#b0473f"><circle cx="409" cy="198" r="10"/><circle cx="541" cy="198" r="10"/></g>
+      <circle cx="475" cy="198" r="10" fill="#1c1c1c"/>
+    </svg></figure>
+  </section>
+
+  <section class="row wrap" aria-label="The situation">
+    <p class="row__word" data-reveal>Situation</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">Poker is a game, not a form</h2>
+      <p class="plain" data-reveal style="--i:2">A standard design system covers buttons, inputs and lists. A poker table also needs cards, decks and player plates, and they must work on every brand.</p>
+    </div>
+  </section>
+
+  <section class="row wrap" aria-label="The task">
+    <p class="row__word" data-reveal>Task</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">One system for about 10 brands</h2>
+      <p class="plain" data-reveal style="--i:2">There was no system to start from. I had to create one, and keep it working for every brand as the product grew.</p>
+    </div>
+  </section>
+
+  <section class="led wrap" aria-label="What I led">
+    <p class="row__word star" data-reveal>Action</p>
+    <h2 class="led__head" data-reveal>Three things I did differently</h2>
+    <div class="decisions">
+        <div class="decision" data-reveal style="--i:0">
+          <h3>Treat game objects as components</h3>
+          <p>Cards, decks and player plates became components with variants, in the same way as a button.</p>
+        </div>
+        <div class="decision" data-reveal style="--i:1">
+          <h3>Supervise, then maintain</h3>
+          <p>I supervised the designers who built on the system, and I kept it maintained as brands and features changed.</p>
+        </div>
+        <div class="decision" data-reveal style="--i:2">
+          <h3>Let players shape the parts</h3>
+          <p>Casual players wanted better avatars, but product pushed back on a realistic set. We tested it, and it shipped.</p>
+          <p class="cost"><b>Cost:</b> we gave up the avatar look the industry knew.</p>
+        </div>
+    </div>
+    <div class="evidence" data-reveal style="--i:3">
+      <div class="ev">
+        <p class="ev__label">Before</p>
+        <img class="ev__pic" src="../img/poker/avatars-old.webp" width="340" height="385" loading="lazy" alt="Typical industry poker avatars, crossed out: hypersexualised women and cartoon characters">
+        <p>Industry default: hypersexualised women and childlike cartoon characters.</p>
+      </div>
+      <div class="ev">
+        <p class="ev__label">The result</p>
+        <p class="ev__fig nums">20 of 24</p>
+        <div class="ev__pair"><figure><img src="../img/poker/avatar-realistic.webp" width="170" height="170" loading="lazy" alt="Realistic version of a poker avatar"><figcaption><b>20</b> chose this</figcaption></figure><figure><img src="../img/poker/avatar-cartoon.webp" width="170" height="170" loading="lazy" alt="Big-head cartoon version of the same avatar"><figcaption><b>4</b> chose this</figcaption></figure></div>
+        <div class="ev__bar" role="img" aria-label="20 of 24 players"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        <p>chose realistic, diverse avatars</p>
+      </div>
+      <figure class="ev">
+        <p class="ev__label">In their words</p>
+        <blockquote class="ev__quote">“I use a man (avatar). I think you can be looked down upon as a woman.”</blockquote>
+        <figcaption class="muted">Female poker player</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="row wrap" aria-label="What I learned">
+    <p class="row__word" data-reveal>Learned</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">Measure the system from day one</h2>
+      <p class="plain" data-reveal style="--i:2">I did not measure how much faster the poker system made the team. At Entain's next system I did: design tasks got 56% faster.</p>
+    </div>
+  </section>
+
+  <nav class="pager wrap" aria-label="Other case studies">
+    <a href="case-system.html"><span>Previous</span><b>40+ brands under one design system</b></a>
+    <a href="case-ai.html"><span>Next</span><b>A design system AI agents can read</b></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <span>Luiz Kim · London · <a class="link" href="mailto:luizfelipekim@gmail.com">luizfelipekim@gmail.com</a></span>
+  <span><a class="link" href="https://www.linkedin.com/in/luizkimux" rel="noopener">LinkedIn</a></span>
+</footer>
+<script>
+(() => {
+  const targets = document.querySelectorAll('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) { if (!e.isIntersecting) continue; e.target.classList.add('is-in'); io.unobserve(e.target); }
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
+    targets.forEach((el) => io.observe(el));
+    window.addEventListener('load', () => setTimeout(() => {
+      targets.forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in'); });
+    }, 2500));
+  } else { targets.forEach((el) => el.classList.add('is-in')); }
+  const team = document.getElementById('team');
+  if (team) {
+    const out = document.getElementById('calc-out'), lab = document.getElementById('team-out');
+    team.addEventListener('input', () => {
+      const n = Number(team.value);
+      lab.textContent = n + ' designers';
+      out.innerHTML = 'A team of ' + n + ' ships <strong>' + (n * 14) + '</strong> tickets a quarter with chat tools, and <strong>' + (n * 33) + '</strong> with AI tooling.';
+    });
+  }
+})();
+</script>
+</body>
+</html>
