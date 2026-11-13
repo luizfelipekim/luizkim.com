@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Luiz Kim · Design systems, London</title>
+<meta name="description" content="Luiz Kim, London. One design system for 40+ brands at Entain, run as a product: design tasks 56% faster, development 43% faster.">
+<meta property="og:title" content="Luiz Kim · Design systems, London">
+<meta property="og:description" content="One design system for 40+ brands at Entain, run as a product. Design tasks 56% faster, development 43% faster.">
+<link rel="preload" href="../fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<script src="../js/motion.js"></script>
+<script>
+document.documentElement.classList.add('js');
+// The home page opens at the top. A reload or Back would otherwise restore the old scroll position
+// and land visitors on a case study; a hash in the URL still wins.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+if (!location.hash) { scrollTo(0, 0); addEventListener('pageshow', function (e) { if (e.persisted && !location.hash) scrollTo(0, 0); }); }
+</script>
+<style>
+/* Layout: the name as a monument on the bottom edge of a full-bleed photograph; after it a small, calm
+   page in one grotesk at two sizes; the ending flips to a pale concrete field with the email as display type. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: var(--step-body); line-height: 1.5; font-weight: var(--weight);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overflow-x: hidden;
+}
+h1, h2, h3, p, figure, ul, ol, dl, dd { margin: 0; }
+ul[class], ol[class] { padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+[hidden]:not([hidden="until-found" i]) { display: none !important; }
+img { height: auto; }
+a { color: inherit; }
+button, input { font: inherit; color: inherit; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+p { max-width: 62ch; text-wrap: pretty; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px), var(--m)); padding-right: max(16px, env(safe-area-inset-right, 0px), var(--m)); }
+.muted { color: var(--muted); }
+.nums { font-variant-numeric: tabular-nums; }
+.link { text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 0.07em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); transition: text-decoration-color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .link:hover { text-decoration-color: currentColor; } }
+.button {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0 1.25rem;
+  background: var(--accent); color: var(--accent-ink); font-weight: var(--weight-strong); text-decoration: none; white-space: nowrap;
+  transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease;
+}
+.button:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) { .button:hover { background: var(--ink); color: var(--bg); } }
+/* theme picker: a palette icon (Lucide) that opens a menu of the looks. The menu takes the page pair, so it reads
+   the same over the hero and the page; each look sets the icon's line weight through --icon-stroke / --icon-cap */
+.pick { position: relative; display: inline-flex; }
+.pick__btn { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; border: var(--border) solid color-mix(in srgb, currentColor 30%, transparent); border-radius: var(--radius-pill); background: transparent; color: inherit; cursor: pointer; transition: border-color var(--t-hover) ease, background-color var(--t-hover) ease; }
+.pick__btn[aria-expanded="true"] { border-color: currentColor; }
+@media (hover: hover) and (pointer: fine) { .pick__btn:hover { border-color: currentColor; } }
+.pick__icon { width: 20px; height: 20px; stroke-width: var(--icon-stroke); stroke-linecap: var(--icon-cap); stroke-linejoin: var(--icon-join); }
+.pick__menu { position: absolute; z-index: 60; top: calc(100% + 10px); right: 0; display: grid; min-width: 13rem; padding: 6px; background: color-mix(in srgb, var(--page-bg) 94%, transparent); color: var(--page-ink); border: var(--border) solid color-mix(in srgb, var(--page-line) 80%, transparent); border-radius: calc(var(--radius) * 2); box-shadow: 0 24px 48px -20px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.12); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transform-origin: top right; animation: pick-in 180ms var(--ease-out); }
+.pick__menu[hidden] { display: none; }
+.pick__item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; padding: 0.6rem 0.75rem; border: 0; border-radius: var(--radius); background: transparent; color: inherit; font: inherit; font-size: var(--step-small); font-weight: var(--weight); text-align: left; cursor: pointer; }
+.pick__item:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) { .pick__item:hover { background: color-mix(in srgb, var(--page-ink) 9%, transparent); } }
+.pick__item[aria-checked="true"] { font-weight: var(--weight-strong); }
+.pick__item[aria-checked="true"]::after { content: ""; width: 0.6rem; height: 0.32rem; margin-top: -0.2rem; border-left: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); }
+@keyframes pick-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .pick__menu { animation: none; } }
+@media (pointer: coarse) { .pick__item { min-height: 44px; font-size: 16px; } }
+
+/* ---------- hero: film title, bottom edge ---------- */
+.hero { position: relative; z-index: 5; height: 100svh; min-height: 560px; overflow: hidden; color: var(--ink); isolation: isolate; color-scheme: light; }
+.hero__pic { position: absolute; inset: 0; z-index: 0; background: var(--bg) radial-gradient(120% 70% at 70% 35%, color-mix(in srgb, var(--hero-b) 10%, transparent), transparent 60%); }
+.hero__scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; z-index: 1; background: linear-gradient( /* taste-skill-ignore: neutral scrim under the name only */to top, color-mix(in srgb, var(--bg) 72%, transparent), transparent); pointer-events: none; }
+.hero__top { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: calc(env(safe-area-inset-top, 0px) + 1.1rem); padding-bottom: 1.1rem;
+  border-bottom: var(--border) solid transparent; transition: background-color var(--t-hover) ease, border-color var(--t-hover) ease, padding var(--t-hover) ease, color var(--t-hover) ease; }
+/* past the hero the bar takes the page's own pair over a translucent ground */
+.hero__top.is-stuck { --bg: var(--page-bg); --ink: var(--page-ink); --line: var(--page-line); color: var(--ink); background: color-mix(in srgb, var(--page-bg) 84%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom-color: color-mix(in srgb, var(--page-line) 60%, transparent); padding-top: calc(env(safe-area-inset-top, 0px) + 0.7rem); padding-bottom: 0.7rem; }
+.hero__end { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; }
+.hero__mark { font-weight: var(--weight-strong); text-decoration: none; font-size: var(--step-body); }
+.hero__nav { display: flex; align-items: center; gap: clamp(1rem, 2.4vw, 2.25rem); font-size: var(--step-small); font-weight: var(--weight-strong); }
+.hero__nav .button { min-height: 2.5rem; padding: 0 1rem; }
+.hero :focus-visible { outline-color: var(--ink); }
+.hero__nav a { text-decoration: none; opacity: 0.92; transition: opacity var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .hero__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.2em; } }
+.hero__bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 1.1rem; padding-bottom: 1.6rem; }
+.hero__row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; }
+.hero__lead { max-width: 28ch; font-size: var(--step-body); line-height: 1.45; }
+.hero__name {
+  font-family: var(--font-display); font-size: clamp(96px, 22vw, 340px); font-weight: var(--weight-strong); line-height: 0.82; letter-spacing: -0.055em;
+  white-space: nowrap; margin-left: -0.04em;
+}
+
+@media (max-width: 700px) {
+  .hero { min-height: 100svh; }
+  .hero__nav a:not(.button) { display: none; }
+  .hero__row { flex-direction: column; align-items: flex-start; gap: 0.9rem; }
+  .hero__name { font-size: 21.5vw; }
+  .hero__bottom { padding-bottom: 1.25rem; }
+}
+
+/* ---------- intro: narrow column, empty field ---------- */
+.intro { padding-top: 4rem; padding-bottom: 10rem; }
+.intro__col { margin-left: 15%; width: min(360px, 100%); display: flex; flex-direction: column; gap: 1rem; font-size: var(--step-body); line-height: 1.5; }
+.intro__col p:first-child { font-weight: var(--weight-strong); color: var(--ink); }
+.intro__col p:first-child { color: var(--ink); }
+@media (max-width: 700px) { .intro { padding-top: 4.5rem; padding-bottom: 6rem; } .intro__col { margin-left: 0; width: 78%; } }
+
+/* ---------- stats: quiet figure lines + the live thing ---------- */
+.stats { padding-top: 18vh; padding-bottom: 18vh; }
+.stats__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: start; }
+.stats__list { grid-column: 2 / 12; }
+.stats__head { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 3.5rem; }
+.stats__rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--gutter); row-gap: 2rem; align-items: start; }
+.stats__row { display: flex; flex-direction: column; gap: 0.75rem; text-decoration: none; }
+.stats__fig { font-family: var(--font-display); font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: var(--weight-strong); line-height: 1; letter-spacing: -0.03em; }
+.stats__txt { max-width: 28ch; color: var(--ink); font-size: var(--step-body); line-height: 1.45; }
+.stats__txt strong { font-weight: calc(var(--weight-strong) + 100); }
+
+@media (max-width: 900px) {
+  .stats { padding-top: 6rem; padding-bottom: 6rem; }
+  .stats__list { grid-column: 1 / -1; }
+  .stats__head { font-size: 1.375rem; margin-bottom: 2.5rem; }
+}
+@media (max-width: 600px) {
+  .stats__rows { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; }
+  .stats__fig { font-size: 2.25rem; }
+}
+
+/* ---------- work: oversized visual, small cluster ---------- */
+.work { display: flex; flex-direction: column; gap: 140px; padding-top: 6rem; padding-bottom: clamp(4rem, 8vw, 7rem); overflow: hidden; }
+.case { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gutter); align-items: end; }
+.case__visual { grid-column: 1 / 8; height: 64svh; min-height: 400px; max-height: 610px; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); overflow: hidden; }
+.case--2 .case__visual { height: 48svh; }
+.case--3 .case__visual { height: 72svh; }
+.case__visual svg { width: 120%; height: 100%; margin-left: -8%; }
+.case__cluster { grid-column: 8 / 13; display: flex; flex-direction: column; gap: 28px; padding-bottom: 0.5rem; }
+.case__shot { aspect-ratio: 16 / 10; border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.case__meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.case__title { font-family: var(--font-display); font-size: clamp(28px, 3vw, 44px); font-weight: var(--weight-strong); line-height: 1.02; letter-spacing: -0.03em; text-wrap: balance; }
+.case__title a { text-decoration: none; }
+.case__desc { font-size: var(--step-body); line-height: 1.45; color: var(--ink); }
+.case__desc a { color: var(--ink); }
+.case__who { font-size: var(--step-small); color: var(--muted); margin-top: 0.35rem; }
+.case__cta { margin-top: 1.25rem; }
+
+/* AI case teaser: the fortune ball */
+.case__visual--ball { overflow: visible; }
+.ball { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; background: var(--bg); color: var(--ink); padding: 1.5rem max(16px, var(--m)) 1.25rem calc(max(16px, env(safe-area-inset-left, 0px), var(--m)) + 0.5rem); }
+.ball__eyebrow { display: block; font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.ball__ask { display: grid; gap: 4px; min-height: 64px; }
+.ball__q { font-size: clamp(18px, 2vw, 26px); font-weight: var(--weight-strong); line-height: 1.2; max-width: 24ch; text-wrap: balance; transition: opacity 350ms var(--ease-out), transform 350ms var(--ease-out); }
+.ball__q.is-out { opacity: 0; transform: translateY(6px); }
+.ball__view { position: relative; width: 100%; flex: 1 1 160px; min-height: 160px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.ball__view.is-held { cursor: grabbing; }
+.ball__canvas { display: block; width: 100%; height: 100%; outline: none; }
+.ball__meter { position: absolute; left: 50%; bottom: 10px; width: 120px; height: 2px; transform: translateX(-50%); background: var(--surface-2); overflow: hidden; opacity: 0; transition: opacity 300ms; }
+.ball__meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 80ms linear; }
+.ball__view.is-held .ball__meter { opacity: 1; }
+/* the hint is a tooltip under the ball, pointing up at it (the script keeps it under the ball as it drifts):
+   up until the first touch, then on hover or focus while the ball is idle */
+.ball__hint { position: absolute; left: 50%; top: calc(100% - 46px); z-index: 1; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: var(--radius); background: var(--ink); color: var(--bg); font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.3; width: max-content; white-space: normal; text-wrap: balance; text-align: center; pointer-events: none; transform: translateX(-50%); transition: opacity 300ms var(--ease-out), transform 300ms var(--ease-out); }
+.ball__hint::after { content: ""; position: absolute; left: 50%; top: -5px; width: 10px; height: 10px; margin-left: -5px; background: inherit; transform: rotate(45deg); }
+.ball__hint.is-off, .ball.is-seen .ball__hint { opacity: 0; transform: translate(-50%, 6px); }
+@media (hover: hover) and (pointer: fine) { .ball.is-seen .ball__view:hover .ball__hint:not(.is-off) { opacity: 1; transform: translateX(-50%); } }
+.ball.is-seen .ball__view:focus-visible .ball__hint:not(.is-off) { opacity: 1; transform: translateX(-50%); }
+.ball__cap { display: grid; gap: 4px; min-height: 4.6em; opacity: 0; transform: translateY(8px); transition: opacity 600ms var(--ease-out) 200ms, transform 600ms var(--ease-out) 200ms; }
+.ball__cap.is-shown { opacity: 1; transform: none; }
+.ball__a { font-size: var(--step-body); font-weight: var(--weight); line-height: 1.4; max-width: 36ch; text-wrap: balance; }
+.ball__row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; min-height: 40px; }
+.ball__btn { font-size: var(--step-small); letter-spacing: 0.08em; text-transform: uppercase; background: transparent; border: var(--border) solid var(--line); border-radius: var(--radius-pill); padding: 8px 16px; cursor: pointer; transition: border-color var(--t-hover); }
+.ball__btn:hover { border-color: var(--muted); }
+.ball__btn[hidden] { display: none; }
+.ball__count { font-size: var(--step-small); color: var(--muted); letter-spacing: 0.08em; }
+.ball__flat { display: none; font-size: var(--step-body); color: var(--muted); max-width: 40ch; }
+.ball.is-flat > :not(.ball__flat) { display: none; }
+.ball.is-flat .ball__flat { display: block; }
+@media (prefers-reduced-motion: reduce) { .ball__cap, .ball__q, .ball__hint { transition: none; } }
+
+/* Poker case teaser: two cards on dark glass, dragged up to peek; a chip stack that riffles */
+.case__visual--peek { position: relative; background: var(--bg); color: var(--ink); }
+.peek__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.peek__vignette { position: absolute; inset: 0; pointer-events: none; background:
+  /* a shadow over the 3D scene: part of the content, not the chrome, so it is not themed */
+  radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(12, 12, 12, 0.5) 100%),
+  linear-gradient(180deg, rgba(12, 12, 12, 0.25) 0%, transparent 26%, transparent 66%, rgba(12, 12, 12, 0.6) 100%); }
+/* the hand and the chip stack each get a hit patch, placed by script over their projection; only there does the
+   touch belong to the table, so the page still scrolls everywhere else. The cue pulses until the first touch. */
+.peek__hit { position: absolute; touch-action: none; cursor: grab; }
+.peek__hit:active { cursor: grabbing; }
+.peek__cue { position: absolute; width: 36px; height: 36px; margin-left: -18px; pointer-events: none; color: #f4f4f4; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); animation: cue 1.6s ease-in-out infinite; }
+.peek__cue svg { width: 100%; height: 100%; }
+@keyframes cue { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-6px); } }
+.peek.is-touched .peek__cue { display: none; }
+.peek:focus-visible { outline-offset: -3px; }
+.peek__flat { display: none; }
+.peek.is-flat :is(.peek__canvas, .peek__vignette, .peek__hit, .peek__cue) { display: none; }
+@media (prefers-reduced-motion: reduce) { .peek__cue { animation: none; opacity: 0.9; } }
+.peek.is-flat .peek__flat { display: grid; place-items: center; height: 100%; padding: var(--m); text-align: center; color: var(--muted); max-width: none; }
+@media (max-width: 900px) {
+  .work { gap: 88px; padding-top: 3rem; }
+  .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
+  .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 56svh; }
+  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 440px; max-height: none; }
+  .case__visual--peek { width: 100%; aspect-ratio: auto; height: 58svh; min-height: 400px; }
+  .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
+  .case__cluster { gap: 1rem; }
+  .case__meta { display: flex; flex-direction: column; gap: 0.75rem; }
+  .case__title { font-size: 8vw; }
+  }
+
+
+/* Design-system case teaser: the claw machine */
+.case.case--2 .case__visual--claw { height: auto; min-height: 0; max-height: none; overflow: visible; }
+.claw { display: flex; flex-direction: column; gap: 10px; background: var(--bg); color: var(--ink); padding: 0 0 0 calc(max(16px, env(safe-area-inset-left, 0px), var(--m))); }
+.claw__stage { position: relative; width: 100%; aspect-ratio: 20 / 11; max-width: 100%; border: var(--border) solid var(--surface-2); overflow: hidden; outline: none; background: var(--bg); }
+.claw__stage:focus-visible { border-color: var(--ink); }
+.claw__canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+/* the engraved plate: a second canvas over the 3D one, drawn by the 2D shader library when a look asks for it (Broadsheet) */
+.claw__ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+.claw__ink.is-on { display: block; }
+.claw__controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: flex-end; gap: 12px; pointer-events: none; }
+.claw__controls > * { pointer-events: auto; }
+.claw__pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 3px; }
+.claw__key { appearance: none; border: var(--border) solid var(--line); background: color-mix(in srgb, var(--bg) 75%, transparent); color: var(--ink); border-radius: calc(var(--radius) * 1.5); padding: 0; display: grid; place-items: center; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 90ms, border-color 90ms; }
+.claw__key:active, .claw__key[data-held="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.claw__key:focus-visible { border-color: var(--ink); }
+.claw__key svg { width: 16px; height: 16px; }
+.claw__key--u { grid-area: 1 / 2; } .claw__key--l { grid-area: 2 / 1; } .claw__key--d { grid-area: 2 / 2; } .claw__key--r { grid-area: 2 / 3; }
+.claw__drop { appearance: none; width: 76px; height: 76px; border-radius: 50%; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; border: var(--border) solid var(--ink); background: var(--ink); color: var(--bg); font-size: var(--step-small); letter-spacing: 0.12em; text-transform: uppercase; font-weight: var(--weight-strong); transition: transform 120ms, background 120ms, color 120ms; }
+.claw__drop:active { transform: scale(0.96); }
+.claw__drop:disabled { background: color-mix(in srgb, var(--bg) 75%, transparent); color: color-mix(in srgb, var(--muted) 75%, var(--bg)); border-color: var(--line); cursor: default; }
+.claw__drop:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+/* the invitation sits inside the glass, top left, and doubles as the aria-live line for a catch; on phones the glass is
+   too small to share with the claw, so it sits under the stage instead */
+.claw__box { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.claw__hint { position: absolute; top: 14px; left: 14px; z-index: 1; max-width: min(30ch, calc(100% - 28px)); margin: 0; padding: 10px 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--bg) 72%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--ink); font-size: var(--step-small); line-height: 1.4; pointer-events: none; }
+.claw__hint b { display: block; font-size: var(--step-body); font-weight: var(--weight-strong); line-height: 1.25; margin-bottom: 2px; }
+.claw__flat { display: none; font-size: var(--step-body); color: var(--muted); max-width: 40ch; }
+.claw.is-flat > :not(.claw__flat) { display: none; }
+.claw.is-flat .claw__flat { display: block; }
+@media (prefers-reduced-motion: reduce) { .claw__drop { transition: none; } }
+@media (max-width: 900px) {
+  .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
+  .claw { padding-left: 0; }
+  .claw__stage { aspect-ratio: 1 / 1; }
+  .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ---------- about: side facts, wide paragraph ---------- */
+.about { padding-top: clamp(4rem, 8vw, 7rem); padding-bottom: clamp(4rem, 8vw, 7rem); display: flex; flex-direction: column; gap: 0; }
+.about__row { display: grid; grid-template-columns: 34% minmax(0, 1fr); column-gap: 0; align-items: center; }
+.who { width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.35rem; }
+.who__pics { position: relative; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.9rem;
+  /* the render is cut out of its ground; only the flat crop at the shoulders is faded away */
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
+.who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.who__name { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; }
+.who__role { font-size: var(--step-body); }
+.who__prev { font-size: var(--step-body); color: var(--muted); }
+.who__link { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-top: 0.6rem; color: var(--ink); transition: color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { .who__link:hover { color: var(--accent); } }
+.about__para { font-size: var(--step-lead); line-height: 1.35; max-width: 90%; letter-spacing: -0.01em; }
+.about__word { font-size: var(--step-body); color: var(--ink); }
+.about__lists { display: flex; gap: 64px; flex-wrap: wrap; }
+.about__list { width: 300px; display: flex; flex-direction: column; gap: 10px; font-size: var(--step-body); line-height: 1.3; }
+.about__list li { display: flex; justify-content: space-between; gap: 1rem; }
+.about__list li span { color: var(--muted); text-align: right; }
+@media (max-width: 800px) {
+  .about { gap: 0; padding-top: 5rem; padding-bottom: 5rem; }
+  .about__row { display: flex; flex-direction: column; gap: 2rem; }
+  .who { align-self: center; }
+  .about__para { max-width: none; }
+  .about__lists { flex-direction: column; gap: 40px; }
+  .about__list { width: 100%; }
+}
+
+/* ---------- contact: the email as display type, curtain ending ---------- */
+.page { position: relative; z-index: 1; background: var(--bg); }
+.contact { height: 100svh; min-height: 560px; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; justify-content: space-between; padding-top: 1.75rem; padding-bottom: 1.5rem; }
+.contact__intro { font-size: var(--step-lead); max-width: 26ch; line-height: 1.3; font-weight: var(--weight-strong); }
+.contact__mail { align-self: flex-start; text-decoration: none; font-family: var(--font-display); font-size: clamp(2.75rem, 8.25vw, 8.5rem); line-height: 0.95; letter-spacing: -0.04em; font-weight: var(--weight); white-space: nowrap; margin-left: -0.03em; transition: color var(--t-hover) ease; overflow-wrap: anywhere; }
+.contact__mail .at { display: inline; }
+@media (hover: hover) and (pointer: fine) { .contact__mail:hover { color: var(--accent); } }
+.contact__foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; font-size: var(--step-small); line-height: 1.4; }
+.contact__links { display: flex; gap: 1.5rem; }
+.contact__cta { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; }
+.contact__copy { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+.copy-btn { background: var(--ink); color: var(--bg); border: 0; padding: 0 1rem; min-height: 2.5rem; font-weight: var(--weight-strong); cursor: pointer; transition: transform var(--t-press) var(--ease-out); }
+.copy-btn:active { transform: scale(0.97); }
+.copy-btn:focus-visible { outline-color: var(--ink); }
+@media (max-width: 700px) {
+  .contact { height: 86svh; }
+  .contact__mail { font-size: 11.5vw; white-space: normal; }
+  .contact__mail .at::after { content: "\A"; white-space: pre; }
+  .contact__foot { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .contact__links { flex-direction: column; gap: 0.75rem; }
+}
+
+/* ---------- motion (content stays visible without script) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-rise] { opacity: 0; transform: translateY(18px); animation: rise var(--t-reveal) var(--ease-out) forwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+  .js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity 700ms var(--ease-out), transform 900ms var(--ease-out); transition-delay: calc(var(--i, 0) * 80ms); }
+  .js [data-reveal].is-in { opacity: 1; transform: none; }
+  .js .hero__name[data-rise] { animation-duration: var(--t-line); animation-timing-function: var(--ease-silk); }
+  .js .case__visual[data-reveal] { transform: none; transition: opacity var(--t-stage) var(--ease-drift); }   /* a stage fades in and never moves: its scene is the motion */
+  .js .shutter[data-reveal] { opacity: 1; transform: none; clip-path: inset(0 100% 0 0); transition: clip-path 1100ms var(--ease-in-out); }
+  .js .shutter[data-reveal] svg { transform: scale(1.06); transform-origin: left bottom; transition: transform 1500ms var(--ease-soft); }
+  .js .shutter[data-reveal].is-in { clip-path: inset(0); }
+  .js .shutter[data-reveal].is-in svg { transform: none; }
+}
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* ---------- charcoal polish: refinements to the default look only ----------
+   Scoped to html:not([data-theme]) so the alternate looks, which restyle these same blocks, are untouched.
+   One spacing rhythm for the sections, the figures at display scale, each case told as one column
+   (title, then the story), no tracked label above the ball's question, and a fuller ending. */
+html:not([data-theme]) {
+  --rhythm: clamp(6rem, 11vw, 10rem);
+  /* two sizes added to the scale, so the section heads and the case titles cannot drift apart */
+  --step-section: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  --step-case: clamp(2rem, 1.2rem + 2.3vw, 3.25rem);
+}
+html:not([data-theme]) .hero__lead { max-width: 34ch; font-size: var(--step-lead); line-height: 1.35; letter-spacing: -0.01em; }
+
+html:not([data-theme]) .stats { padding-top: var(--rhythm); padding-bottom: var(--rhythm); }
+html:not([data-theme]) .stats__list { grid-column: 1 / -1; }
+html:not([data-theme]) .stats__head { font-size: var(--step-section); line-height: 1.05; letter-spacing: -0.025em; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+html:not([data-theme]) .stats__row { gap: 1rem; padding-top: 1.25rem; border-top: var(--border) solid var(--line); }
+html:not([data-theme]) .stats__fig { font-size: clamp(3.5rem, 2rem + 4.2vw, 6rem); font-weight: var(--weight); line-height: 0.9; letter-spacing: -0.035em; font-variant-numeric: proportional-nums; }
+html:not([data-theme]) .stats__txt { color: var(--muted); }
+html:not([data-theme]) .stats__txt strong { color: var(--ink); }
+
+html:not([data-theme]) .ball__eyebrow { font-size: var(--step-small); letter-spacing: 0; text-transform: none; }
+
+html:not([data-theme]) .work { gap: var(--rhythm); padding-top: 0; padding-bottom: var(--rhythm); }
+html:not([data-theme]) .case__cluster { gap: 0; }
+html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; max-width: 30rem; }
+html:not([data-theme]) .case__title { font-size: var(--step-case); line-height: 1; letter-spacing: -0.035em; }
+html:not([data-theme]) .case__desc { color: var(--muted); }
+html:not([data-theme]) .case__who { margin-top: 0.75rem; }
+html:not([data-theme]) .case__cta { margin-top: 1.75rem; }
+
+html:not([data-theme]) .about { padding-top: 0; padding-bottom: var(--rhythm); }
+html:not([data-theme]) .about__para { font-size: var(--step-head); line-height: 1.3; letter-spacing: -0.015em; max-width: 34ch; }
+
+html:not([data-theme]) .contact { height: auto; min-height: 88svh; padding-top: clamp(3rem, 6vw, 5rem); }
+html:not([data-theme]) .contact__intro { font-size: var(--step-section); line-height: 1.1; letter-spacing: -0.025em; max-width: 20ch; }
+html:not([data-theme]) .contact__foot { color: var(--muted); }
+html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
+
+@media (max-width: 900px) {
+  html:not([data-theme]) .claw__box { margin-bottom: 1rem; }
+}
+@media (max-width: 700px) {
+  html:not([data-theme]) .hero__name { font-size: 25vw; }
+  html:not([data-theme]) .contact { min-height: 80svh; }
+}
+</style>
+<script src="../js/theme.js"></script>
+<script src="../js/analytics.js" defer></script>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="hero" id="top">
+    <div class="hero__pic" aria-hidden="true"></div>
+    <div class="hero__scrim"></div>
+    <div class="hero__top wrap">
+      <a class="hero__mark" href="#top">Luiz Kim</a>
+      <nav class="hero__nav" aria-label="Main">
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <span class="pick" data-theme-pick><button class="pick__btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="pick-menu" aria-label="Theme: Default"><svg class="pick__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button><span class="pick__menu" id="pick-menu" role="menu" aria-label="Theme" hidden><button class="pick__item" type="button" role="menuitemradio" aria-checked="true" data-look="charcoal">Default</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="brutalist">Brutalist</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="windows95">Windows 95</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="broadsheet">Broadsheet</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="esports">E-sports</button></span></span>
+        <a class="button" href="#contact">Email me</a>
+      </nav>
+    </div>
+    <div class="hero__bottom wrap">
+      <div class="hero__row">
+        <p class="hero__lead" data-rise style="--i:0">Product designer in London. I build design systems and run them as products: tokens, components, governance and adoption.</p>
+      </div>
+      <h1 class="hero__name" data-rise style="--i:1">Luiz Kim</h1>
+    </div>
+    <div class="hero__end" aria-hidden="true"></div>
+  </header>
+
+  <section class="stats wrap" aria-labelledby="stats-head">
+    <div class="stats__grid">
+      <div class="stats__list">
+        <h2 class="stats__head" id="stats-head" data-reveal data-lines>What the work changed</h2>
+        <div class="stats__rows">
+          <a class="stats__row" href="case-ai.html" data-reveal style="--i:0">
+            <span class="stats__fig nums">≤0.5 days</span>
+            <span class="stats__txt">per larger component, from brief to a documented Figma master, in a <strong>component pipeline</strong> built for AI agents. The old way took 3 to 5 days, estimated.</span>
+          </a>
+          <a class="stats__row" href="case-system.html" data-reveal style="--i:1">
+            <span class="stats__fig nums">56%</span>
+            <span class="stats__txt">faster design tasks and 43% faster development at Entain, with 40+ brands under one <strong>federated design system</strong>. My team won a zeroheight award for collaboration in 2025.</span>
+          </a>
+          <a class="stats__row" href="case-poker.html" data-reveal style="--i:2">
+            <span class="stats__fig nums">~10</span>
+            <span class="stats__txt">poker brands on one <strong>game design system</strong> I created from scratch: cards, decks and player plates.</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="work wrap" id="work" aria-label="Selected work">
+
+    <article class="case case--1" id="case-1">
+      <div class="case__visual case__visual--ball" data-reveal>
+        <section class="ball" aria-label="Fortune ball. Shake it to reveal each answer.">
+          <div class="ball__ask">
+            <span class="ball__eyebrow">Designers ask</span>
+            <p class="ball__q">You hand off straight from AI?</p>
+          </div>
+          <div class="ball__view" tabindex="0" role="button" aria-label="Fortune ball. Press and hold, then shake. Or press Enter to reveal." aria-describedby="ball-hint">
+            <canvas class="ball__canvas" aria-hidden="true"></canvas>
+            <div class="ball__meter" aria-hidden="true"><i></i></div>
+            <p class="ball__hint" id="ball-hint" role="tooltip">Press, hold and shake the ball</p>
+          </div>
+          <div class="ball__cap" aria-live="polite">
+            <span class="ball__eyebrow">The ball says</span>
+            <p class="ball__a"></p>
+          </div>
+          <div class="ball__row">
+            <button class="ball__btn" type="button" data-ball-motion hidden>Shake your phone</button>
+            <button class="ball__btn" type="button" data-ball-reveal>Can't shake? Reveal</button>
+            <button class="ball__btn" type="button" data-ball-next hidden>Ask the next one</button>
+            <span class="ball__count"></span>
+          </div>
+          <p class="ball__flat">Designers ask whether you can hand off straight from AI. Yes: five tickets were built straight from the prototype. The 3D ball needs WebGL, which this browser doesn't offer.</p>
+        </section>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-ai.html">A design system AI agents can read</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">Seven Claude Code skills take a component from a brief to a documented Figma master, with a designer's approval at each step. The usage docs live in the repo as Markdown, so an agent can pick the right component.</p>
+            <p class="case__who">A5 Labs · Design Director · 2026 to present</p>
+            <a class="button case__cta" href="case-ai.html">Read the case study</a>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case case--2" id="case-2">
+      <div class="case__visual case__visual--claw" data-reveal>
+        <section class="claw" aria-label="Claw machine. Catch the system's foundational components.">
+          <div class="claw__box">
+          <div class="claw__stage" tabindex="0" role="application" aria-label="Claw machine. Use arrow keys to move, space to drop.">
+            <canvas class="claw__canvas" aria-hidden="true"></canvas>
+            <div class="claw__controls">
+              <div class="claw__pad" aria-label="Move the claw">
+                <button class="claw__key claw__key--u" type="button" data-claw-dir="up" aria-label="Move back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                <button class="claw__key claw__key--l" type="button" data-claw-dir="left" aria-label="Move left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+                <button class="claw__key claw__key--d" type="button" data-claw-dir="down" aria-label="Move forward"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+                <button class="claw__key claw__key--r" type="button" data-claw-dir="right" aria-label="Move right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+              </div>
+              <button class="claw__drop" type="button" data-claw-drop>Drop</button>
+            </div>
+          </div>
+          <p class="claw__hint" aria-live="polite"><b>Catch one. The whole site changes.</b> <span>Steer, drop, and each prize dresses the site in a new look. Five to find.</span></p>
+          </div>
+          <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
+        </section>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-system.html">40+ brands under one design system</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">Markets kept their own systems for their own needs, under shared tokens and one governance model. Eight matrixed ambassadors owned their parts. Design tasks got 56% faster.</p>
+            <p class="case__who">Entain · Product Design Manager · 2023 to 2026</p>
+            <a class="button case__cta" href="case-system.html">Read the case study</a>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case case--3" id="case-3">
+      <div class="case__visual case__visual--peek peek" data-reveal tabindex="0" aria-label="Two poker cards face down on a glass table. Drag them up, or press Enter, to peek.">
+        <canvas class="peek__canvas" aria-hidden="true"></canvas>
+        <div class="peek__vignette" aria-hidden="true"></div>
+        <div class="peek__hit peek__hit--cards" aria-hidden="true"></div>
+        <div class="peek__hit peek__hit--chips" aria-hidden="true"></div>
+        <div class="peek__cue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+        <p class="peek__flat">Two cards face down on a glass table. The 3D peek needs WebGL, which this browser doesn't offer.</p>
+      </div>
+      <div class="case__cluster">
+        <div class="case__meta">
+          <h2 class="case__title" data-reveal data-lines style="--i:2"><a href="case-poker.html">A design system for a poker game</a></h2>
+          <div data-reveal style="--i:3">
+            <p class="case__desc">I created it from scratch for about 10 poker brands. Its parts were cards, decks and player plates, not only buttons. I supervised it and kept it maintained.</p>
+            <p class="case__who">Entain · Product Design Manager, Poker · 2021 to 2023</p>
+            <a class="button case__cta" href="case-poker.html">Read the case study</a>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="about wrap" id="about" aria-label="About">
+    <div class="about__row about__row--1">
+      <div class="who" data-reveal>
+        <div class="who__pics">
+          <img class="who__pic who__pic--mesh" src="../img/portrait-mesh.webp" width="1254" height="1254" alt="Luiz Kim, sculpted portrait: grey clay on one side, blue wireframe on the other" loading="lazy">
+        </div>
+        <p class="who__name">Luiz Kim</p>
+        <p class="who__role">Design Director, A5 Labs</p>
+        <p class="who__prev">Previously Product Design Manager, Entain</p>
+        <a class="who__link" href="https://www.linkedin.com/in/luizkimux" rel="noopener" aria-label="Luiz Kim on LinkedIn">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+        </a>
+      </div>
+      <p class="about__para" data-reveal style="--i:1">At Entain my DesignOps team owned the tokens, governance, toolchain and reports. Eight ambassadors owned their part of the system, by product or by market.</p>
+    </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="contact wrap" id="contact">
+  <p class="contact__intro">If you're hiring for a design systems role, email me.</p>
+  <div class="contact__cta">
+    <div class="contact__copy">
+      <a class="contact__mail" href="mailto:luizfelipekim@gmail.com?subject=Design%20systems%20role" id="mail-link">luizfelipekim<span class="at">@</span>gmail.com</a>
+      <button class="copy-btn" type="button" id="copy-mail">Copy address</button>
+    </div>
+  </div>
+  <div class="contact__foot">
+    <div><span class="muted">London · Right to work in the UK and Europe</span><br>Luiz Kim</div>
+    <div class="contact__links">
+      <a class="link" href="https://www.linkedin.com/in/luizkimux" rel="noopener">LinkedIn</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // reveal once; never leaves content hidden
+  const targets = document.querySelectorAll('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    // a clipped shutter reports no intersection of its own, so its block is watched instead
+    const watched = new Map();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        for (const el of watched.get(e.target) || []) el.classList.add('is-in');
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
+    targets.forEach((el) => {
+      const key = el.classList.contains('shutter') ? el.closest('.case') : el;
+      if (!watched.has(key)) { watched.set(key, []); io.observe(key); }
+      watched.get(key).push(el);
+    });
+    window.addEventListener('load', () => setTimeout(() => {
+      targets.forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in'); });
+    }, 2500));
+  } else { targets.forEach((el) => el.classList.add('is-in')); }
+
+  // the header bar is fixed; once the hero's bottom edge passes under it, it takes the page pair and a ground
+  const bar = document.querySelector('.hero__top'), end = document.querySelector('.hero__end');
+  if (bar && end) {
+    const place = () => bar.classList.toggle('is-stuck', end.getBoundingClientRect().top < bar.offsetHeight);
+    addEventListener('scroll', place, { passive: true });
+    addEventListener('resize', place);
+    document.addEventListener('theme:change', () => setTimeout(place, 0));
+    place();
+  }
+
+  // copy the address; fall back to selecting it
+  const btn = document.getElementById('copy-mail'), mail = document.getElementById('mail-link');
+  btn.addEventListener('click', () => {
+    const text = 'luizfelipekim@gmail.com';
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy address'; }, 1600); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents(mail); const s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(select); else select();
+  });
+})();
+</script>
+
+<script>
+// The three 3D openers (the ball, the claw, the poker peek) and the Three.js library they share are
+// fetched only when the first stage comes within three quarters of a screen of the viewport. Each
+// scene then starts itself on the same rule, so nothing is built for a visitor who never scrolls to it.
+(() => {
+  const SCRIPTS = ['../js/three.min.js', '../js/pixel-pass.js', '../js/GLTFLoader.js', '../js/postprocessing.js', '../js/Reflector.js', '../js/fortune-ball.js', '../js/poker-peek.js', '../js/claw-machine.js'];
+  const stages = document.querySelectorAll('.ball, .claw, .peek');
+  let loading = false;
+  const load = () => {
+    if (loading) return; loading = true;
+    if (io) io.disconnect();
+    for (const src of SCRIPTS) { const s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); }   // async=false keeps the order
+  };
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) load(); }, { rootMargin: '75% 0px' }) : null;
+  if (io) stages.forEach((s) => io.observe(s)); else addEventListener('load', load, { once: true });
+})();
+</script>
+</body>
+</html>

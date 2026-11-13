@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI-ready design system components · Luiz Kim</title>
+<meta name="description" content="Seven Claude Code skills take a component from a brief to a documented Figma master, with Markdown docs and metadata that AI agents can read.">
+<meta property="og:title" content="A design system AI agents can read">
+<meta property="og:description" content="Seven Claude Code skills take a component from a brief to a documented Figma master, with Markdown docs and metadata that AI agents can read.">
+<link rel="preload" href="../fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../case.css">
+<script src="../js/theme.js"></script>
+<script src="../js/motion.js"></script>
+<script>document.documentElement.classList.add('js')</script>
+<script src="../js/analytics.js" defer></script>
+
+<style>
+/* ds track: a step strip with a gate under each step, a three-tier model, bars against the old way, limits */
+:root { --rule: var(--line); }
+.lead { font-size: var(--step-lead); line-height: 1.35; max-width: 44ch; }
+.plain-w { font-size: var(--step-body); line-height: 1.5; max-width: 62ch; }
+.pipe { counter-reset: step; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem var(--gutter); padding: 0; margin: 0; list-style: none; }
+.pipe li { counter-increment: step; display: flex; flex-direction: column; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); min-width: 0; font-size: var(--step-body); }
+.pipe li::before { content: counter(step); font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1; letter-spacing: -0.02em; }
+.pipe b { font-weight: var(--weight-strong); }
+.pipe .gate { margin-top: auto; padding-top: 0.6rem; border-top: 1px dashed var(--rule); color: var(--muted); font-size: var(--step-small); }
+.pipe .gate::before { content: "Gate · "; color: var(--ink); font-weight: var(--weight-strong); }
+.pipe .opt { color: var(--muted); font-weight: var(--weight); }
+@media (max-width: 1000px) { .pipe { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .pipe { grid-template-columns: 1fr; } }
+.note { font-size: var(--step-small); color: var(--muted); max-width: 70ch; }
+.tiers { display: flex; flex-direction: column; gap: 0.75rem; max-width: 64rem; }
+.tier { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 0.5rem var(--gutter); padding: 1.25rem 1.5rem; background: var(--surface); }
+.tier h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.tier p { font-size: var(--step-body); }
+.tier .who { color: var(--muted); font-size: var(--step-small); grid-column: 1; }
+.tier--core { border-left: 4px solid var(--accent); }
+.tier__chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; padding: 0; list-style: none; }
+.tier__chips li { padding: 0.25rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-pill); font-size: var(--step-small); }
+@media (max-width: 700px) { .tier { grid-template-columns: 1fr; } }
+.bars { display: flex; flex-direction: column; gap: 1.5rem; background: var(--surface); padding: clamp(1.25rem, 3vw, 2rem); max-width: 64rem; margin: 0; }
+.gauge { display: flex; flex-direction: column; gap: 0.5rem; }
+.gauge__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; flex-wrap: wrap; }
+.gauge__label { font-size: var(--step-small); color: var(--muted); }
+.gauge__value { font-weight: var(--weight-strong); }
+.gauge__track { display: flex; }
+.gauge__fill { display: block; height: 1.5rem; width: calc(var(--d) / 5 * 100%); background: var(--muted); }
+.gauge__fill--to { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.gauge.is-key .gauge__fill { background: var(--accent); }
+.limits { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+.limits h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.limits ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); padding: 0; list-style: none; }
+.limits li { display: flex; flex-direction: column; gap: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); font-size: var(--step-body); }
+.limits b { font-weight: var(--weight-strong); }
+@media (max-width: 700px) { .limits ul { grid-template-columns: 1fr; } }
+.decisions--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 64rem; }
+@media (max-width: 800px) { .decisions--2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="bar wrap">
+  <a class="bar__mark" href="index.html">Luiz Kim</a>
+  <nav class="bar__nav" aria-label="Main">
+    <a href="index.html#work">All work</a>
+    <a href="index.html#about">About</a>
+    <span class="pick" data-theme-pick><button class="pick__btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="pick-menu" aria-label="Theme: Default"><svg class="pick__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button><span class="pick__menu" id="pick-menu" role="menu" aria-label="Theme" hidden><button class="pick__item" type="button" role="menuitemradio" aria-checked="true" data-look="charcoal">Default</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="brutalist">Brutalist</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="windows95">Windows 95</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="broadsheet">Broadsheet</button><button class="pick__item" type="button" role="menuitemradio" aria-checked="false" data-look="esports">E-sports</button></span></span>
+    <a class="button" href="index.html#contact">Email me</a>
+  </nav>
+</header>
+<main>
+  <section class="top wrap">
+    <p class="top__meta" data-rise style="--i:0">A5 Labs · Design Director · 2026 to present</p>
+    <h1 class="top__title" data-rise data-lines style="--i:1">A design system AI agents can read</h1>
+    <p class="top__summary" data-rise style="--i:2">I built a pipeline of seven Claude Code skills. It takes a component from a brief to a documented Figma master, with metadata and Markdown docs that an agent can read.</p>
+    <div class="outcomes">
+        <div class="outcome" data-reveal style="--i:0">
+          <span class="outcome__fig nums">9</span>
+          <span class="outcome__txt">components in two and a half working days</span>
+          <span class="outcome__how">Pilot run · five of them larger components</span>
+        </div>
+        <div class="outcome" data-reveal style="--i:1">
+          <span class="outcome__fig nums">≤0.5 days</span>
+          <span class="outcome__txt">per larger component, against 3 to 5 days the old way</span>
+          <span class="outcome__how">Old way estimated from ticket dates and team posts</span>
+        </div>
+        <div class="outcome" data-reveal style="--i:2">
+          <span class="outcome__fig nums">14 of 14</span>
+          <span class="outcome__txt">states from the brief built, every value from a token</span>
+          <span class="outcome__how">Counted twice against the approved brief</span>
+        </div>
+    </div>
+    <dl class="facts" data-reveal><div><dt>Tools</dt><dd>Claude Code, Figma CLI, Figma MCP</dd></div><div><dt>Output</dt><dd>Figma masters, Markdown usage docs, metadata</dd></div><div><dt>Lives in</dt><dd>The Figma library and a Git repo</dd></div><div><dt>Gates</dt><dd>A designer approves every step</dd></div></dl>
+  </section>
+
+  <section class="row wrap" aria-label="The situation">
+    <p class="row__word" data-reveal>Situation</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">Components were made for people, not agents</h2>
+      <p class="plain" data-reveal style="--i:2">A component in Figma had a name and a look. An AI agent could not tell when to use it, or when not to. Building one by hand also took days.</p>
+    </div>
+  </section>
+
+  <section class="row wrap" aria-label="The task">
+    <p class="row__word" data-reveal>Task</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">Build it, then make it ready for AI</h2>
+      <p class="plain" data-reveal style="--i:2">Each component needed a build in Figma, a usage doc in Markdown, metadata on the master and a doc page. The docs go into the repo, so agents read the same source as people.</p>
+    </div>
+  </section>
+
+  <section class="led wrap" aria-label="The pipeline">
+    <p class="row__word star" data-reveal>Action</p>
+    <h2 class="led__head" data-reveal>Seven skills, a gate after each one</h2>
+    <p class="lead" data-reveal style="--i:1">Each skill does one step and reads what the step before it wrote. Nothing moves on until a designer approves it.</p>
+    <ol class="pipe" data-reveal style="--i:2">
+      <li><b>Brief</b><span>The need, every state and property, and product research.</span><span class="gate">The designer ticks or strikes each state, then approves.</span></li>
+      <li><b>Build in Figma</b><span>The component set, through the Figma CLI. Library parts, variables and text styles only.</span><span class="gate">The designer reviews the set and prunes it.</span></li>
+      <li><b>Usage doc</b><span>A Markdown file in the repo: when to use it, and when not to.</span><span class="gate">The designer reads the "when" sentence and the "when not" list.</span></li>
+      <li><b>Metadata</b><span>Category, usage, "not for" and tags on the Figma master.</span><span class="gate">An explicit yes after the diff. It writes to the live library.</span></li>
+      <li><b>Doc page</b><span>Overview, anatomy, variants, states, content, accessibility, related.</span><span class="gate">The designer reviews the page.</span></li>
+      <li><b>Routing check</b><span>A fresh agent picks components for real needs and for near misses.</span><span class="gate">Any need that routes to two components gets fixed.</span></li>
+      <li><b>Eval <span class="opt">(optional)</span></b><span>A prompt-only build against the pipeline build.</span><span class="gate">The designer picks A or B blind, before the numbers.</span></li>
+    </ol>
+    <p class="note" data-reveal>Publishing the library stays manual. No skill publishes it.</p>
+  </section>
+
+  <section class="led wrap" aria-label="Rules">
+    <p class="row__word star" data-reveal>Action</p>
+    <h2 class="led__head" data-reveal>Four rules that keep it honest</h2>
+    <div class="decisions decisions--2">
+        <div class="decision" data-reveal style="--i:0">
+          <h3>The brief is the answer key</h3>
+          <p>The build, the doc and the eval all read the approved brief. A line struck in the brief is not built and not documented.</p>
+        </div>
+        <div class="decision" data-reveal style="--i:1">
+          <h3>One source for usage text</h3>
+          <p>The Markdown doc generates the Figma description and the index. We change the doc and run again. Nobody edits the output.</p>
+        </div>
+        <div class="decision" data-reveal style="--i:2">
+          <h3>Builds never copy earlier builds</h3>
+          <p>A build that opens an earlier attempt carries its mistakes forward, and the eval means nothing.</p>
+          <p class="cost"><b>Cost:</b> every run starts clean, so it takes longer.</p>
+        </div>
+        <div class="decision" data-reveal style="--i:3">
+          <h3>Check the file before every write</h3>
+          <p>The Figma CLI can run in a different file from the one in front. The pipeline checks the file key before it writes.</p>
+        </div>
+    </div>
+  </section>
+
+  <section class="results wrap" aria-label="Results">
+    <p class="row__word star" data-reveal>Result</p>
+    <h2 class="results__head" data-reveal>Nine components in two and a half days</h2>
+    <p class="plain-w" data-reveal style="--i:1">Nobody had logged hours for the old way, so I estimated them from ticket dates and team update posts.</p>
+    <figure class="bars" data-reveal style="--i:2">
+      <div class="gauge">
+        <div class="gauge__head"><span class="gauge__label">Old way, estimated</span><span class="gauge__value nums">3 to 5 hands-on days per larger component</span></div>
+        <div class="gauge__track" aria-hidden="true"><i class="gauge__fill" style="--d:3"></i><i class="gauge__fill gauge__fill--to" style="--d:2"></i></div>
+      </div>
+      <div class="gauge is-key">
+        <div class="gauge__head"><span class="gauge__label">Pipeline, one run</span><span class="gauge__value nums">0.5 days per larger component at most</span></div>
+        <div class="gauge__track" aria-hidden="true"><i class="gauge__fill" style="--d:0.5"></i></div>
+      </div>
+      <figcaption class="note">The whole run, charged to the five larger components alone.</figcaption>
+    </figure>
+    <div class="limits" data-reveal style="--i:3">
+      <h3>Limits I put on the claim</h3>
+      <ul>
+        <li><b>Different scope</b><span>The old way includes exploring options and choosing a direction. The pipeline run may not.</span></li>
+        <li><b>Never measured</b><span>Inferred from dates while tasks overlapped. Real hands-on time is probably lower.</span></li>
+        <li><b>One run, by me</b><span>Nine components say little about review rounds, harder ones or other designers.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="row wrap" aria-label="Next">
+    <p class="row__word" data-reveal>Next</p>
+    <div class="row__body">
+      <h2 class="row__head" data-reveal style="--i:1">A controlled test</h2>
+      <p class="plain" data-reveal style="--i:2">Two or three components, built both ways to one definition of done, with hours logged.</p>
+    </div>
+  </section>
+
+  <nav class="pager wrap" aria-label="Other case studies">
+    <a href="case-poker.html"><span>Previous</span><b>A design system for a poker game</b></a>
+    <a href="case-system.html"><span>Next</span><b>40+ brands under one design system</b></a>
+  </nav>
+</main>
+<footer class="foot wrap">
+  <span>Luiz Kim · London · <a class="link" href="mailto:luizfelipekim@gmail.com">luizfelipekim@gmail.com</a></span>
+  <span><a class="link" href="https://www.linkedin.com/in/luizkimux" rel="noopener">LinkedIn</a></span>
+</footer>
+<script>
+(() => {
+  const targets = document.querySelectorAll('[data-reveal]');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) { if (!e.isIntersecting) continue; e.target.classList.add('is-in'); io.unobserve(e.target); }
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
+    targets.forEach((el) => io.observe(el));
+    window.addEventListener('load', () => setTimeout(() => {
+      targets.forEach((el) => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) el.classList.add('is-in'); });
+    }, 2500));
+  } else { targets.forEach((el) => el.classList.add('is-in')); }
+  const team = document.getElementById('team');
+  if (team) {
+    const out = document.getElementById('calc-out'), lab = document.getElementById('team-out');
+    team.addEventListener('input', () => {
+      const n = Number(team.value);
+      lab.textContent = n + ' designers';
+      out.innerHTML = 'A team of ' + n + ' ships <strong>' + (n * 14) + '</strong> tickets a quarter with chat tools, and <strong>' + (n * 33) + '</strong> with AI tooling.';
+    });
+  }
+})();
+</script>
+</body>
+</html>

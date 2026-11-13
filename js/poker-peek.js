@@ -48,7 +48,7 @@
   function image(key) {
     const im = images[key];
     if (im) return im.complete && im.naturalWidth ? im : null;
-    const n = new Image(); n.decoding = 'async'; n.onload = () => redrawAll(); n.src = ART[key]; images[key] = n;
+    const n = new Image(); n.decoding = 'async'; n.onload = () => redrawAll(); n.src = (document.documentElement.getAttribute('data-root') || '') + ART[key]; images[key] = n;
     return null;
   }
 
