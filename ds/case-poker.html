@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>A design system for a poker game · Luiz Kim</title>
-<meta name="description" content="A poker design system created from scratch for about 10 brands: cards, decks and player plates as components.">
+<meta name="description" content="A poker design system created from scratch for 6 brands: cards, decks and player plates as components.">
 <meta property="og:title" content="A design system for a poker game">
-<meta property="og:description" content="A poker design system created from scratch for about 10 brands: cards, decks and player plates as components.">
+<meta property="og:description" content="A poker design system created from scratch for 6 brands: cards, decks and player plates as components.">
 <link rel="preload" href="../fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="../case.css">
@@ -57,6 +57,15 @@
 @media (max-width: 700px) { .limits ul { grid-template-columns: 1fr; } }
 .decisions--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 64rem; }
 @media (max-width: 800px) { .decisions--2 { grid-template-columns: 1fr; } }
+.cover--shot { aspect-ratio: 1766 / 763; }
+.cover--shot img { object-position: center; }
+.themes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gutter); max-width: 64rem; margin-top: 0.5rem; }
+.themes > div { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.25rem 1.5rem; background: var(--surface); }
+.themes > div.is-key { border-left: 4px solid var(--accent); }
+.themes h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.themes ul { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 0; list-style: none; }
+.themes li { padding: 0.25rem 0.75rem; border: 1px solid var(--rule); border-radius: var(--radius-pill); font-size: var(--step-small); }
+@media (max-width: 700px) { .themes { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -73,7 +82,7 @@
   <section class="top wrap">
     <p class="top__meta" data-rise style="--i:0">Entain · Product Design Manager, Poker · 2021 to 2023</p>
     <h1 class="top__title" data-rise data-lines style="--i:1">A design system for a poker game</h1>
-    <p class="top__summary" data-rise style="--i:2">I created the poker design system from scratch for about 10 brands. A poker client is a game, so its parts were cards, decks and player plates, not only buttons and inputs.</p>
+    <p class="top__summary" data-rise style="--i:2">I created the poker design system from scratch for 6 brands. A poker client is a game, so its parts were cards, decks and player plates, not only buttons and inputs.</p>
     <div class="outcomes">
         <div class="outcome" data-reveal style="--i:0">
           <span class="outcome__fig nums">0 → 1</span>
@@ -81,7 +90,7 @@
           <span class="outcome__how">No poker system existed before</span>
         </div>
         <div class="outcome" data-reveal style="--i:1">
-          <span class="outcome__fig nums">~10</span>
+          <span class="outcome__fig nums">6</span>
           <span class="outcome__txt">poker brands on one system</span>
           <span class="outcome__how">Each brand with its own look</span>
         </div>
@@ -91,28 +100,8 @@
           <span class="outcome__how">Moderated study</span>
         </div>
     </div>
-    <dl class="facts" data-reveal><div><dt>Team</dt><dd>9 designers, 1 researcher, 1 UX writer</dd></div><div><dt>Brands</dt><dd>About 10 poker brands</dd></div><div><dt>Game parts</dt><dd>Cards, decks, player plates</dd></div><div><dt>My role</dt><dd>Created, supervised, maintained</dd></div></dl>
-    <figure class="cover" data-reveal data-drift aria-label="A poker table seen from above: player plates around the felt, a deck and a fan of cards in the middle"><svg viewBox="0 0 900 386" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A poker table seen from above: player plates around the felt, a deck and a fan of cards in the middle">
-      <rect width="900" height="386" fill="#1c1c1c"/>
-      <ellipse cx="450" cy="200" rx="380" ry="160" fill="#3b3b3b"/>
-      <ellipse cx="450" cy="196" rx="350" ry="138" fill="#8fa68e"/>
-      <g fill="#262626" stroke="#c8c5ba" stroke-width="2">
-        <rect x="100" y="70" width="130" height="44" rx="22"/><rect x="385" y="22" width="130" height="44" rx="22"/><rect x="670" y="70" width="130" height="44" rx="22"/>
-        <rect x="100" y="286" width="130" height="44" rx="22"/><rect x="385" y="330" width="130" height="44" rx="22"/><rect x="670" y="286" width="130" height="44" rx="22"/>
-      </g>
-      <g fill="#c8c5ba"><circle cx="122" cy="92" r="14"/><circle cx="407" cy="44" r="14"/><circle cx="692" cy="92" r="14"/><circle cx="122" cy="308" r="14"/><circle cx="407" cy="352" r="14"/><circle cx="692" cy="308" r="14"/></g>
-      <g fill="#f1f1ef"><rect x="144" y="84" width="70" height="7"/><rect x="429" y="36" width="70" height="7"/><rect x="714" y="84" width="70" height="7"/><rect x="144" y="300" width="70" height="7"/><rect x="429" y="344" width="70" height="7"/><rect x="714" y="300" width="70" height="7"/></g>
-      <g fill="#8fa68e" opacity="0.9"><rect x="144" y="97" width="44" height="6"/><rect x="429" y="49" width="44" height="6"/><rect x="714" y="97" width="44" height="6"/><rect x="144" y="313" width="44" height="6"/><rect x="429" y="357" width="44" height="6"/><rect x="714" y="313" width="44" height="6"/></g>
-      <g fill="#262626"><rect x="262" y="158" width="58" height="82" rx="5"/><rect x="266" y="154" width="58" height="82" rx="5"/></g>
-      <rect x="270" y="150" width="58" height="82" rx="5" fill="#3b3b3b" stroke="#c8c5ba" stroke-width="2"/>
-      <path d="M282 162h34v58h-34z" fill="none" stroke="#c8c5ba" stroke-width="1.5"/>
-      <g stroke="#1c1c1c" stroke-width="1.5">
-        <rect x="380" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/><rect x="446" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/><rect x="512" y="150" width="58" height="82" rx="5" fill="#f1f1ef"/>
-      </g>
-      <g fill="#1c1c1c"><rect x="388" y="158" width="12" height="16"/><rect x="454" y="158" width="12" height="16"/><rect x="520" y="158" width="12" height="16"/></g>
-      <g fill="#b0473f"><circle cx="409" cy="198" r="10"/><circle cx="541" cy="198" r="10"/></g>
-      <circle cx="475" cy="198" r="10" fill="#1c1c1c"/>
-    </svg></figure>
+    <dl class="facts" data-reveal><div><dt>Team</dt><dd>9 designers, 1 researcher, 1 UX writer</dd></div><div><dt>Brands</dt><dd>6 poker brands</dd></div><div><dt>Game parts</dt><dd>Cards, decks, player plates</dd></div><div><dt>My role</dt><dd>Created, supervised, maintained</dd></div></dl>
+    <figure class="cover cover--photo cover--shot" data-reveal data-drift><img src="../img/poker/ds-lobby-brands.webp" srcset="../img/poker/ds-lobby-brands-1200.webp 1200w, ../img/poker/ds-lobby-brands.webp 2400w" sizes="100vw" width="2400" height="1037" alt="The poker lobby on one design system, in six brands: partypoker, bwin, BetMGM, Borgata, PMU and Ladbrokes"></figure>
   </section>
 
   <section class="row wrap" aria-label="The situation">
@@ -126,9 +115,20 @@
   <section class="row wrap" aria-label="The task">
     <p class="row__word" data-reveal>Task</p>
     <div class="row__body">
-      <h2 class="row__head" data-reveal style="--i:1">One system for about 10 brands</h2>
+      <h2 class="row__head" data-reveal style="--i:1">One system for 6 brands</h2>
       <p class="plain" data-reveal style="--i:2">There was no system to start from. I had to create one, and keep it working for every brand as the product grew.</p>
     </div>
+  </section>
+
+  <section class="led wrap" aria-label="Not an ordinary design system">
+    <p class="row__word star" data-reveal>Complexity</p>
+    <h2 class="led__head" data-reveal>Not an ordinary design system</h2>
+    <p class="lead" data-reveal style="--i:1">Most design systems theme colour, type and radius. This one also themed heavy graphics, and every graphic had to work in all 6 brands.</p>
+    <div class="themes" data-reveal style="--i:2">
+      <div><h3>An ordinary system themes</h3><ul><li>Colour</li><li>Type</li><li>Radius</li><li>Spacing</li><li>Icons</li></ul></div>
+      <div class="is-key"><h3>This system also themed</h3><ul><li>Tables and felt</li><li>Background art</li><li>Card faces</li><li>Card backs</li><li>Chips</li><li>Player plates</li><li>Avatars</li><li>Turn timer</li><li>Bet controls</li><li>Hand rankings</li></ul></div>
+    </div>
+    <figure class="shot" data-reveal style="--i:3"><img src="../img/poker/ds-table-themed.webp" srcset="../img/poker/ds-table-themed-905.webp 905w, ../img/poker/ds-table-themed.webp 1810w" sizes="(max-width: 1100px) 100vw, 1100px" width="1810" height="686" loading="lazy" alt="A poker table built from the system: the hand strength panel, card faces and backs, chips and player plates with avatars, over space-themed background art"><figcaption class="muted">One table, every part from the system: hand strength panel, cards, chips, player plates and avatars.</figcaption></figure>
   </section>
 
   <section class="led wrap" aria-label="What I led">
@@ -149,18 +149,18 @@
           <p class="cost"><b>Cost:</b> we gave up the avatar look the industry knew.</p>
         </div>
     </div>
-    <div class="evidence" data-reveal style="--i:3">
+    <div class="evidence evidence--lead" data-reveal style="--i:3">
       <div class="ev">
-        <p class="ev__label">Before</p>
-        <img class="ev__pic" src="../img/poker/avatars-old.webp" width="340" height="385" loading="lazy" alt="Typical industry poker avatars, crossed out: hypersexualised women and cartoon characters">
-        <p>Industry default: hypersexualised women and childlike cartoon characters.</p>
+        <p class="ev__label">The poker industry</p>
+        <img class="ev__pic" src="../img/poker/avatars-industry.webp" srcset="../img/poker/avatars-industry-1200.webp 1200w, ../img/poker/avatars-industry.webp 2400w" sizes="(max-width: 1200px) 100vw, 1200px" width="2400" height="908" loading="lazy" alt="Three illustrated poker avatars: a hypersexualised woman, a tattooed man seen as a gangster and a childlike cartoon boy">
+        <p>What other poker apps gave players, illustrated: hypersexualised women, characters judged by their look and childlike cartoons. We wanted to change this, so we tested a different set with players.</p>
       </div>
       <div class="ev">
-        <p class="ev__label">The result</p>
+        <p class="ev__label">Our UX research test</p>
         <p class="ev__fig nums">20 of 24</p>
         <div class="ev__pair"><figure><img src="../img/poker/avatar-realistic.webp" width="170" height="170" loading="lazy" alt="Realistic version of a poker avatar"><figcaption><b>20</b> chose this</figcaption></figure><figure><img src="../img/poker/avatar-cartoon.webp" width="170" height="170" loading="lazy" alt="Big-head cartoon version of the same avatar"><figcaption><b>4</b> chose this</figcaption></figure></div>
         <div class="ev__bar" role="img" aria-label="20 of 24 players"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
-        <p>chose realistic, diverse avatars</p>
+        <p>players chose our realistic, diverse avatars over the cartoon version</p>
       </div>
       <figure class="ev">
         <p class="ev__label">In their words</p>
