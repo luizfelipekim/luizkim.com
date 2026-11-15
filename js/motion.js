@@ -43,24 +43,74 @@
   }
 
   /* ---------- the light on the foil ----------
-     A look may print on holographic stock (the esports cards). Its stylesheet reads --lx and --ly, the
-     pointer's place on the screen from -1 to 1, as where the light sits. Eased, and running only while it moves. */
-  var foilEls = null, aim = [0, 0], lit = [0, 0], moving = false;
+     A look may print on holographic stock and turn its hero card in space (the esports cards). Its stylesheet
+     reads --lx and --ly, from -1 to 1, as where the light sits and how far the card leans: the pointer's place
+     on the screen, or the tilt of a phone. --sc is how far the hero has scrolled away, 0 to 1. All three are
+     eased, and the loop runs only while one of them moves: with no input, nothing is written. */
+  var cards = [], settled = false, hero = null, heroH = 0, aim = [0, 0, 0], lit = [0, 0, 0], moving = false, tilting = false;
+  function findCards() {
+    if (settled) return cards.length > 0;
+    cards = Array.prototype.slice.call(document.querySelectorAll('.hero, .who'));
+    hero = document.querySelector('.hero');
+    settled = document.readyState !== 'loading';   // the list is final once the page is parsed; a page with no such card then costs nothing
+    return cards.length > 0;
+  }
   function stepLight() {
-    lit[0] += (aim[0] - lit[0]) * 0.12; lit[1] += (aim[1] - lit[1]) * 0.12;
-    moving = Math.abs(aim[0] - lit[0]) + Math.abs(aim[1] - lit[1]) > 0.002;
-    foilEls.forEach(function (el) { el.style.setProperty('--lx', lit[0].toFixed(3)); el.style.setProperty('--ly', lit[1].toFixed(3)); });
+    var rest = 0;
+    for (var i = 0; i < 3; i++) { lit[i] += (aim[i] - lit[i]) * 0.12; rest += Math.abs(aim[i] - lit[i]); }
+    moving = rest > 0.002;
+    cards.forEach(function (el) { el.style.setProperty('--lx', lit[0].toFixed(3)); el.style.setProperty('--ly', lit[1].toFixed(3)); });
+    if (hero) hero.style.setProperty('--sc', lit[2].toFixed(3));
     if (moving) requestAnimationFrame(stepLight);
   }
+  function wake() { if (!moving) { moving = true; requestAnimationFrame(stepLight); } }
   function trackLight(e) {
-    if (!foilEls || !foilEls.length) {
-      foilEls = Array.prototype.slice.call(document.querySelectorAll('.hero__bottom, .who'));
-      if (!foilEls.length) { if (document.readyState !== 'loading') removeEventListener('pointermove', trackLight); return; }   // a page with no such card stops listening
-    }
+    if (!findCards()) return;
+    if (tilting && e.pointerType !== 'mouse') return;   // on a phone that is steering by its tilt, a finger on the glass is not the light
     aim[0] = (e.clientX / (innerWidth || 1)) * 2 - 1; aim[1] = (e.clientY / (innerHeight || 1)) * 2 - 1;
-    if (!moving) { moving = true; requestAnimationFrame(stepLight); }
+    wake();
+  }
+  // a finger that lifts takes its light with it: the card settles back
+  function dropLight(e) { if (e.pointerType === 'mouse' || tilting || !findCards()) return; aim[0] = aim[1] = 0; wake(); }
+  function trackScroll() {
+    if (!findCards() || !hero) return;
+    if (!heroH) heroH = hero.offsetHeight || 1;
+    var far = Math.min(Math.max(scrollY / heroH, 0), 1);
+    if (far === aim[2]) return;
+    aim[2] = far; wake();
   }
   addEventListener('pointermove', trackLight, { passive: true });
+  addEventListener('pointerup', dropLight, { passive: true });
+  addEventListener('pointercancel', dropLight, { passive: true });
+  addEventListener('scroll', trackScroll, { passive: true });
+  addEventListener('resize', function () { heroH = 0; });
+
+  /* the tilt of a phone. A look asks for it with --tilt on the hero. The way the phone is held when the first
+     reading comes is level; past the card's full lean, level follows the hand, so turning back answers at once.
+     iOS gives no readings until the reader allows them, and may only be asked on a tap: the first tap on the
+     card asks, and a refusal changes nothing. */
+  var level = null, heard = false, asked = false, wants = false, FULL = 22;   // FULL: degrees of tilt for the card's full lean
+  function onTilt(e) {
+    if (!wants || e.gamma == null || e.beta == null) return;
+    var turn = (screen.orientation && screen.orientation.angle) || 0;   // a phone on its side swaps the two axes
+    var x = turn === 90 ? e.beta : turn === 270 ? -e.beta : e.gamma, y = turn === 90 ? -e.gamma : turn === 270 ? e.gamma : e.beta;
+    if (!level) level = [x, y];
+    level[0] = Math.min(Math.max(level[0], x - FULL), x + FULL); level[1] = Math.min(Math.max(level[1], y - FULL), y + FULL);
+    x = (x - level[0]) / FULL; y = (y - level[1]) / FULL;
+    if (Math.abs(x - aim[0]) + Math.abs(y - aim[1]) < 0.03) return;   // a hand is never quite still: the sensor's noise must not keep the loop awake
+    tilting = true; aim[0] = x; aim[1] = y; wake();
+  }
+  function askTilt(tapped) {
+    var D = window.DeviceOrientationEvent;
+    wants = findCards() && !!hero && getComputedStyle(hero).getPropertyValue('--tilt').trim() !== '';
+    if (!wants) { tilting = false; return; }
+    if (!D) return;
+    if (!heard) { heard = true; addEventListener('deviceorientation', onTilt, { passive: true }); }
+    if (tapped && !asked && typeof D.requestPermission === 'function') { asked = true; D.requestPermission().catch(function () {}); }
+  }
+  addEventListener('click', function (e) { if (!asked && e.target.closest && e.target.closest('.hero__bottom')) askTilt(true); });
+  addEventListener('load', function () { askTilt(false); trackScroll(); });
+  document.addEventListener('theme:change', function () { heroH = 0; askTilt(false); });
 
   function wire() {
     // fonts decide the wrap, but a slow font must not hold a headline back; `ready` only waits for a font
