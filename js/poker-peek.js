@@ -1,7 +1,8 @@
 /* Poker case teaser on the homepage: two cards face down on dark glass. Drag them up (or
-   press Enter) to peek, the way a player looks at a hand; press the chip stack and lift to
-   riffle it. 30 mm lens fitted to the box, mouse parallax clamped to +-80 px. Needs js/three.min.js (r128) and
-   js/Reflector.js (three r128 examples) loaded first. All artwork is drawn on canvas at load. */
+   press Enter) to peek, the way a player looks at a hand; take chips off the stack and set
+   them down in piles. 30 mm lens fitted to the box; the mouse leans the camera a few degrees
+   round the hand. Needs js/three.min.js (r128) and js/Reflector.js (three r128 examples)
+   loaded first. All artwork is drawn on canvas at load. */
 (function () {
   'use strict';
   const stage = document.querySelector('.peek');
@@ -294,15 +295,16 @@
     return c;
   }
   // The chips match the deck. Each look names a base, a stripe and a mark colour, the face the mark
-  // is set in, and the finish; the capping chip may differ (the hazard red one, the gold one).
+  // is set in, and the finish; the capping chip may differ (the hazard red one, the gold one), and so
+  // may the two at the foot of the stack (low) and the two under the cap (high).
   const CHIPS = {
     default: { base: '#0d0d0d', stripe: '#f4f4f4', mark: '#f4f4f4', font: '900 50px ' + DISPLAY, rough: 0.45, metal: 0.05 },
     manual: { base: PAPER, stripe: CARBON, mark: CARBON, font: ARCHIVO + '58px ' + ARCHIVO_F, rough: 0.92, metal: 0,
       cap: { base: HAZARD, stripe: PAPER, mark: PAPER } },
     press: { base: CREAM, stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.88, metal: 0, hatched: true },
     win95: { base: '#ff0000', stripe: '#ffffff', mark: '#ffffff', font: '900 50px ' + DISPLAY, rough: 1, metal: 0, pixel: 8 },
-    foil: { base: '#1d1247', stripe: '#b7a2ff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.3, metal: 0.35,
-      cap: { base: '#1d1247', stripe: '#ffcf3a', mark: '#ffcf3a' } }
+    foil: { base: '#140b3a', stripe: '#9a6bff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.28, metal: 0.35,
+      low: { stripe: '#00b4ff' }, high: { stripe: '#ff1fb4' }, cap: { base: '#140b3a', stripe: '#ffcf3a', mark: '#ffcf3a' } }   // dark lacquer, the inlays running cyan, violet, magenta up the stack to the one gold chip
   };
   function chipTextures(pal, side, top) {
     const s = side.getContext('2d');
@@ -342,9 +344,18 @@
   // 70 mm lens on 35 mm gauge; fov is derived from it on every resize
   const camera = new THREE.PerspectiveCamera(30, 1, 1, 400);
   camera.filmGauge = 35;
-  const CAM_BASE = new THREE.Vector3(0, 27, 44);
-  const LOOK = new THREE.Vector3(0, 0.6, 0.5);
-  let camDist = CAM_BASE.distanceTo(LOOK);
+  // The framing: where the camera stands and looks, where the hand and the chip stack lie (in a wide box, and in a
+  // tall one, which crops the sides), and the margins the fit keeps round them: [sides, bottom, top] in clip space.
+  // Every look takes the first; a look names another in RIGS when its light asks for one. The arcade's subject is
+  // the foil: the camera stands a little higher so the backs open up, the hand sits just left of centre in the
+  // pool, and the stack goes behind and to the right, where the two rims edge it and it never stands over the cards.
+  const FRAMES = {
+    default: { cam: [0, 27, 44], look: [0, 0.6, 0.5], hand: [-0.4, 0], stack: [8.4, 5.6], stackTall: [4.8, 7.6], fit: [0.9, -0.66, 0.9], pad: [0.85, 1.2] },
+    arcade: { cam: [0, 30, 42], look: [0, 0.6, 0.3], hand: [-1.5, 0.6], stack: [8.0, -3.4], stackTall: [3.6, -8.6], fit: [0.94, -0.66, 0.95], pad: [0.64, 0.74], bet: 0.7, centre: true }   // bet: how far up the frame the neon betting line crosses it; centre: the group sits midway between the bottom and top margins
+  };
+  let FRAME = FRAMES.default;
+  const CAM_BASE = new THREE.Vector3().fromArray(FRAME.cam);
+  const LOOK = new THREE.Vector3().fromArray(FRAME.look);
 
   // lights: one fixed rig (hemisphere, key spot, fill, under, rim), so a look change never recompiles
   // a material; each look sets the colours and intensities, where the key hangs and how wide it opens,
@@ -368,17 +379,22 @@
   // Press, a reading lamp late: one warm bulb low from the upper left, a tight cone that pools on the
   //   paper and lets the edges of the slab fall into shade, warm bounce off the desk, long shadows.
   // Win95, Solitaire: no light at all, a flat green with a stamped shadow.
-  // Foil, the arena: a low violet key, cyan and rose rims, the glass smoked indigo, fog that swallows the
-  //   horizon close, and a room lit by thin colour strips alone, no softbox, for the foil and the gilt to catch.
-  // key: [colour, intensity, penumbra, angle, position]; fill: [colour, intensity, position]; mirror: the smoke
-  // in the glass; fog: [near, far]; neon: the arena's tubes, which the glass reflects;
+  // Foil, an arcade hall with the lights down: light comes in pools, never evenly. One narrow spot on the hand,
+  //   a cyan rim from the back left and a magenta one from the back right, a table of black gloss that mirrors
+  //   the hall's screens and tubes far off and fades into the dark, and nothing bright behind and above, where
+  //   the flat cards look: the foil makes its own colour and a pale light there would only veil it.
+  // key: [colour, intensity, penumbra, angle, position], keyTo: where it aims; fill: [colour, intensity, position];
+  // rimAt: where the rim comes from; mirror: the smoke in the glass; gloss: the glass as black lacquer, see the
+  // mirror's shader; sheen: the key's streak on the glass, where a look changes it; rail: false takes the padded rail away; fog: [near, far];
+  // neon: the hall's lights, which the glass reflects; frame: the look's own framing, see FRAMES;
   // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
   const RIGS = {
     default: { hemi: [0x9a9a9a, 0x101010, 0.3], key: [0xffffff, 1.55, 0.7, 0.5, [-46, 36, 16]], fill: [0xffffff, 0.75, [46, 34, 16]], under: [0xffffff, 0.22], rim: [0xaab6c4, 0.3], table: 'glass', mirror: 0x4a4a4a, fog: [42, 120], tone: true, exposure: 1.05, shadow: 0.5, room: 'cardroom', env: 0.7 },
     manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
     press: { hemi: [0xfff3e2, 0xcbbfa8, 0.42], key: [0xffcf92, 1.75, 0.9, 0.33, [-30, 38, 20]], fill: [0xffe6c8, 0.14], under: [0xffdcb0, 0.1], rim: [0xffffff, 0], table: 'matte', fog: [48, 130], tone: true, exposure: 1.18, shadow: 0.34, room: 'lamp', env: 0.6 },
     win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
-    foil: { hemi: [0x8fe4ff, 0x2a1a66, 0.24], key: [0xc3b4ff, 0.55, 0.9, 0.5, [-12, 50, 28]], fill: [0xff9df0, 0.3], under: [0x8fe4ff, 0.2], rim: [0x8fe4ff, 0.6], table: 'glass', mirror: 0x6a5aa0, fog: [34, 96], tone: true, exposure: 1.0, shadow: 0.55, room: 'arena', env: 0.9, neon: true }
+    foil: { hemi: [0x6a5cff, 0x0a0619, 0.07], key: [0xf3ecff, 1.5, 1, 0.21, [-7, 44, 15]], keyTo: [0.4, 0, -0.4], fill: [0xff00c0, 2.8, [40, 7, -10]], under: [0xcfc4ff, 0.26], rim: [0x00c8ff, 2.4], rimAt: [-40, 9, -12],
+      table: 'glass', mirror: 0xffffff, gloss: [0.16, 0.95, 62, 112], sheen: [0x000000, 0.5, 0.2, 0], rail: false, fog: [80, 190], tone: true, exposure: 1.0, shadow: 0.6, room: 'arcade', env: 1, neon: true, bevel: true, frame: 'arcade' }
   };
   function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
   // the rooms: small lit boxes rendered once into a prefiltered environment (PMREM), the vendored three has
@@ -388,7 +404,19 @@
     cardroom: { bg: 0x070707, lamps: [[4, 14, -11, 4, 2, 0xffffff, 3.4], [4, 14, 11, 4, 2, 0xffffff, 3.4], [10, 2, 0, 1, -10, 0x5a5a5a, 0.8]] },
     overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
     lamp: { bg: 0x241c12, lamps: [[5, 5, -8, 7, 4, 0xffd29a, 5.5], [14, 6, 4, -2, 6, 0xd9c7a6, 1.0], [8, 3, 0, 4, -9, 0x6a5840, 0.8], [3, 8, 9, 3, 0, 0x8a7458, 0.6]] },
-    arena: { bg: 0x0e0a20, lamps: [[16, 0.5, 0, 8, 3, 0x6fd8f4, 2.6], [16, 0.5, 0, 6.5, -4, 0xe88ad8, 2.4], [0.5, 12, -10, 3, 2, 0xe88ad8, 2.0], [0.5, 12, 10, 3, -1, 0x6fd8f4, 2.0], [14, 0.5, 0, 2, -10, 0xb9a6ff, 1.6]] }   // strip lights, no softbox
+    // a dark arcade hall, the claw machine's own room (js/claw-machine.js). A gloss face mirrors one part of it: the chips'
+    // sides see low and to their own side, the rail sees front and overhead, the flat tops see back and high. Screens
+    // of other machines and tube runs are placed there; back and high stays almost dark, so nothing veils the foil.
+    arcade: { bg: 0x030208, lamps: [
+      [11, 4, -3, -4, 9, 0x42308a, 1],                                             // front, low: a violet wash, so a face toward the camera is never plain black
+      [1.8, 1.3, -9, -2.5, 3, 0x00c8ff, 5], [1.8, 1.3, -8, -4, -4, 0x0a50ff, 5],  // screens, left: cyan and blue
+      [1.8, 1.3, 9, -2.5, 2, 0xff00c0, 5], [1.8, 1.3, 8, -4, -5, 0xffb020, 4],    // screens, right: magenta and amber
+      [0.3, 12, -10, -5, 0, 0x00c8ff, 5.5], [0.3, 12, 10, -5, -1, 0xff00c0, 5.5], // floor tubes down each side
+      [13, 0.3, 0, -5.5, 8, 0x8a5cff, 5],                                          // floor tube, front, violet
+      [14, 0.3, 0, 9, 5, 0xc9b8ff, 6],                                             // ceiling tube, front: the line along the rail
+      [1.6, 1.6, -5, 8, -7, 0xdcd4ff, 7],                                          // one ceiling can, back left: the glint on the chips' faces
+      [0.4, 6, -10, 3, -6, 0x00c8ff, 3.2], [0.4, 6, 10, 3, -5, 0xff00c0, 3.2]     // an edge line at each back corner
+    ] }
   };
   const envs = {};
   function roomEnv(name) {
@@ -414,15 +442,31 @@
   const TABLE = new THREE.PlaneGeometry(240, 240);
   const glass = [];   // everything that is the glass table, hidden under Solitaire
   if (typeof THREE.Reflector === 'function') {
+    // uGloss, for a look that asks (gloss in RIGS): the glass as black lacquer. x, y: how much it mirrors seen from
+    // above and at a grazing angle (a gloss surface mirrors more the flatter you look along it, so the far hall
+    // burns and the near table stays black); z, w: where it starts to fade into the stage colour and where it is gone.
     const smoked = {
-      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null } },
-      vertexShader: THREE.Reflector.ReflectorShader.vertexShader,
+      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uGloss: { value: new THREE.Vector4(0, 0, 0, 0) }, uStage: { value: new THREE.Color(0x000000) } },
+      vertexShader: `
+        uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vWorld;
+        void main() {
+          vUv = textureMatrix * vec4(position, 1.0);
+          vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
       fragmentShader: `
-        uniform vec3 color; uniform sampler2D tDiffuse; varying vec4 vUv;
+        uniform vec3 color; uniform sampler2D tDiffuse; uniform vec4 uGloss; uniform vec3 uStage; varying vec4 vUv; varying vec3 vWorld;
         void main() {
           vec3 base = texture2DProj(tDiffuse, vUv).rgb;
           // the mirror pass writes linear values: bring them to screen gamma, then hold the reflection down
-          gl_FragColor = vec4(pow(base, vec3(1.0 / 2.2)) * color, 1.0);
+          vec3 c = pow(base, vec3(1.0 / 2.2)) * color;
+          if (uGloss.y > 0.0) {
+            // lacquer mirrors what is there, no brighter: the lift above would turn the dark hall to a grey haze
+            float graze = 1.0 - normalize(cameraPosition - vWorld).y;
+            c = base * color * mix(uGloss.x, uGloss.y, graze * graze * graze);
+            c = mix(c, uStage, smoothstep(uGloss.z, uGloss.w, length(vWorld.xz)));
+          }
+          gl_FragColor = vec4(c, 1.0);
         }`
     };
     const res = matchMedia('(pointer: coarse)').matches ? 512 : 1024;
@@ -447,15 +491,60 @@
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
   matte.material.bumpMap = feltBump; matte.material.bumpScale = 0.012;
 
-  // the arena's neon: tubes across the back of the table and up each side, unlit and unfogged so they burn,
-  // put there for the glass to reflect; shown by the foil look alone
+  // the hall behind the table (the foil look alone): the screens of other machines and a few tube runs, far off
+  // and out of focus, unlit and unfogged so they burn. The camera looks down at the table and never at them: they
+  // are there for the glass to mirror, cyan to the left and magenta to the right, as the two rims come.
+  // Each is a flat card with a soft-edged glow drawn on it, so it needs no blur pass.
   const neon = new THREE.Group(); neon.visible = false; scene.add(neon);
-  function tube(len, x, y, z, ry, hex) {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, len, 10, 1), new THREE.MeshBasicMaterial({ color: hex, fog: false }));
-    m.rotation.z = Math.PI / 2; m.rotation.y = ry; m.position.set(x, y, z); neon.add(m); return m;
+  const glowTex = (() => {
+    const c = mkCanvas(128, 128), x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(0.6, 'rgba(255,255,255,0.12)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+  })();
+  // a light far out of focus: an even disc with a soft rim
+  const discTex = (() => {
+    const c = mkCanvas(128, 128), x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,0.8)'); g.addColorStop(0.62, 'rgba(255,255,255,0.9)'); g.addColorStop(0.8, 'rgba(255,255,255,0.3)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+  })();
+  function glow(w, h, x, y, z, hex, gain, map) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: hex, map: map || glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }));
+    m.material.color.multiplyScalar(gain); m.position.set(x, y, z); neon.add(m); return m;
   }
-  tube(140, 0, 4.5, -44, 0, 0x6fd8f4); tube(140, 0, 8, -45, 0, 0xe88ad8); tube(140, 0, 11.5, -46, 0, 0xb9a6ff);   // three lines across the back
-  tube(80, -60, 8, -4, Math.PI / 2, 0xe88ad8); tube(80, 60, 8, -4, Math.PI / 2, 0x6fd8f4);                     // one up each side
+  // [width, height, x, y, z, colour, gain]: three wide washes, then the lights
+  [[170, 80, -100, 26, -150, 0x00a8ff, 0.5], [170, 80, 104, 24, -150, 0xff00c0, 0.5], [100, 50, 6, 44, -160, 0x5a2bff, 0.35]].forEach(g => glow(...g));
+  [[17, 17, -116, 20, -140, 0x00c8ff, 0.8], [11, 11, -66, 31, -145, 0x00c8ff, 0.65], [9, 9, -36, 15, -150, 0x0a6cff, 0.75], [6, 6, -88, 46, -150, 0x9a6bff, 0.6], [7, 7, -146, 40, -150, 0x00c8ff, 0.5],
+    [17, 17, 112, 22, -140, 0xff00c0, 0.8], [11, 11, 60, 34, -145, 0xff1fb4, 0.65], [8, 8, 32, 14, -150, 0xffb020, 0.6], [6, 6, 86, 48, -150, 0x9a6bff, 0.6], [7, 7, 148, 38, -150, 0xff00c0, 0.5],
+    [5, 5, -6, 27, -155, 0x5a2bff, 0.7], [4, 4, 12, 56, -155, 0x00c8ff, 0.4]
+  ].forEach(g => glow(...g, discTex));
+  // the table's own light: the betting line as a neon inlay in the glass, cyan at one end and magenta at the other,
+  // an arc across the table beyond the hand, where a player pushes chips over it. Two bands on an arc of the etched
+  // line's radius (56, its nearest point at the group's origin, the ends curving away): a thin tube, burning paler
+  // than its colour as a lit tube does, and a wide soft halo round it in the colour itself.
+  const bet = new THREE.Group(); bet.position.y = 0.03; neon.add(bet);
+  [[0.17, 1, [0, 0.2, 0.8, 1], ['#3fd6ff', '#9468ff', '#ff45d2']], [2.6, 0.55, [0, 0.5, 0.5, 1], ['#00c8ff', '#7a3cff', '#ff00c0']]].forEach(([width, gain, fall, hue]) => {
+    const c = mkCanvas(256, 32), x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 256, 0);
+    g.addColorStop(0.3, hue[0]); g.addColorStop(0.5, hue[1]); g.addColorStop(0.7, hue[2]);
+    x.fillStyle = g; x.fillRect(0, 0, 256, 32);
+    const f = x.createLinearGradient(0, 0, 0, 32);   // across the band: dark at the edges, clear where it burns
+    f.addColorStop(fall[0], 'rgba(0,0,0,1)'); f.addColorStop(fall[1], 'rgba(0,0,0,0)'); f.addColorStop(fall[2], 'rgba(0,0,0,0)'); f.addColorStop(fall[3], 'rgba(0,0,0,1)');
+    x.fillStyle = f; x.fillRect(0, 0, 256, 32);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const R = 56, HALF = 0.42, N = 72, pos = [], uv = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const a = (i / N * 2 - 1) * HALF;
+      [R - width / 2, R + width / 2].forEach((r, k) => { pos.push(r * Math.sin(a), 0, r * Math.cos(a) - R); uv.push(i / N, k); });
+      if (i < N) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide }));
+    m.material.color.multiplyScalar(gain); bet.add(m);
+  });
+  // the pool the key spot leaves on the lacquer: black gloss has nothing to scatter light with, so the pool is laid
+  // in under the shadow catcher, and the hand's shadow still falls across it
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x3626b8, map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  pool.rotation.x = -Math.PI / 2; pool.position.y = 0.005; pool.renderOrder = -1; pool.visible = false; scene.add(pool);   // drawn first of the see-through layers: the shadow catcher above it writes depth
 
   // betting line, a faint etch in the glass just in front of the cards
   const line = new THREE.Mesh(new THREE.RingGeometry(56, 56.16, 220, 1, 0, Math.PI * 2),
@@ -481,30 +570,56 @@
     const mTop = new THREE.MeshStandardMaterial({ map: top, roughness: 0.4, metalness: 0.05 });
     return { sideC, topC, side, top, mats: [mSide, mTop, mTop] };
   }
-  const chipMain = chipSet(), chipCap = chipSet();
+  const chipMain = chipSet(), chipCap = chipSet(), chipLow = chipSet(), chipHigh = chipSet();
   function drawChips() {
-    const pal = CHIPS[look()] || CHIPS.default, cap = Object.assign({}, pal, pal.cap || {});
-    chipTextures(pal, chipMain.sideC, chipMain.topC); chipTextures(cap, chipCap.sideC, chipCap.topC);
-    [chipMain, chipCap].forEach(set => {
+    const pal = CHIPS[look()] || CHIPS.default;
+    [[chipMain, {}], [chipCap, pal.cap], [chipLow, pal.low], [chipHigh, pal.high]].forEach(([set, own]) => chipTextures(Object.assign({}, pal, own || {}), set.sideC, set.topC));
+    [chipMain, chipCap, chipLow, chipHigh].forEach(set => {
       set.side.needsUpdate = set.top.needsUpdate = true;
       set.mats.forEach(m => { m.roughness = pal.rough; m.metalness = pal.metal; });
     });
   }
+  const chipPlain = new THREE.CylinderGeometry(1.95, 1.95, 0.33, 48);
+  // the same chip with its two edges cut back, so each edge has a face of its own to catch a light (a look asks with
+  // bevel in RIGS). Groups and mapping follow the cylinder's: the wall with both bevels, then the top, then the bottom.
+  const chipBevel = (() => {
+    const r = 1.95, h = 0.33, b = 0.045, seg = 64, pos = [], nor = [], uv = [], idx = [], k = Math.SQRT1_2, g = new THREE.BufferGeometry();
+    const band = (r0, y0, r1, y1, nr, ny) => {   // a ring of faces between two heights, one normal across it
+      const s = pos.length / 3;
+      for (let i = 0; i <= seg; i++) {
+        const a = i / seg * Math.PI * 2, sx = Math.sin(a), cz = Math.cos(a);
+        pos.push(r0 * sx, y0, r0 * cz, r1 * sx, y1, r1 * cz); nor.push(nr * sx, ny, nr * cz, nr * sx, ny, nr * cz); uv.push(i / seg, 0, i / seg, 1);
+        if (i < seg) idx.push(s + 2 * i, s + 2 * i + 2, s + 2 * i + 1, s + 2 * i + 1, s + 2 * i + 2, s + 2 * i + 3);
+      }
+    };
+    const cap = (y, up) => {
+      const s = pos.length / 3; pos.push(0, y, 0); nor.push(0, up, 0); uv.push(0.5, 0.5);
+      for (let i = 0; i <= seg; i++) {
+        const a = i / seg * Math.PI * 2, sx = Math.sin(a), cz = Math.cos(a), q = (r - b) / r;
+        pos.push((r - b) * sx, y, (r - b) * cz); nor.push(0, up, 0); uv.push(0.5 + 0.5 * q * cz, 0.5 + 0.5 * q * sx * up);
+        if (i < seg) { if (up > 0) idx.push(s, s + 1 + i, s + 2 + i); else idx.push(s, s + 2 + i, s + 1 + i); }
+      }
+    };
+    band(r - b, -h / 2, r, -h / 2 + b, k, -k); band(r, -h / 2 + b, r, h / 2 - b, 1, 0); band(r, h / 2 - b, r - b, h / 2, k, k);
+    const wall = idx.length; cap(h / 2, 1); const top = idx.length - wall; cap(-h / 2, -1);
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx); g.addGroup(0, wall, 0); g.addGroup(wall, top, 1); g.addGroup(wall + top, idx.length - wall - top, 2);
+    return g;
+  })();
   function chipStack(n, x, z, rot) {
-    const g = new THREE.CylinderGeometry(1.95, 1.95, 0.33, 48);
+    const g = chipPlain;
     const group = new THREE.Group();
     for (let i = 0; i < n; i++) {
-      const m = new THREE.Mesh(g, (i === n - 1 ? chipCap : chipMain).mats);
+      const m = new THREE.Mesh(g, (i === n - 1 ? chipCap : i < 2 ? chipLow : i > n - 4 ? chipHigh : chipMain).mats);
       m.position.set((Math.random() - 0.5) * 0.12, 0.165 + i * 0.33, (Math.random() - 0.5) * 0.12);
       m.rotation.y = rot + i * 0.37; m.castShadow = true; m.receiveShadow = true; group.add(m);
     }
     group.position.set(x, 0, z); scene.add(group); return group;
   }
-  // one stack of seven, the one the hand riffles
+  // one stack of seven, the one the hand plays with
   drawChips();
   const stack = chipStack(7, 8.4, 5.6, 2.0);
   const chips = stack.children.slice();   // bottom first
-  chips.forEach(m => { m.userData.rest = m.position.clone(); m.userData.restRot = m.rotation.y; });
 
   // cards
   const CARD_W = 6.35, CARD_H = 8.89, CARD_T = 0.12;   // a 1.2 mm stock at this scale, so the edge reads and the card grounds
@@ -519,27 +634,28 @@
   function faceMat(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: 0.55, metalness: 0, alphaTest: 0.5 }); }
 
   // Foil: the same pressed holographic foil as the claw's marquee sticker (js/claw-machine.js). The stock is
-  // silver with the folds as relief; over it the foil is pressed in large soft patches, each with its own
+  // near black with the folds as relief; over it the foil is pressed in large soft patches, each with its own
   // grating direction and pitch, and the grating equation picks the colour from one palette (cyan, violet,
-  // magenta, gold). The colour answers the view (the card lifting, the camera's parallax) and one light that
-  // follows the pointer; it never moves by itself. The dark print is masked out by its own darkness.
+  // magenta, gold). The colour answers the view (the card lifting, the camera's lean) and one light that
+  // follows the pointer and the page's scroll; it never moves by itself. The dark print is masked out by its own darkness.
   const bumpCanvas = mkCanvas(BW, BH); drawBump(bumpCanvas);
   const bumpTex = new THREE.CanvasTexture(bumpCanvas);
   const foilMat = new THREE.MeshStandardMaterial({ map: backTex, bumpMap: bumpTex, bumpScale: 0.025, roughness: 0.3, metalness: 0.55, alphaTest: 0.5 });
   foilMat.extensions = { derivatives: true };
-  const foilLight = new THREE.Vector3(0.1, 0.45, 1), foilAim = { x: 0.1, y: 0.25 };
-  const foilK = new THREE.Vector4(0.42, 0.78, 1.9, 0);   // x: colour cycles per unit of grating phase (low: the cards lie almost edge-on to the eye, where the phase runs fast), y: foil brightness, z: patches across the card
+  const foilLight = new THREE.Vector3(0.1, 0.45, 1), foilAim = { x: 0.1, y: 0.25, s: 0 };   // s: the stage's place in the window, see the frame loop
+  const foilK = new THREE.Vector4(0.42, 1.2, 1.9, 0);   // x: colour cycles per unit of grating phase (low: the cards lie almost edge-on to the eye, where the phase runs fast), y: foil brightness, z: patches across the card
   foilMat.onBeforeCompile = shader => {
     shader.uniforms.uFoilLight = { value: foilLight }; shader.uniforms.uFoilK = { value: foilK };
     shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
-      uniform vec3 uFoilLight; uniform vec4 uFoilK;
+      uniform vec3 uFoilLight; uniform vec4 uFoilK; vec3 fFoilOut = vec3(0.0);
       float fHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
       float fNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
         return mix(mix(fHash(i), fHash(i + vec2(1.0, 0.0)), f.x), mix(fHash(i + vec2(0.0, 1.0)), fHash(i + vec2(1.0, 1.0)), f.x), f.y); }
       vec3 fPal(float t){ t = fract(t) * 4.0; float i = floor(t), f = smoothstep(0.0, 1.0, fract(t));
         vec3 c0 = vec3(0.0, 0.85, 1.0), c1 = vec3(0.42, 0.18, 1.0), c2 = vec3(1.0, 0.08, 0.72), c3 = vec3(1.0, 0.72, 0.12);
         vec3 a = i < 1.0 ? c0 : i < 2.0 ? c1 : i < 3.0 ? c2 : c3; vec3 b = i < 1.0 ? c1 : i < 2.0 ? c2 : i < 3.0 ? c3 : c0;
-        return mix(a, b, f); }`)
+        return mix(a, b, smoothstep(0.12, 0.88, f)); }`)   // each colour holds for a stretch, so a patch is one colour and not a blend of two
+      .replace('#include <shadowmap_pars_fragment>', '#include <shadowmap_pars_fragment>\n#include <shadowmask_pars_fragment>')
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       {
         float fold = texture2D(bumpMap, vUv).r;
@@ -556,9 +672,13 @@
         float fU = dot(fT, fL) + dot(fT, fV);                           // first-order grating equation: the phase picks the colour
         vec3 foilCol = fPal(fU * uFoilK.x * gPitch + 0.8 * fNoise(sp * 0.8 + 4.4));
         float fLobe = 0.45 + 0.55 * pow(max(dot(normal, fH), 0.0), 4.0);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1) * (0.6 + 0.8 * fold), foil * 0.9);    // dark silver under the foil: the key light is strong here, and a pale stock would wash the colour out
-        totalEmissiveRadiance += foil * foilCol * fLobe * (0.75 + 0.5 * fold) * uFoilK.y;
-      }`);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.035) * (0.6 + 0.8 * fold), foil);    // near-black stock under the foil: the spot is strong here, and any pale stock would lift every colour toward white
+        fFoilOut = foil * foilCol * fLobe * (0.75 + 0.5 * fold) * uFoilK.y;
+        fFoilOut /= max(1.0, max(fFoilOut.r, max(fFoilOut.g, fFoilOut.b)));                       // held under white as a whole colour: a channel cut off alone would turn the gold yellow
+      }`)
+      // the foil's colour goes in after the tone curve, as the neon does: the film curve pulls a bright cyan or magenta toward white
+      .replace('#include <tonemapping_fragment>', `#include <tonemapping_fragment>
+      gl_FragColor.rgb += fFoilOut * (0.5 + 0.5 * getShadowMask());`);   // foil in a shadow has less light to split: a chip held over the cards, or one card over the other, still shades it
   };
   // Card geometry: two subdivided planes (back +z, face -z) whose rounded corners are
   // alpha-clipped by the texture, plus a thin rim that follows the rounded outline, so
@@ -642,13 +762,13 @@
   }
   function redrawAll() {
     drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas); drawChips();
-    backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = true;
+    backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = cast = true;
   }
   // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
   const take = (m, gain) => { m.userData.envGain = gain; lit.push(m); };
-  take(foilMat, 0.8); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
+  take(foilMat, 0.35); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
   take(sheen.material, 1); take(rail.material, 0.8); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
-  [chipMain, chipCap].forEach(set => set.mats.forEach(m => take(m, 0.8)));
+  [chipMain, chipCap, chipLow, chipHigh].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
   let currentLook = null;
   // the 32-colour desktop (js/pixel-pass.js): Solitaire's table, cards and chips drawn through the 95 palette
@@ -660,7 +780,7 @@
   // in front of a card still hides it.
   function renderSolitaire() {
     const cardMats = [cardA, cardK].reduce((all, c) => all.concat(c.material), []);
-    const chipMats = chipMain.mats.concat(chipCap.mats);
+    const chipMats = chipMain.mats.concat(chipCap.mats, chipLow.mats, chipHigh.mats);
     cardMats.forEach(m => { m.colorWrite = false; m.depthWrite = false; });
     pixelPass.render(scene, camera);
     cardMats.forEach(m => { m.colorWrite = true; m.depthWrite = true; });
@@ -681,6 +801,7 @@
     const solitaire = l === 'win95', paper = l === 'manual' || l === 'press';
     pixelOn = solitaire && !!pixelPass;
     const rig = RIGS[l] || RIGS.default;
+    FRAME = FRAMES[rig.frame] || FRAMES.default;
     // the table
     // glass: the mirror and its rail. matte: a lit paper slab. felt / flat: an unlit slab in the stage's colour (Solitaire green, the manual's paper)
     glass.forEach(o => { o.visible = rig.table === 'glass'; }); felt.visible = rig.table === 'felt' || rig.table === 'flat'; matte.visible = rig.table === 'matte';
@@ -696,11 +817,22 @@
     // the light
     setLight(hemi, rig.hemi[0], rig.hemi[2]); hemi.groundColor.setHex(rig.hemi[1]);
     setLight(key, rig.key[0], rig.key[1], rig.key[2]); key.angle = rig.key[3]; key.position.fromArray(rig.key[4]);
+    key.target.position.fromArray(rig.keyTo || [0, 0, 0]); rim.position.fromArray(rig.rimAt || [0, 14, -40]);
     setLight(fill, rig.fill[0], rig.fill[1]); fill.position.fromArray(rig.fill[2] || [30, 18, 42]);
     neon.visible = !!rig.neon;
     setLight(under, rig.under[0], rig.under[1]); setLight(rim, rig.rim[0], rig.rim[1]);
     // the glass takes the look's smoke, the horizon its fog
-    if (glass.mirror && rig.mirror !== undefined) glass.mirror.material.uniforms.color.value.setHex(rig.mirror);
+    if (glass.mirror && rig.mirror !== undefined) {
+      const u = glass.mirror.material.uniforms;
+      u.color.value.setHex(rig.mirror); u.uGloss.value.fromArray(rig.gloss || [0, 0, 0, 0]); u.uStage.value.copy(scene.background);
+    }
+    // the key's streak on the glass: [colour, opacity, roughness, how much of the room it takes]; the dark glass as it was, unless the look says
+    const sh = rig.sheen || [0x000000, 0.55, 0.32, 1];
+    sheen.material.color.setHex(sh[0]); sheen.material.opacity = sh[1]; sheen.material.roughness = sh[2]; sheen.material.userData.envGain = sh[3];
+    // the arcade's table has no padded rail and no etched line: a neon line beyond the hand, and the dark
+    if (rig.rail === false) rail.visible = trim.visible = line.visible = false;
+    chips.forEach(m => { m.geometry = rig.bevel ? chipBevel : chipPlain; });
+    pool.visible = !!rig.gloss;
     scene.fog.near = rig.fog[0]; scene.fog.far = rig.fog[1];
     // the room: every standard material reflects it and takes its light; the flat looks have none
     scene.environment = roomEnv(rig.room);
@@ -719,20 +851,22 @@
     redrawAll();
     // the look's own type arrives with its stylesheet: draw again once it is in
     if (FONTS[l] && document.fonts && document.fonts.load) Promise.all(FONTS[l].map(f => document.fonts.load(f))).then(redrawAll).catch(() => {});
+    resize();   // the look may frame the table its own way
   }
   document.addEventListener('theme:change', applyLook);
 
   // ---------- sizing ----------
   // The frame is fitted, not fixed: from the 70 mm base view the camera dollies out along its own axis
   // until the hand (at full lift) and the whole chip stack sit inside the box with a margin above the
-  // rail, and the look point slides sideways so the group sits centred. Parallax moves relative to this.
+  // rail, and the look point slides sideways so the group sits centred. The mouse leans the camera about this.
   let W = 1, H = 1;
   const camBase = CAM_BASE.clone(), lookAt = LOOK.clone(), fitV = new THREE.Vector3();
   function framePoints() {
-    const hx = hand.position.x, hz = hand.position.z, sp = stack.position, top = 7 * 0.33 + 0.5;
+    const hx = FRAME.hand[0], hz = FRAME.hand[1], sp = stack.position, top = 7 * 0.33 + 0.5;
+    const [pl, pr] = FRAME.pad;
     return [
-      [hx - CARD_W * 0.85, 0, hz - CARD_H * 0.55], [hx + CARD_W * 1.2, 0, hz - CARD_H * 0.55],
-      [hx - CARD_W * 0.85, 0, hz + CARD_H * 0.62], [hx + CARD_W * 1.2, 0, hz + CARD_H * 0.62],
+      [hx - CARD_W * pl, 0, hz - CARD_H * 0.55], [hx + CARD_W * pr, 0, hz - CARD_H * 0.55],
+      [hx - CARD_W * pl, 0, hz + CARD_H * 0.62], [hx + CARD_W * pr, 0, hz + CARD_H * 0.62],
       [hx - CARD_W * 0.5, CARD_H * 0.92, hz], [hx + CARD_W * 1.1, CARD_H * 0.92, hz],   // the hand up
       [sp.x - 2.5, 0, sp.z + 2.5], [sp.x + 2.5, 0, sp.z + 2.5], [sp.x + 2.5, top, sp.z - 2.5], [sp.x - 2.5, top, sp.z - 2.5]
     ];
@@ -744,12 +878,17 @@
     camera.aspect = W / H;
     camera.setFocalLength(30);               // 30 mm: wide, close, the table falls away in perspective
     camera.updateProjectionMatrix();
-    // a portrait box crops the sides, so the stack comes forward and in, below the hand
-    if (camera.aspect < 1.2) stack.position.set(4.8, 0, 7.6); else stack.position.set(8.4, 0, 5.6);
+    // a portrait box crops the sides, so the stack comes in: forward and below the hand, or behind it, as the frame says
+    const at = camera.aspect < 1.2 ? FRAME.stackTall : FRAME.stack;
+    if (stack.position.x !== at[0] || stack.position.z !== at[1]) dealChips();   // a new place for the stack: the piles go back to one
+    stack.position.set(at[0], 0, at[1]); hand.position.x = FRAME.hand[0]; hand.position.z = FRAME.hand[1] + ease(peek) * 1.1;
+    CAM_BASE.fromArray(FRAME.cam); LOOK.fromArray(FRAME.look);
+    pool.position.set(FRAME.hand[0] + 1.2, 0.005, FRAME.hand[1] - 0.6); pool.scale.set(30, 20, 1);
     const pts = framePoints(), half = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
-    let dolly = 0.3, shift = 0;              // start close and back off only as far as the fit needs
-    for (let i = 0; i < 48; i++) {
-      lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z);
+    let dolly = 0.3, shift = 0, slide = 0;   // start close and back off only as far as the fit needs
+    const [fx, fb, ft] = FRAME.fit, rise = CAM_BASE.y / CAM_BASE.distanceTo(LOOK);
+    for (let i = 0; i < 64; i++) {
+      lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z + slide);
       camBase.copy(lookAt).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
       camera.position.copy(camBase); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
       let x0 = 1, x1 = -1, y0 = 1, y1 = -1;
@@ -757,53 +896,91 @@
         fitV.set(x, y, z).project(camera);
         x0 = Math.min(x0, fitV.x); x1 = Math.max(x1, fitV.x); y0 = Math.min(y0, fitV.y); y1 = Math.max(y1, fitV.y);
       }
-      const cx = (x0 + x1) / 2;
-      const over = x0 < -0.9 || x1 > 0.9 || y0 < -0.66 || y1 > 0.9;
-      if (!over && Math.abs(cx) < 0.01) break;
+      const cx = (x0 + x1) / 2, cy = FRAME.centre ? (y0 + y1) / 2 - (fb + ft) / 2 : 0;
+      // centred, only the group's size can be over; otherwise each margin is held as the group lies
+      const over = FRAME.centre ? (x1 - x0 > 2 * fx || y1 - y0 > ft - fb) : (x0 < -fx || x1 > fx || y0 < fb || y1 > ft);
+      if (!over && Math.abs(cx) < 0.01 && Math.abs(cy) < 0.01) break;
       shift += cx * camBase.distanceTo(lookAt) * half * camera.aspect;
+      slide -= cy * camBase.distanceTo(lookAt) * half / rise;   // along the table, a step counts for less on screen by the camera's slope
       if (over && dolly < 1.8) dolly *= 1.03;
     }
     // the loop may leave the base one step ahead of the camera: settle on the base
-    lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z);
+    lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z + slide);
     camBase.copy(lookAt).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
     camera.position.copy(camBase); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
-    camDist = camBase.distanceTo(lookAt);
-    dirty = true; placeHits();
+    // the neon betting line: its nearest point crosses at the same height of the frame in any box
+    if (FRAME.bet) {
+      const dir = fitV.set(0, -1 + 2 * FRAME.bet, 0.5).unproject(camera).sub(camBase).normalize();
+      bet.position.set(lookAt.x, 0.03, camBase.z - dir.z * camBase.y / dir.y);
+    }
+    aim(); camera.updateMatrixWorld(true);   // the lean is kept across a resize
+    dirty = cast = true; placeHits();
   }
   addEventListener('resize', resize, { passive: true });
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(stage);
 
-  // ---------- parallax (mouse only, clamped to +-80 px at the card plane) ----------
-  const PARALLAX_MAX = 80;
-  let pxTarget = 0, px = 0;
-  if (matchMedia('(pointer: fine)').matches) {
+  // ---------- parallax (mouse only): the camera leans round the hand ----------
+  // The pointer's place in the window turns the camera a few degrees about the point it looks at, to the side and
+  // up and down, and the camera keeps looking there: the hand holds its place while the chips, the reflections in
+  // the glass and the foil's colour shift against it. Each axis is a critically damped spring stepped by its exact
+  // solution, so a move starts and ends gently and takes the same time at 60 Hz, at 120 Hz or across a dropped frame.
+  const LEAN = [0.105, 0.05], LEAN_RATE = 9;   // radians to each side, radians up and down; the spring's frequency, per second
+  const lean = [{ x: 0, v: 0, to: 0 }, { x: 0, v: 0, to: 0 }];
+  if (!REDUCED && matchMedia('(pointer: fine)').matches) {
     addEventListener('pointermove', e => {
-      if (e.pointerType && e.pointerType !== 'mouse') return;
-      const n = (e.clientX / (innerWidth || 1) - 0.5) * 2;
-      pxTarget = Math.max(-PARALLAX_MAX, Math.min(PARALLAX_MAX, n * PARALLAX_MAX));
+      if ((e.pointerType && e.pointerType !== 'mouse') || hold || dragPeek !== null) return;   // with the cards or chips in the hand the table holds still
+      lean[0].to = (e.clientX / (innerWidth || 1) * 2 - 1) * LEAN[0];
+      lean[1].to = (1 - e.clientY / (innerHeight || 1) * 2) * LEAN[1];
     }, { passive: true });
-    document.addEventListener('pointerleave', () => { pxTarget = 0; });
+    document.documentElement.addEventListener('pointerleave', () => { lean[0].to = lean[1].to = 0; });
+  }
+  function spring(s, dt) {   // true while it moved
+    const d = s.x - s.to;
+    if (Math.abs(d) < 2e-5 && Math.abs(s.v) < 2e-4) { const was = s.x; s.x = s.to; s.v = 0; return was !== s.to; }
+    const e = Math.exp(-LEAN_RATE * dt), k = (s.v + LEAN_RATE * d) * dt;
+    s.x = s.to + (d + k) * e; s.v = (s.v - LEAN_RATE * k) * e;
+    return true;
+  }
+  const leanV = new THREE.Vector3(), SIDE = new THREE.Vector3(1, 0, 0), UP = new THREE.Vector3(0, 1, 0);
+  function aim() {   // the camera on its arc round the look point, looking at it
+    leanV.copy(camBase).sub(lookAt).applyAxisAngle(SIDE, -lean[1].x).applyAxisAngle(UP, lean[0].x);
+    camera.position.copy(lookAt).add(leanV); camera.lookAt(lookAt);
   }
 
-  // the foil's light follows the pointer over the page (any pointer: a touch moves it too); see foilMat
+  // the foil's light follows the pointer over the page (any pointer: a touch moves it too), and the page as it
+  // scrolls: the stage's place in the window swings the light, so the foil turns as the table goes by; see foilMat
+  let scrolled = true;
   addEventListener('pointermove', e => {
     foilAim.x = (e.clientX / (innerWidth || 1)) * 2 - 1; foilAim.y = 1 - (e.clientY / (innerHeight || 1)) * 2;
   }, { passive: true });
+  addEventListener('scroll', () => { scrolled = true; }, { passive: true });
 
-  // ---------- hit patches: the hand and the chip stack, projected to the screen ----------
-  // Only these two patches take the touch (touch-action: none in CSS), so the page still scrolls
-  // everywhere else over the table. They are placed again after every render, so parallax keeps them true.
+  // ---------- hit patches: the hand and each pile of chips, projected to the screen ----------
+  // Only these patches take the touch (touch-action: none in CSS), so the page still scrolls everywhere else
+  // over the table. They are placed again after every render, so the camera's lean and the chips' moves keep them true.
   const hitCards = stage.querySelector('.peek__hit--cards'), hitChips = stage.querySelector('.peek__hit--chips'), cue = stage.querySelector('.peek__cue');
+  const chipHits = hitChips ? [hitChips] : [];
   const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  const clamp01 = v => Math.min(1, Math.max(0, v));
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v)), clamp01 = v => clamp(v, 0, 1);
   const v3 = new THREE.Vector3();
   function project(x, y, z) { v3.set(x, y, z).project(camera); return [(v3.x + 1) / 2 * W, (1 - v3.y) / 2 * H]; }
+  // the point of the plane at height y that lies under a place on the stage
+  function tableAt(sx, sy, y) {
+    v3.set(sx / W * 2 - 1, 1 - sy / H * 2, 0.5).unproject(camera).sub(camera.position);
+    const t = (y - camera.position.y) / Math.min(v3.y, -1e-3);
+    return [camera.position.x + v3.x * t, camera.position.z + v3.z * t];
+  }
   function bounds(points, pad) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const [x, y] of points) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     return { x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad };
   }
-  function place(el, b) { el.style.left = b.x + 'px'; el.style.top = b.y + 'px'; el.style.width = b.w + 'px'; el.style.height = b.h + 'px'; }
+  const boxes = new Map();
+  function place(el, b) {
+    const was = boxes.get(el);   // a style write costs a layout: only when the patch has moved
+    if (was && Math.abs(was.x - b.x) < 0.5 && Math.abs(was.y - b.y) < 0.5 && Math.abs(was.w - b.w) < 0.5 && Math.abs(was.h - b.h) < 0.5) return;
+    boxes.set(el, b); el.style.left = b.x + 'px'; el.style.top = b.y + 'px'; el.style.width = b.w + 'px'; el.style.height = b.h + 'px';
+  }
   function placeHits() {
     if (!hitCards || !hitChips) return;
     camera.updateMatrixWorld(true); camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
@@ -811,16 +988,19 @@
     const xl = hx - CARD_W * 0.8, xr = hx + CARD_W * 1.15, zf = hz - CARD_H * 0.6, zn = hz + CARD_H * 0.62;
     const cards = bounds([project(xl, 0, zf), project(xr, 0, zf), project(xl, 0, zn), project(xr, 0, zn), project(xl, CARD_H * 0.4, hz), project(xr, CARD_H * 0.4, hz)], 14);
     place(hitCards, cards);
-    const sp = stack.position, top = 7 * 0.33 + 6 * 0.55 + 0.6;
-    place(hitChips, bounds([project(sp.x - 2.6, 0, sp.z - 2.4), project(sp.x + 2.6, 0, sp.z - 2.4), project(sp.x - 2.6, 0, sp.z + 2.4), project(sp.x + 2.6, 0, sp.z + 2.4), project(sp.x - 3.2, top, sp.z), project(sp.x + 3.2, top, sp.z)], 12));
+    const ps = piles();
+    while (chipHits.length < ps.length) { const el = hitChips.cloneNode(false); stage.insertBefore(el, hitChips.nextSibling); bindChips(el); chipHits.push(el); }
+    chipHits.forEach((el, i) => {
+      const off = i >= ps.length && !(hold && hold.el === el);   // the patch a drag began on stays until the drag ends
+      if (el.hidden !== off) el.hidden = off;
+      if (i < ps.length) place(el, pileBox(ps[i]));
+    });
     if (cue) { const [cx, cy] = project(hx + CARD_W * 0.25, 0, zf); cue.style.left = cx + 'px'; cue.style.top = (cy - 46) + 'px'; }
   }
 
   // ---------- interaction ----------
   // Cards: press and drag up to peek; let go and they settle back. Enter or Space peeks from the keyboard.
-  // Chips: press the stack and lift; the halves riffle apart and clack back bottom-first on release.
-  let dragPeek = null, keyPeek = false, dragLift = 0;
-  const chipS = chips.map(() => 0), chipV = chips.map(() => 0), chipHold = chips.map(() => 0);
+  let dragPeek = null, keyPeek = false;
   function touched() { stage.classList.add('is-touched'); }
   function grab(el, onMove, onEnd) {
     if (!el) return;
@@ -840,32 +1020,171 @@
     });
   }
   grab(hitCards, dy => { dragPeek = clamp01(dy / 140); dirty = true; }, () => { dragPeek = null; dirty = true; });
-  grab(hitChips, dy => { dragLift = clamp01(dy / 110); dirty = true; }, () => {
-    dragLift = 0; const now = performance.now(); chips.forEach((_, i) => { chipHold[i] = now + i * 40; }); dirty = true;
-  });
   stage.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched(); keyPeek = !keyPeek; dirty = true; } });
 
-  function updateChips(dt, now) {
-    let moving = false;
-    for (let i = 0; i < chips.length; i++) {
-      const m = chips[i], rest = m.userData.rest;
-      const target = now < chipHold[i] ? chipS[i] : dragLift;
-      if (REDUCED) { chipV[i] = 0; chipS[i] = target; }
-      else {
-        chipV[i] += ((target - chipS[i]) * 170 - chipV[i] * 13) * dt;
-        chipS[i] += chipV[i] * dt;
-        if (chipS[i] < 0) { chipS[i] = 0; chipV[i] *= -0.3; }   // the clack
+  // Chips: there to be played with, the way a player's hands never leave the stack. Press a pile and the chips from
+  // that level up come away in the hand: the foot of a pile takes all of it, its top face one chip. They follow the
+  // pointer over the table, and where they are let go they drop: back on their pile, onto another one, or as a new
+  // pile beside it. Under a mouse the pile shows the cut before the press. A pile is the chips that share a centre
+  // (sx, sz, in the stack's own space); lv is a chip's level in it. mode 0: at rest, 1: in the hand, 2: dropping.
+  const CHIP_R = 1.95, CHIP_H = 0.33, LIFT = 0.55, HOVER = 0.13, GRAVITY = 150, REACH = 15;
+  const bits = chips.map((m, i) => ({ m, sx: 0, sz: 0, lv: i, jx: m.position.x, jz: m.position.z, mode: 0, wait: 0, vy: 0, up: 0 }));
+  chips.forEach(m => { m.rotation.order = 'XZY'; });   // the chip's own turn first, then any lean, whichever way the chip is turned
+  let hold = null, hover = null;
+  function dealChips() {   // one stack again, in its first order
+    bits.forEach((b, i) => { b.sx = b.sz = 0; b.lv = i; b.mode = 0; b.up = b.vy = 0; b.m.position.set(b.jx, CHIP_H / 2 + i * CHIP_H, b.jz); b.m.rotation.x = b.m.rotation.z = 0; });
+    hold = hover = null;
+  }
+  function piles() {   // the chips on the table, pile by pile, bottom first
+    const out = [];
+    for (const b of bits) {
+      if (b.mode === 1) continue;
+      let p = out.find(q => q.x === b.sx && q.z === b.sz);
+      if (!p) out.push(p = { x: b.sx, z: b.sz, bits: [] });
+      p.bits.push(b);
+    }
+    out.forEach(p => p.bits.sort((a, b) => a.lv - b.lv));
+    return out;
+  }
+  function pileBox(p) {   // a pile on the screen, with a margin, and never a smaller target than a fingertip
+    const x = stack.position.x + p.x, z = stack.position.z + p.z, top = p.bits.length * CHIP_H, r = CHIP_R;
+    const b = bounds([project(x - r, 0, z), project(x + r, 0, z), project(x, 0, z + r), project(x - r, top, z), project(x + r, top, z), project(x, top, z - r)], 10);
+    if (b.w < 48) { b.x -= (48 - b.w) / 2; b.w = 48; }
+    if (b.h < 48) { b.y -= (48 - b.h) / 2; b.h = 48; }
+    return b;
+  }
+  // The pile under a place on the stage, and the cut: the level the pointer is on (that chip and all above it come
+  // away); on the top face, the top chip alone. The sight line is tried against each pile as a cylinder a little
+  // fatter than the chips, nearest first, so a pile in front wins over one behind it; a press in the margin of a
+  // patch goes to the pile whose patch it is nearest the middle of.
+  function pileAt(sx, sy) {
+    const o = camera.position, d = v3.set(sx / W * 2 - 1, 1 - sy / H * 2, 0.5).unproject(camera).sub(o), r = CHIP_R * 1.12;
+    const a = d.x * d.x + d.z * d.z;
+    let best = null, near = Infinity;
+    for (const p of piles()) {
+      const cx = stack.position.x + p.x - o.x, cz = stack.position.z + p.z - o.z, top = p.bits.length * CHIP_H;
+      const tTop = (top - o.y) / d.y, ex = d.x * tTop - cx, ez = d.z * tTop - cz;
+      if (ex * ex + ez * ez <= r * r) { if (tTop < near) { near = tTop; best = { pile: p, cut: p.bits.length - 1 }; } continue; }   // on the top face
+      const b = d.x * cx + d.z * cz, disc = b * b - a * (cx * cx + cz * cz - r * r);
+      if (disc < 0) continue;
+      const t = (b - Math.sqrt(disc)) / a, y = o.y + d.y * t;
+      if (y >= 0 && y <= top && t < near) { near = t; best = { pile: p, cut: clamp(Math.floor(y / CHIP_H), 0, p.bits.length - 1) }; }
+    }
+    if (best) return best;
+    near = Infinity;
+    for (const p of piles()) {
+      const b = pileBox(p), m = Math.hypot(sx - b.x - b.w / 2, sy - b.y - b.h / 2);
+      if (sx >= b.x && sx <= b.x + b.w && sy >= b.y && sy <= b.y + b.h && m < near) { near = m; best = { pile: p, cut: sy > b.y + b.h / 2 ? 0 : Math.ceil(p.bits.length / 2) }; }   // low in the margin: the whole pile; high: its top half
+    }
+    return best;
+  }
+  function stagePoint(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  function bindChips(el) {
+    el.addEventListener('pointerdown', e => {
+      if (e.button || hold) return;
+      const [sx, sy] = stagePoint(e), on = pileAt(sx, sy);
+      if (!on) return;
+      e.preventDefault(); touched();
+      const taken = on.pile.bits.slice(on.cut), lead = taken[0].m.position, at = tableAt(sx, sy, lead.y);
+      taken.forEach(b => { b.mode = 1; b.up = 0; });
+      // the chip stays under the pointer where it was taken: the offset from the sight line is kept
+      hold = { id: e.pointerId, el, bits: taken, sx, sy, y: lead.y, ox: stack.position.x + lead.x - at[0], oz: stack.position.z + lead.z - at[1], from: on.pile };
+      hover = null; dirty = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    el.addEventListener('pointermove', e => {
+      if (hold) { if (e.pointerId === hold.id) { [hold.sx, hold.sy] = stagePoint(e); dirty = true; } return; }
+      if (e.pointerType !== 'mouse') return;
+      const [sx, sy] = stagePoint(e), on = pileAt(sx, sy);
+      hover = on ? { x: on.pile.x, z: on.pile.z, cut: on.cut } : null; dirty = true;
+    });
+    el.addEventListener('pointerleave', () => { if (hover) { hover = null; dirty = true; } });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => el.addEventListener(n, e => { if (hold && e.pointerId === hold.id) drop(); }));
+  }
+  if (hitChips) bindChips(hitChips);
+  // how near the chips may come: a little in front of the hand
+  const nearest = () => FRAME.hand[1] + 7.6;
+  function drop() {
+    const h = hold, sp = stack.position, lead = h.bits[0].m.position, ps = piles();
+    hold = null; dirty = true;
+    try { h.el.releasePointerCapture(h.id); } catch (_) {}
+    let x = lead.x, z = lead.z, onto = null;
+    for (const p of ps) if (Math.hypot(p.x - x, p.z - z) < CHIP_R * 1.3) onto = p;   // near enough to a pile: onto it
+    if (!onto) {
+      // a pile of its own, stood clear of the other piles and off the cards
+      const gap = CHIP_R * 2 + 0.2, m = CHIP_R + 0.3, hx = FRAME.hand[0] - sp.x, hz = FRAME.hand[1] - sp.z;
+      const box = [hx - CARD_W * 0.62 - m, hx + CARD_W * 0.82 + m, hz - CARD_H * 0.54 - m, hz + CARD_H * 0.56 + m];
+      for (let n = 0; n < 4; n++) {
+        for (const p of ps) {
+          const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
+          if (d < gap) { x = d > 1e-3 ? p.x + dx * gap / d : p.x + gap; z = d > 1e-3 ? p.z + dz * gap / d : p.z; }
+        }
+        if (x > box[0] && x < box[1] && z > box[2] && z < box[3]) {
+          const out = [x - box[0], box[1] - x, z - box[2], box[3] > nearest() - sp.z ? Infinity : box[3] - z], i = out.indexOf(Math.min(...out));
+          if (i === 0) x = box[0]; else if (i === 1) x = box[1]; else if (i === 2) z = box[2]; else z = box[3];
+        }
       }
-      const s = chipS[i], side = i % 2 ? 1 : -1, fan = Math.min(1, i / 2);
-      m.position.set(rest.x + s * side * 0.9 * fan, rest.y + s * i * 0.55, rest.z + s * side * 0.25 * fan);
-      m.rotation.y = m.userData.restRot + s * 0.4 * i;
-      if (Math.abs(chipV[i]) > 0.02 || Math.abs(target - s) > 0.003) moving = true;
+      // no room there in view (a narrow frame has little table beside the cards): the chips go back where they came from
+      const [px, py] = project(sp.x + x, 0, sp.z + z), half = Math.abs(project(sp.x + x + CHIP_R, 0, sp.z + z)[0] - px);
+      if (px < half || px > W - half || py < 24 || py > (rail.visible ? project(lookAt.x, 4.5, rail.position.z)[1] : H) - half * 0.5) {
+        x = h.from.x; z = h.from.z; onto = ps.find(p => p.x === x && p.z === z) || null;
+      }
+    }
+    const base = onto ? onto.bits.length : 0;
+    h.bits.forEach((b, k) => { b.sx = onto ? onto.x : x; b.sz = onto ? onto.z : z; b.lv = base + k; b.mode = 2; b.wait = k * 0.028; b.vy = 0; });   // bottom first: the pile lands as a riffle
+  }
+  function updateChips(dt) {
+    let moving = false;
+    const sp = stack.position, glide = REDUCED ? 1 : 1 - Math.exp(-dt * 20);
+    if (hold) {
+      const lead = hold.bits[0].m.position;
+      // held clear of whatever pile is under the hand
+      let floor = 0;
+      for (const p of piles()) if (Math.hypot(p.x - lead.x, p.z - lead.z) < CHIP_R * 2) floor = Math.max(floor, p.bits.length * CHIP_H);
+      hold.y += (floor + LIFT + CHIP_H / 2 - hold.y) * glide;
+      // the hand: the pointer's sight line down to the height the chips are held at, kept on the table and in view
+      const wide = Math.abs(project(sp.x + lead.x + CHIP_R, hold.y, sp.z + lead.z)[0] - project(sp.x + lead.x, hold.y, sp.z + lead.z)[0]);   // half a chip, on screen
+      const foot = rail.visible ? project(lookAt.x, 4.5, rail.position.z)[1] : H;                                                          // the rail's crest hides the table behind it
+      const at = tableAt(clamp(hold.sx, wide, W - wide), clamp(hold.sy, 24, foot - wide), hold.y);
+      const x = clamp(at[0] + hold.ox, FRAME.hand[0] - REACH, FRAME.hand[0] + REACH) - sp.x, z = clamp(at[1] + hold.oz, FRAME.hand[1] - REACH, nearest()) - sp.z;
+      hold.bits.forEach((b, k) => {
+        const p = b.m.position, r = b.m.rotation, under = k && !REDUCED ? hold.bits[k - 1].m.position : null;
+        if (!under) { p.set(x, hold.y + k * CHIP_H, z); r.x = r.z = 0; return; }
+        // each chip trails the one under it a little, so a pile carried fast leans back and rights itself
+        const f = 1 - Math.exp(-dt * 40);
+        let dx = p.x + (under.x - p.x) * f - under.x, dz = p.z + (under.z - p.z) * f - under.z;
+        const d = Math.hypot(dx, dz); if (d > 0.28) { dx *= 0.28 / d; dz *= 0.28 / d; }
+        p.set(under.x + dx, hold.y + k * CHIP_H, under.z + dz); r.z = -dx * 0.3; r.x = dz * 0.3;
+      });
+      moving = true;
+    }
+    for (const b of bits) {
+      const p = b.m.position, r = b.m.rotation, restY = CHIP_H / 2 + b.lv * CHIP_H;
+      if (b.mode === 2) {
+        moving = true;
+        const tx = b.sx + b.jx, tz = b.sz + b.jz, f = REDUCED ? 1 : 1 - Math.exp(-dt * 30);
+        p.x += (tx - p.x) * f; p.z += (tz - p.z) * f; r.x *= 1 - f; r.z *= 1 - f;
+        if (!REDUCED) {
+          if (b.wait > 0) { b.wait -= dt; continue; }
+          if (Math.hypot(tx - p.x, tz - p.z) > 0.3) continue;     // over its place first, then down
+          b.vy -= GRAVITY * dt; p.y += b.vy * dt;
+          if (p.y > restY) continue;
+          if (b.vy < -9) { p.y = restY; b.vy *= -0.3; continue; }   // the clack: one short hop off a real drop
+        }
+        b.mode = 0; b.vy = 0; p.set(tx, restY, tz); r.x = r.z = 0;
+      } else if (b.mode === 0) {
+        const want = hover && hover.x === b.sx && hover.z === b.sz && b.lv >= hover.cut ? HOVER : 0;
+        if (Math.abs(want - b.up) > 1e-3) { b.up += (want - b.up) * glide; moving = true; } else b.up = want;
+        p.y = restY + b.up;
+      }
     }
     return moving;
   }
 
   // ---------- frame loop ----------
-  let dirty = true, visible = true, lastTheta = -1, lastPx = 0, peek = 0, lastT = performance.now();
+  // dirty: something on screen changed, draw; cast: something that throws a shadow moved, so the shadow map is drawn again too
+  let dirty = true, cast = true, visible = true, lastTheta = -1, peek = 0, lastT = performance.now();
+  renderer.shadowMap.autoUpdate = false;
   const io = new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) dirty = true; }, { threshold: 0 });
   io.observe(pin);
 
@@ -885,31 +1204,30 @@
     if (!REDUCED && c > 0.01) theta += c * (0.012 * Math.sin(time * 7.1) + 0.008 * Math.sin(time * 11.3 + 1.7));
     if (Math.abs(theta - lastTheta) > 1e-4) {
       bendCard(cardA, theta); bendCard(cardK, theta * 1.04);
-      hand.position.z = c * 1.1;
-      lastTheta = theta; dirty = true;
+      hand.position.z = FRAME.hand[1] + c * 1.1;
+      lastTheta = theta; dirty = cast = true;
     }
 
-    if (updateChips(dt, t)) dirty = true;
+    if (updateChips(dt)) dirty = cast = true;
 
     // parallax
-    px += (pxTarget - px) * (REDUCED ? 1 : 0.085);
-    if (Math.abs(px - lastPx) > 0.02) {
-      const vfov = THREE.MathUtils.degToRad(camera.fov);
-      const worldPerPx = (2 * camDist * Math.tan(vfov / 2)) / H;
-      camera.position.x = camBase.x + px * worldPerPx;
-      lastPx = px; dirty = true;
-    }
+    const turned = spring(lean[0], dt), tipped = spring(lean[1], dt);
+    if (turned || tipped) { aim(); dirty = true; }
 
-    // the foil's light eases toward the pointer; with the pointer still, it holds still
+    // the foil's light eases toward the pointer and the scroll; with both still, it holds still
     if (cardA.material[0] === foilMat) {
-      const lx = foilAim.x * 0.9, ly = 0.3 + foilAim.y * 0.6, k = REDUCED ? 1 : Math.min(1, dt * 6);
+      if (scrolled) { const r = stage.getBoundingClientRect(); foilAim.s = clamp((r.top + r.height / 2) / (innerHeight || 1) * 2 - 1, -1.5, 1.5); scrolled = false; }
+      const lx = foilAim.x * 0.9 + foilAim.s * 0.5, ly = 0.3 + foilAim.y * 0.6 - foilAim.s * 0.7, k = REDUCED ? 1 : 1 - Math.exp(-dt * 6);
       if (Math.abs(lx - foilLight.x) + Math.abs(ly - foilLight.y) > 2e-3) { foilLight.x += (lx - foilLight.x) * k; foilLight.y += (ly - foilLight.y) * k; dirty = true; }
     }
 
-    if (dirty) { if (pixelOn) renderSolitaire(); else renderer.render(scene, camera); placeHits(); dirty = false; }
+    if (dirty) {
+      if (cast) { renderer.shadowMap.needsUpdate = true; cast = false; }
+      if (pixelOn) renderSolitaire(); else renderer.render(scene, camera);
+      placeHits(); dirty = false;
+    }
   }
   applyLook();
-  resize();
   bendCard(cardA, 0); bendCard(cardK, 0);
   requestAnimationFrame(frame);
   }
