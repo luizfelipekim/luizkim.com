@@ -84,6 +84,8 @@ p { max-width: 62ch; text-wrap: pretty; }
 .hero__nav a { text-decoration: none; opacity: 0.92; transition: opacity var(--t-hover) ease; }
 @media (hover: hover) and (pointer: fine) { .hero__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.2em; } }
 .hero__bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 1.1rem; padding-bottom: 1.6rem; }
+.hero__back { display: none; }   /* a ground for a look that builds the hero as an object behind its words; unused unless a look shows it */
+.hero__art { display: none; }   /* an art window for a look that frames the portrait in the hero; unused unless a look shows it */
 .hero__row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; }
 .hero__lead { max-width: 28ch; font-size: var(--step-body); line-height: 1.45; }
 .hero__name {
@@ -177,14 +179,14 @@ p { max-width: 62ch; text-wrap: pretty; }
 .ball.is-flat .ball__flat { display: block; }
 @media (prefers-reduced-motion: reduce) { .ball__cap, .ball__q, .ball__hint { transition: none; } }
 
-/* Poker case teaser: two cards on dark glass, dragged up to peek; a chip stack that riffles */
+/* Poker case teaser: two cards on dark glass, dragged up to peek; a chip stack to cut and pile up */
 .case__visual--peek { position: relative; background: var(--bg); color: var(--ink); }
 .peek__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .peek__vignette { position: absolute; inset: 0; pointer-events: none; background:
   /* a shadow over the 3D scene: part of the content, not the chrome, so it is not themed */
   radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(12, 12, 12, 0.5) 100%),
   linear-gradient(180deg, rgba(12, 12, 12, 0.25) 0%, transparent 26%, transparent 66%, rgba(12, 12, 12, 0.6) 100%); }
-/* the hand and the chip stack each get a hit patch, placed by script over their projection; only there does the
+/* the hand and each pile of chips get a hit patch, placed by script over their projection; only there does the
    touch belong to the table, so the page still scrolls everywhere else. The cue pulses until the first touch. */
 .peek__hit { position: absolute; touch-action: none; cursor: grab; }
 .peek__hit:active { cursor: grabbing; }
@@ -201,7 +203,8 @@ p { max-width: 62ch; text-wrap: pretty; }
   .work { gap: 88px; padding-top: 3rem; }
   .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
   .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 56svh; }
-  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 440px; max-height: none; }
+  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 540px; max-height: none; }   /* tall enough that the ball keeps its size when the two buttons wrap on a short phone */
+  .ball__view { min-height: 220px; }
   .case__visual--peek { width: 100%; aspect-ratio: auto; height: 58svh; min-height: 400px; }
   .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
   .case__cluster { gap: 1rem; }
@@ -243,7 +246,10 @@ p { max-width: 62ch; text-wrap: pretty; }
 @media (max-width: 900px) {
   .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
   .claw { padding-left: 0; }
-  .claw__stage { aspect-ratio: 1 / 1; }
+  /* on a narrow screen the pad would cover the prizes, so the stage grows a control deck under the square picture */
+  .claw__stage { aspect-ratio: auto; display: flex; flex-direction: column; }
+  .claw__canvas { height: auto; aspect-ratio: 1 / 1; }
+  .claw__controls { position: static; justify-content: space-between; padding: 10px 12px 12px; }
   .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
@@ -255,6 +261,8 @@ p { max-width: 62ch; text-wrap: pretty; }
   /* the render is cut out of its ground; only the flat crop at the shoulders is faded away */
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
 .who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.who__pics canvas { display: none; }   /* a look that prints the portrait in foil draws it here (js/hero-foil.js); no other look shows it */
+.who__back { display: none; }   /* a ground for a look that builds the card as an object behind its words; unused unless a look shows it */
 .who__name { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; }
 .who__role { font-size: var(--step-body); }
 .who__prev { font-size: var(--step-body); color: var(--muted); }
@@ -349,6 +357,8 @@ html:not([data-theme]) .contact__intro { font-size: var(--step-section); line-he
 html:not([data-theme]) .contact__foot { color: var(--muted); }
 html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
 
+/* the default look's machine wears a tall art deco kit that fills the glass, so the invitation sits under the stage at every width */
+html:not([data-theme]) .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 @media (max-width: 900px) {
   html:not([data-theme]) .claw__box { margin-bottom: 1rem; }
 }
@@ -357,8 +367,9 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
   html:not([data-theme]) .contact { min-height: 80svh; }
 }
 </style>
-<script src="../js/theme.js"></script>
+<script src="../js/theme.js" data-preload-esports="../img/portrait.webp"></script>
 <script src="../js/analytics.js" defer></script>
+<script src="../js/hero-foil.js" defer></script>
 </head>
 <body>
 
@@ -378,6 +389,8 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
       </nav>
     </div>
     <div class="hero__bottom wrap">
+      <span class="hero__back" aria-hidden="true"></span>
+      <div class="hero__art" aria-hidden="true"></div>
       <div class="hero__row">
         <p class="hero__lead" data-rise style="--i:0">Product designer in London. I build design systems and run them as products: tokens, components, governance and adoption.</p>
       </div>
@@ -463,7 +476,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
               <button class="claw__drop" type="button" data-claw-drop>Drop</button>
             </div>
           </div>
-          <p class="claw__hint" aria-live="polite"><b>Catch one. The whole site changes.</b> <span>Steer, drop, and each prize dresses the site in a new look. Five to find.</span></p>
+          <p class="claw__hint" aria-live="polite"><b>Catch one. The whole site changes.</b></p>
           </div>
           <p class="claw__flat">A claw machine full of the system's foundational components: toggle, pill, checkbox, radio, button and text input. The 3D machine needs WebGL, which this browser doesn't offer.</p>
         </section>
@@ -506,6 +519,7 @@ html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
   <section class="about wrap" id="about" aria-label="About">
     <div class="about__row about__row--1">
       <div class="who" data-reveal>
+        <span class="who__back" aria-hidden="true"></span>
         <div class="who__pics">
           <img class="who__pic who__pic--mesh" src="../img/portrait-mesh.webp" width="1254" height="1254" alt="Luiz Kim, sculpted portrait: grey clay on one side, blue wireframe on the other" loading="lazy">
         </div>

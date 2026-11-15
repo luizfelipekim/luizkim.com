@@ -278,7 +278,12 @@
                   rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, topY: 4.35,   /* the claw rests lower here, clear of the marquee */ prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
-  function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'charcoal'; }
+  // no --look means charcoal, the look with no stylesheet. But while another look's sheet is still on its way the
+  // variable is empty too: then the machine waits as the bare cabinet, and does not dress (and download) as charcoal
+  function look() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--look').trim();
+    return v || (document.documentElement.hasAttribute('data-theme') ? 'default' : 'charcoal');
+  }
   function finish() { var f = Object.assign({}, FINISH.default); Object.assign(f, FINISH[look()] || {}); return f; }
   var plate = '';   // the post pass a look asks for on the overlay: '' (none), 'engraving' or 'glow'
   var shell = new THREE.Group();  // the procedural cabinet: plinth, posts, frame; stands in until the modelled one loads
@@ -327,7 +332,7 @@
       var f = finish();
       BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
       PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); m.envMapIntensity = f.prizeEnv; m.roughness = f.prizeRough; });
-      S.topY = f.topY;   // where the claw rests and carries
+      topYWant = f.topY;   // where the claw rests and carries; eased in update()
       STEEL.envMapIntensity = f.steelEnv; STEEL.roughness = f.steelRough; STEEL.metalness = f.steelMetal;
       pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
@@ -511,7 +516,8 @@
     cabinet.traverse(function (o) { if (o.isMesh && o.material === m) o.material = ph; });
     return (cabMats[name] = ph);
   }
-  var ornamentState = {};   // per set: 'loading' or 'done'
+  var topYWant = S.topY;
+  var ornamentState = {}, ornamentTries = {};   // per set: 'loading' or 'done'; and how often its fetch has failed
   function loadOrnament(set) {
     if (ornamentState[set] || !cabinet || !THREE.GLTFLoader) return;
     ornamentState[set] = 'loading';
@@ -525,7 +531,12 @@
       if (ornaments.foil && !neon) buildNeon();
       tintGlass();
       renderer.compile(scene, camera);
-    }, undefined, function (e) { delete ornamentState[set]; console.warn('Claw ornament did not load:', e); });
+    }, undefined, function (e) {
+      delete ornamentState[set]; console.warn('Claw ornament did not load:', e);
+      // try again, twice, a little later each time: tintGlass asks for the set only if the look on the page still wants it
+      ornamentTries[set] = (ornamentTries[set] || 0) + 1;
+      if (ornamentTries[set] <= 2) setTimeout(tintGlass, 4000 * ornamentTries[set]);
+    });
   }
 
 
@@ -725,7 +736,7 @@
   var ink = null, inkShader = null, inkVideo = null, inkStarting = false;
   function stageInk() { var c = getComputedStyle(root); return { ink: c.color, paper: stageColor() }; }
   // the cut is counted in lines per canvas height; keep the pitch near 3px whatever the stage's size
-  function inkLines() { return Math.round(Math.max(80, Math.min(220, stage.getBoundingClientRect().height / 3.2))); }
+  function inkLines() { return Math.round(Math.max(80, Math.min(220, canvas.getBoundingClientRect().height / 3.2))); }
   var inkKind = '';
   // what each pass is: the engraving in the stage's ink and paper; the glow a bloom on the brightest tenth of the frame
   var PASSES = {
@@ -757,7 +768,7 @@
       inkVideo.srcObject = canvas.captureStream();
       ink = document.createElement('canvas');
       ink.className = 'claw__ink'; ink.setAttribute('aria-hidden', 'true');
-      var r = stage.getBoundingClientRect();
+      var r = canvas.getBoundingClientRect();   // the picture's box, as in resize()
       ink.style.width = Math.round(r.width) + 'px'; ink.style.height = Math.round(r.height) + 'px';
       canvas.parentNode.insertBefore(ink, canvas.nextSibling);
       // a media component of our own: the library's video source only takes a URL, this one hands it the element
@@ -1009,6 +1020,7 @@
 
   function update(dt) {
     st += dt;
+    if (S.topY !== topYWant) { S.topY += (topYWant - S.topY) * Math.min(1, dt * 5); if (Math.abs(topYWant - S.topY) < 0.002) S.topY = topYWant; }
     switch (state) {
       case 'idle': {
         var mx = (keys.right || pad.right ? 1 : 0) - (keys.left || pad.left ? 1 : 0);
