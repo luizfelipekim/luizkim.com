@@ -261,6 +261,7 @@
       paper: '#faf8f4', ink: '#1a1715', face: '#faf8f4', text: '#1a1715', ink2: '#1a1715', ring: 'rgba(26,23,21,0.6)', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
       font: '400 30px "Source Serif 4",Georgia,"Times New Roman",serif' }
   };
+  LOOKS.manual = LOOKS.default;   // Brutalist shows the default look's ball
   function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
   var pal = LOOKS.default, current = null;
   function setL(l, v) { l.color.setHex(v[0]); l.intensity = v[1]; }
