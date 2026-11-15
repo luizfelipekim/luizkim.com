@@ -40,7 +40,7 @@
   const SERIF = '"Source Serif 4",Georgia,"Times New Roman",serif';
   const FONTS = {
     manual: ['condensed 900 100px "Archivo"', '500 20px "IBM Plex Mono"'],
-    press: ['900 100px "Playfair Display"', '400 20px "Source Serif 4"']
+    press: ['900 100px "Playfair Display"', '400 20px "Source Serif 4"', 'italic 400 30px "Source Serif 4"']
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   const look = () => getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default';
@@ -351,6 +351,10 @@
   // pool, and the stack goes behind and to the right, where the two rims edge it and it never stands over the cards.
   const FRAMES = {
     default: { cam: [0, 27, 44], look: [0, 0.6, 0.5], hand: [-0.4, 0], stack: [8.4, 5.6], stackTall: [4.8, 7.6], fit: [0.9, -0.66, 0.9], pad: [0.85, 1.2] },
+    // the first, drawn in a little: the stack a step back, so the cards are the larger thing. rail: how far up the frame
+    // the padded rail comes, so it is the same band at the foot of a wide box and of a tall one
+    studio: { cam: [0, 27, 44], look: [0, 0.6, 0.5], hand: [-0.6, 0.2], stack: [8.5, 3.2], stackTall: [4.8, 7.6], fit: [0.9, -0.62, 0.9], pad: [0.72, 1.0], rail: 0.045 },
+    paper: { cam: [0, 27, 44], look: [0, 0.6, 0.5], hand: [-0.6, 0.2], stack: [8.5, 3.2], stackTall: [4.8, 7.6], fit: [0.9, -0.66, 0.9], pad: [0.72, 1.0] },
     arcade: { cam: [0, 30, 42], look: [0, 0.6, 0.3], hand: [-1.5, 0.6], stack: [8.0, -3.4], stackTall: [3.6, -8.6], fit: [0.94, -0.66, 0.95], pad: [0.64, 0.74], bet: 0.7, centre: true }   // bet: how far up the frame the neon betting line crosses it; centre: the group sits midway between the bottom and top margins
   };
   let FRAME = FRAMES.default;
@@ -372,12 +376,15 @@
   const under = new THREE.PointLight(0xffffff, 0.38, 0, 2); under.position.set(2, 8, 26); scene.add(under);
   const rim = new THREE.DirectionalLight(0xbfbfbf, 0.3); rim.position.set(0, 14, -40); scene.add(rim);
   // The light sets the mood, and the table carries it. Each look is a place:
-  // Charcoal, a card room after hours: a tall white softbox on each side of the table, nothing overhead,
-  //   the rest of the room black, so the glass holds two long streaks and the chips take a hard edge each side.
+  // Charcoal, a dark grey studio, the claw machine's own (js/claw-machine.js): neutral light, a shade warmer from
+  //   the front than from behind. One spot on the hand and its pool on the glass, a cool rim from the back left
+  //   and a warm one from the back right, a table of black glass that mirrors two soft lights far off and fades
+  //   into the stage's grey. Nothing shines from straight behind: its streak on the glass would veil the cards.
   // Manual, a copy desk under a skylight: flat overcast daylight from straight above, a wide cone, one
   //   soft-edged shadow, no film curve and no gloss, print as print.
-  // Press, a reading lamp late: one warm bulb low from the upper left, a tight cone that pools on the
-  //   paper and lets the edges of the slab fall into shade, warm bounce off the desk, long shadows.
+  // Press, paper and ink: the page is the light. The table is the page itself, unlit and even; the hand stands in
+  //   a pool of ink shadow, which sets the pale cards off from the pale paper; one hard light from above and a
+  //   little behind cuts short, clean shadows at the foot of each thing and edges the tops.
   // Win95, Solitaire: no light at all, a flat green with a stamped shadow.
   // Foil, an arcade hall with the lights down: light comes in pools, never evenly. One narrow spot on the hand,
   //   a cyan rim from the back left and a magenta one from the back right, a table of black gloss that mirrors
@@ -386,24 +393,45 @@
   // key: [colour, intensity, penumbra, angle, position], keyTo: where it aims; fill: [colour, intensity, position];
   // rimAt: where the rim comes from; mirror: the smoke in the glass; gloss: the glass as black lacquer, see the
   // mirror's shader; sheen: the key's streak on the glass, where a look changes it; rail: false takes the padded rail away; fog: [near, far];
-  // neon: the hall's lights, which the glass reflects; frame: the look's own framing, see FRAMES;
+  // pool: what lies on the table round the hand, [colour, strength, width, depth, right of the hand, in front of it, ink]:
+  // a pool of light added to dark glass or, with ink, a wash of shadow laid on paper; neon: the hall's lights, and
+  // softs: the studio's, which the glass reflects; bevel: the chips' edges cut back; frame: the look's own framing, see FRAMES;
   // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
   const RIGS = {
-    default: { hemi: [0x9a9a9a, 0x101010, 0.3], key: [0xffffff, 1.55, 0.7, 0.5, [-46, 36, 16]], fill: [0xffffff, 0.75, [46, 34, 16]], under: [0xffffff, 0.22], rim: [0xaab6c4, 0.3], table: 'glass', mirror: 0x4a4a4a, fog: [42, 120], tone: true, exposure: 1.05, shadow: 0.5, room: 'cardroom', env: 0.7 },
+    default: { hemi: [0xc8ccd4, 0x0c0c0c, 0.14], key: [0xfff4e6, 1.5, 1, 0.3, [-7, 44, 16]], keyTo: [2, 0, 1.2], fill: [0xfff0e0, 1.0, [40, 8, -12]], under: [0xffffff, 0.2], rim: [0xdfe8ff, 1.3], rimAt: [-40, 10, -14],
+      table: 'glass', mirror: 0xffffff, gloss: [0.22, 0.9, 14, 64], glassBase: 0.62, sheen: [0x000000, 0.5, 0.22, 0], pool: [0x5c5c5c, 1, 36, 25, 2.6, 0.8], softs: true, bevel: true, fog: [90, 220], tone: true, exposure: 1.05, shadow: 0.5, room: 'studio', env: 0.8, frame: 'studio' },
     manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
-    press: { hemi: [0xfff3e2, 0xcbbfa8, 0.42], key: [0xffcf92, 1.75, 0.9, 0.33, [-30, 38, 20]], fill: [0xffe6c8, 0.14], under: [0xffdcb0, 0.1], rim: [0xffffff, 0], table: 'matte', fog: [48, 130], tone: true, exposure: 1.18, shadow: 0.34, room: 'lamp', env: 0.6 },
+    press: { hemi: [0xfff6e8, 0xe9e2d4, 0.62], key: [0xfff6e8, 0.4, 0.3, 0.3, [-10, 58, -12]], keyTo: [2, 0, 1], fill: [0xfff6e8, 0], under: [0xfff6e8, 0.1], rim: [0xfff6e8, 0.2], rimAt: [-30, 22, -24],
+      table: 'flat', pool: [0x1a1715, 0.32, 21, 13.5, 3.4, 0.6, true], bevel: true, fog: [60, 160], tone: false, exposure: 1, shadow: 0.42, room: 'pressroom', env: 0.5, frame: 'paper' },
     win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
     foil: { hemi: [0x6a5cff, 0x0a0619, 0.07], key: [0xf3ecff, 1.5, 1, 0.21, [-7, 44, 15]], keyTo: [0.4, 0, -0.4], fill: [0xff00c0, 2.8, [40, 7, -10]], under: [0xcfc4ff, 0.26], rim: [0x00c8ff, 2.4], rimAt: [-40, 9, -12],
-      table: 'glass', mirror: 0xffffff, gloss: [0.16, 0.95, 62, 112], sheen: [0x000000, 0.5, 0.2, 0], rail: false, fog: [80, 190], tone: true, exposure: 1.0, shadow: 0.6, room: 'arcade', env: 1, neon: true, bevel: true, frame: 'arcade' }
+      table: 'glass', mirror: 0xffffff, gloss: [0.16, 0.95, 62, 112], sheen: [0x000000, 0.5, 0.2, 0], rail: false, fog: [80, 190], tone: true, exposure: 1.0, shadow: 0.6, pool: [0x3626b8, 1, 30, 20, 1.2, -0.6], room: 'arcade', env: 1, neon: true, bevel: true, frame: 'arcade' }
   };
   function setLight(l, c, i, pen) { l.color.setHex(c); l.intensity = i; if (pen !== undefined) l.penumbra = pen; }
   // the rooms: small lit boxes rendered once into a prefiltered environment (PMREM), the vendored three has
   // no HDR loader and the page needs no download for this. Each lamp is a plane facing the centre:
   // [width, height, x, y, z, colour, gain]. Built on first use, kept for the tab.
   const ROOMS = {
-    cardroom: { bg: 0x070707, lamps: [[4, 14, -11, 4, 2, 0xffffff, 3.4], [4, 14, 11, 4, 2, 0xffffff, 3.4], [10, 2, 0, 1, -10, 0x5a5a5a, 0.8]] },
+    // the dark grey studio, as the claw machine's atelier but placed for a table: strip lights stand low in front,
+    // where the chips' sides and the rail look; an edge line each side, cool on the left and warm on the right, as
+    // the rims come; one strip and a dim wash back and high for the flat tops, kept low so the card backs stay black
+    studio: { bg: 0x050505, lamps: [
+      [0.8, 9, -9, -2.5, 7, 0xffffff, 7], [0.8, 9, -4.2, -3.5, 9.8, 0xffffff, 5], [0.8, 9, 1.2, -3.5, 10.5, 0xffffff, 7], [0.8, 9, 6.5, -3, 8.6, 0xffffff, 3.5],
+      [12, 2.5, -3, -8, 6.5, 0xffffff, 0.3],                                        // the floor in front, a dim bounce
+      [0.5, 9, -10.5, 1, -3, 0xdfe8ff, 4.5], [0.5, 9, 10.5, 0, -2, 0xfff0e0, 5],   // an edge line, left and right
+      [9, 1.2, -4.5, 8.5, -8.5, 0xffffff, 1.8], [8, 5, -5, 5, -9, 0xffffff, 0.3],  // back left, high
+      [5, 3, 1, 10.5, 3, 0xffffff, 2.2]                                             // overhead softbox: the line along the rail
+    ] },
     overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
-    lamp: { bg: 0x241c12, lamps: [[5, 5, -8, 7, 4, 0xffd29a, 5.5], [14, 6, 4, -2, 6, 0xd9c7a6, 1.0], [8, 3, 0, 4, -9, 0x6a5840, 0.8], [3, 8, 9, 3, 0, 0x8a7458, 0.6]] },
+    // Broadsheet's room, as the claw machine's pressroom: a grey room lit by windows the colour of the page, and the
+    // page itself below, which sends its light back up into the foot of everything that stands on it
+    pressroom: { bg: 0x171614, lamps: [
+      [5, 7, -6.5, 3, 8.5, 0xfff6e8, 5],          // window, front left
+      [9, 1.8, -4.5, 8.5, -8.5, 0xfff6e8, 4],     // skylight, back left, high
+      [5, 3, 1, 10.5, 3, 0xfff6e8, 2.5],          // overhead
+      [24, 24, 0, -9, 0, 0xf2ede2, 0.7],          // the page below
+      [7, 7, 8, -3.5, -7.5, 0x4d4a43, 1]          // back right, low: the right sides stay the shade side
+    ] },
     // a dark arcade hall, the claw machine's own room (js/claw-machine.js). A gloss face mirrors one part of it: the chips'
     // sides see low and to their own side, the rail sees front and overhead, the flat tops see back and high. Screens
     // of other machines and tube runs are placed there; back and high stays almost dark, so nothing veils the foil.
@@ -445,8 +473,9 @@
     // uGloss, for a look that asks (gloss in RIGS): the glass as black lacquer. x, y: how much it mirrors seen from
     // above and at a grazing angle (a gloss surface mirrors more the flatter you look along it, so the far hall
     // burns and the near table stays black); z, w: where it starts to fade into the stage colour and where it is gone.
+    // uBase: the table under the glass, as a share of the stage colour, where it is not black (glassBase in RIGS).
     const smoked = {
-      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uGloss: { value: new THREE.Vector4(0, 0, 0, 0) }, uStage: { value: new THREE.Color(0x000000) } },
+      uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, uGloss: { value: new THREE.Vector4(0, 0, 0, 0) }, uStage: { value: new THREE.Color(0x000000) }, uBase: { value: 0 } },
       vertexShader: `
         uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vWorld;
         void main() {
@@ -455,7 +484,7 @@
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }`,
       fragmentShader: `
-        uniform vec3 color; uniform sampler2D tDiffuse; uniform vec4 uGloss; uniform vec3 uStage; varying vec4 vUv; varying vec3 vWorld;
+        uniform vec3 color; uniform sampler2D tDiffuse; uniform vec4 uGloss; uniform vec3 uStage; uniform float uBase; varying vec4 vUv; varying vec3 vWorld;
         void main() {
           vec3 base = texture2DProj(tDiffuse, vUv).rgb;
           // the mirror pass writes linear values: bring them to screen gamma, then hold the reflection down
@@ -463,7 +492,7 @@
           if (uGloss.y > 0.0) {
             // lacquer mirrors what is there, no brighter: the lift above would turn the dark hall to a grey haze
             float graze = 1.0 - normalize(cameraPosition - vWorld).y;
-            c = base * color * mix(uGloss.x, uGloss.y, graze * graze * graze);
+            c = base * color * mix(uGloss.x, uGloss.y, graze * graze * graze) + uStage * uBase;
             c = mix(c, uStage, smoothstep(uGloss.z, uGloss.w, length(vWorld.xz)));
           }
           gl_FragColor = vec4(c, 1.0);
@@ -476,12 +505,9 @@
     const slab = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.3, metalness: 0.1 }));
     slab.rotation.x = -Math.PI / 2; slab.receiveShadow = true; scene.add(slab); glass.push(slab);
   }
-  // the unlit table (Solitaire's green, the manual's paper): one flat colour, no reflection; the shadow catcher above it still grounds the cards
+  // the unlit table (Solitaire's green, the manual's paper, the broadsheet's page): one flat colour, no reflection; the shadow catcher above it still grounds the cards
   const felt = new THREE.Mesh(TABLE, new THREE.MeshBasicMaterial({ color: 0x008000 }));
   felt.rotation.x = -Math.PI / 2; felt.visible = false; scene.add(felt);
-  // the paper looks: a matte slab in the stage's own colour, with a fine grain, no reflection
-  const matte = new THREE.Mesh(TABLE, new THREE.MeshStandardMaterial({ color: 0xe4e1d9, roughness: 0.96, metalness: 0 }));
-  matte.rotation.x = -Math.PI / 2; matte.visible = false; matte.receiveShadow = true; scene.add(matte);
   const shadows = new THREE.Mesh(TABLE, new THREE.ShadowMaterial({ opacity: 0.45 }));
   shadows.rotation.x = -Math.PI / 2; shadows.position.y = 0.01; shadows.receiveShadow = true; scene.add(shadows);
   const sheen = new THREE.Mesh(TABLE, new THREE.MeshPhysicalMaterial({ color: 0x000000, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, roughness: 0.32, metalness: 0, clearcoat: 0.8, clearcoatRoughness: 0.22 }));
@@ -489,7 +515,6 @@
   // the rail keeps a fine grain
   const feltBump = new THREE.CanvasTexture(noiseCanvas(256, [128, 128, 128], 110));
   feltBump.wrapS = feltBump.wrapT = THREE.RepeatWrapping; feltBump.repeat.set(40, 40);
-  matte.material.bumpMap = feltBump; matte.material.bumpScale = 0.012;
 
   // the hall behind the table (the foil look alone): the screens of other machines and a few tube runs, far off
   // and out of focus, unlit and unfogged so they burn. The camera looks down at the table and never at them: they
@@ -541,8 +566,19 @@
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: t, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide }));
     m.material.color.multiplyScalar(gain); bet.add(m);
   });
-  // the pool the key spot leaves on the lacquer: black gloss has nothing to scatter light with, so the pool is laid
-  // in under the shadow catcher, and the hand's shadow still falls across it
+  // the studio's own lights (the default look alone): two soft lights far behind the table, cool to the left and
+  // warm to the right, as its rims come. Like the hall, they are there for the glass to mirror, and they stay dim.
+  const softs = new THREE.Group(); softs.visible = false; scene.add(softs);
+  [[44, 44, -92, 30, -150, 0xdfe8ff, 0.2], [38, 38, 100, 27, -150, 0xfff0e0, 0.16]].forEach(g => softs.add(glow(...g)));
+  // the pool the key spot leaves on the table: black gloss has nothing to scatter light with, so the pool is laid
+  // in under the shadow catcher, and the hand's shadow still falls across it. On paper the same patch is a wash of
+  // ink, a pool of shadow for pale things to stand in. Each look gives its own (pool in RIGS).
+  let POOL = null;
+  const washTex = (() => {   // ink soaks evenly and ends softly: full to near half way out, then gone
+    const c = mkCanvas(128, 128), x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.42, 'rgba(255,255,255,0.92)'); g.addColorStop(0.72, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+  })();
   const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x3626b8, map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
   pool.rotation.x = -Math.PI / 2; pool.position.y = 0.005; pool.renderOrder = -1; pool.visible = false; scene.add(pool);   // drawn first of the see-through layers: the shadow catcher above it writes depth
 
@@ -766,8 +802,8 @@
   }
   // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
   const take = (m, gain) => { m.userData.envGain = gain; lit.push(m); };
-  take(foilMat, 0.35); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4); take(matte.material, 0.5);
-  take(sheen.material, 1); take(rail.material, 0.8); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
+  take(foilMat, 0.35); take(backMat, 0.6); take(backFlat, 0.3); take(edgeMat, 0.4);
+  take(sheen.material, 1); take(rail.material, 0.36); take(trim.material, 1); take(cardA.material[1], 0.5); take(cardK.material[1], 0.5);
   [chipMain, chipCap, chipLow, chipHigh].forEach(set => set.mats.forEach(m => take(m, 0.8)));
   // deal the deck the theme asks for: artwork, materials, and the table under them
   let currentLook = null;
@@ -803,9 +839,8 @@
     const rig = RIGS[l] || RIGS.default;
     FRAME = FRAMES[rig.frame] || FRAMES.default;
     // the table
-    // glass: the mirror and its rail. matte: a lit paper slab. felt / flat: an unlit slab in the stage's colour (Solitaire green, the manual's paper)
-    glass.forEach(o => { o.visible = rig.table === 'glass'; }); felt.visible = rig.table === 'felt' || rig.table === 'flat'; matte.visible = rig.table === 'matte';
-    if (rig.table === 'matte') matte.material.color.setStyle(stageColor());
+    // glass: the mirror and its rail. felt / flat: an unlit slab in the stage's colour (Solitaire green, the manual's paper, the broadsheet's page)
+    glass.forEach(o => { o.visible = rig.table === 'glass'; }); felt.visible = rig.table === 'felt' || rig.table === 'flat';
     if (felt.visible) felt.material.color.setStyle(stageColor());
     // the palette pass reads the scene as linear light: the stage colour goes in linear, so Solitaire's green comes
     // out as the palette's own 008000 instead of a dither between two greens
@@ -824,7 +859,7 @@
     // the glass takes the look's smoke, the horizon its fog
     if (glass.mirror && rig.mirror !== undefined) {
       const u = glass.mirror.material.uniforms;
-      u.color.value.setHex(rig.mirror); u.uGloss.value.fromArray(rig.gloss || [0, 0, 0, 0]); u.uStage.value.copy(scene.background);
+      u.color.value.setHex(rig.mirror); u.uGloss.value.fromArray(rig.gloss || [0, 0, 0, 0]); u.uStage.value.copy(scene.background); u.uBase.value = rig.glassBase || 0;
     }
     // the key's streak on the glass: [colour, opacity, roughness, how much of the room it takes]; the dark glass as it was, unless the look says
     const sh = rig.sheen || [0x000000, 0.55, 0.32, 1];
@@ -832,7 +867,8 @@
     // the arcade's table has no padded rail and no etched line: a neon line beyond the hand, and the dark
     if (rig.rail === false) rail.visible = trim.visible = line.visible = false;
     chips.forEach(m => { m.geometry = rig.bevel ? chipBevel : chipPlain; });
-    pool.visible = !!rig.gloss;
+    POOL = rig.pool || null; pool.visible = !!POOL; softs.visible = !!rig.softs;
+    if (POOL) { pool.material.color.setHex(POOL[0]); pool.material.opacity = POOL[1]; pool.material.blending = POOL[6] ? THREE.NormalBlending : THREE.AdditiveBlending; pool.material.map = POOL[6] ? washTex : glowTex; }
     scene.fog.near = rig.fog[0]; scene.fog.far = rig.fog[1];
     // the room: every standard material reflects it and takes its light; the flat looks have none
     scene.environment = roomEnv(rig.room);
@@ -883,7 +919,7 @@
     if (stack.position.x !== at[0] || stack.position.z !== at[1]) dealChips();   // a new place for the stack: the piles go back to one
     stack.position.set(at[0], 0, at[1]); hand.position.x = FRAME.hand[0]; hand.position.z = FRAME.hand[1] + ease(peek) * 1.1;
     CAM_BASE.fromArray(FRAME.cam); LOOK.fromArray(FRAME.look);
-    pool.position.set(FRAME.hand[0] + 1.2, 0.005, FRAME.hand[1] - 0.6); pool.scale.set(30, 20, 1);
+    if (POOL) { pool.position.set(FRAME.hand[0] + POOL[4], 0.005, FRAME.hand[1] + POOL[5]); pool.scale.set(POOL[2], POOL[3], 1); }
     const pts = framePoints(), half = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     let dolly = 0.3, shift = 0, slide = 0;   // start close and back off only as far as the fit needs
     const [fx, fb, ft] = FRAME.fit, rise = CAM_BASE.y / CAM_BASE.distanceTo(LOOK);
@@ -908,6 +944,10 @@
     lookAt.set(LOOK.x + shift, LOOK.y, LOOK.z + slide);
     camBase.copy(lookAt).add(CAM_BASE.clone().sub(LOOK).multiplyScalar(dolly));
     camera.position.copy(camBase); camera.lookAt(lookAt); camera.updateMatrixWorld(true);
+    // the rail, with its trim and the line etched before it: where it always was, or where the frame asks
+    let railZ = 15;
+    if (FRAME.rail) { const dir = fitV.set(0, -1 + 2 * FRAME.rail, 0.5).unproject(camera).sub(camBase).normalize(); railZ = camBase.z + dir.z * (1.6 - camBase.y) / dir.y + 3.3; }   // the sight line at that height meets the rail's far shoulder
+    rail.position.z = railZ; trim.position.z = railZ - 3.6; line.position.z = railZ + 51;
     // the neon betting line: its nearest point crosses at the same height of the frame in any box
     if (FRAME.bet) {
       const dir = fitV.set(0, -1 + 2 * FRAME.bet, 0.5).unproject(camera).sub(camBase).normalize();
@@ -1147,8 +1187,8 @@
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => el.addEventListener(n, e => { if (hold && e.pointerId === hold.id) drop(); }));
   }
   if (hitChips) bindChips(hitChips);
-  // how near the chips may come: a little in front of the hand
-  const nearest = () => FRAME.hand[1] + 7.6;
+  // how near the chips may come: a little in front of the hand, and short of the rail's foot
+  const nearest = () => Math.min(FRAME.hand[1] + 7.6, rail.visible ? rail.position.z - 3.4 - CHIP_R - 0.2 : Infinity);
   function drop() {
     const h = hold, sp = stack.position, lead = h.bits[0].m.position, ps = piles();
     hold = null; dirty = true;
