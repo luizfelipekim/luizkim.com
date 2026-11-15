@@ -106,9 +106,10 @@
   // Broadsheet: an engraved card. Cream newsprint, a hatched border band between rules, the
   // nameplate LK in the Playfair black, a line of small capitals with hairlines, as a masthead.
   const CREAM = '#faf8f4', INK = '#1a1715';
+  const WALNUT = '#5a3a22', WALNUT_DARK = '#33200f';   // the crane cabinet's wood, for the card's border
   function hatch(ctx, x, y, w, h, step, alpha, both) {
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-    ctx.strokeStyle = INK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
+    ctx.strokeStyle = WALNUT_DARK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
     for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke(); }
     if (both) for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d + h, y); ctx.lineTo(x + d, y + h); ctx.stroke(); }
     ctx.restore();
@@ -119,7 +120,8 @@
     roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = CREAM; ctx.fill();
     const m = 40, w = CW - 2 * m, h = CH - 2 * m, band = 54;
     // the border: rule, hatched band, rule; cross-hatched in the corners
-    ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
+    ctx.fillStyle = WALNUT; ctx.fillRect(m, m, w, h); ctx.fillStyle = CREAM; ctx.fillRect(m + band, m + band, w - 2 * band, h - 2 * band);
+    ctx.strokeStyle = WALNUT_DARK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
     hatch(ctx, m, m, w, band, 7, 0.55, false); hatch(ctx, m, CH - m - band, w, band, 7, 0.55, false);
     hatch(ctx, m, m + band, band, h - 2 * band, 7, 0.55, false); hatch(ctx, CW - m - band, m + band, band, h - 2 * band, 7, 0.55, false);
     [[m, m], [CW - m - band, m], [m, CH - m - band], [CW - m - band, CH - m - band]].forEach(([x, y]) => hatch(ctx, x, y, band, band, 7, 0.5, true));

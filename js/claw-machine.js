@@ -271,7 +271,7 @@
     // this look fetches), nickel trim, the lever's ball in the page's one red
     press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'artdeco', room: 'pressroom', stage: 'paper', rig: [0.95, 0.3, 0.5],
-                  fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35, inner: 0.16,
+                  fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35, inner: 0.16, plaque: false,   // no header plate: the walnut beam shows
                   wood: 0x4f3423, woodMap: true, woodRough: 0.42, woodMetal: 0, woodEnv: 0.55, woodCoat: 0.7, trim: 0xd9d5cb, trimRough: 0.16, trimEnv: 1.0,
                   steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7, knob: 0x8b1a1a },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
@@ -379,6 +379,7 @@
         if (ribbed) { ribTex.repeat.set(f.ribs, f.ribs); cabMats.body.normalScale.set(f.ribDepth || 0.6, f.ribDepth || 0.6); }
         if (f.ornament && !ornaments[f.ornament]) loadOrnament(f.ornament);   // each ornament set is a file of its own, fetched the first time a look asks
         for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
+        for (var pi = 0; pi < plaque.length; pi++) plaque[pi].visible = f.plaque !== false;   // a look may take the header plate off and show the beam behind
         if (f.sticker && !sticker) buildSticker();
         if (sticker) sticker.visible = !!f.sticker;
         // an ornament set's lit parts: black surfaces that emit the look's colours; the tier band is gold metal
@@ -523,6 +524,28 @@
     return (cabMats[name] = ph);
   }
   var topYWant = S.topY;
+  /* The art deco kit is one mesh per material, so its header plate (frame, frosted plate, chevrons) cannot be
+     hidden as a node. This lifts the plate's triangles into meshes of their own: every triangle that lies
+     wholly inside the plate's box, given in the cabinet's units. The beam behind is wider than the box and stays. */
+  var plaque = [], PLAQUE_BOX = [-2.3, 5.85, 3.13, 2.3, 6.6, 3.4];
+  function splitPlaque(node) {
+    var B = PLAQUE_BOX, sc = node.scale, at = node.position, meshes = [];
+    node.traverse(function (o) { if (o.isMesh && o.geometry && o.geometry.index) meshes.push(o); });
+    meshes.forEach(function (o) {
+      var pos = o.geometry.attributes.position, idx = o.geometry.index.array, keep = [], take = [];
+      function inside(i) {
+        var x = pos.getX(i) * sc.x + at.x, y = pos.getY(i) * sc.y + at.y, z = pos.getZ(i) * sc.z + at.z;
+        return x >= B[0] && x <= B[3] && y >= B[1] && y <= B[4] && z >= B[2] && z <= B[5];
+      }
+      for (var i = 0; i < idx.length; i += 3) (inside(idx[i]) && inside(idx[i + 1]) && inside(idx[i + 2]) ? take : keep).push(idx[i], idx[i + 1], idx[i + 2]);
+      if (!take.length) return;
+      var g = o.geometry.clone(); g.setIndex(take); o.geometry.setIndex(keep);
+      var part = new THREE.Mesh(g, o.material); part.name = 'plaque';
+      part.castShadow = o.castShadow; part.receiveShadow = o.receiveShadow;
+      o.parent.add(part); part.position.copy(o.position); part.quaternion.copy(o.quaternion); part.scale.copy(o.scale);
+      plaque.push(part);
+    });
+  }
   var ornamentState = {}, ornamentTries = {};   // per set: 'loading' or 'done'; and how often its fetch has failed
   function loadOrnament(set) {
     if (ornamentState[set] || !cabinet || !THREE.GLTFLoader) return;
@@ -533,6 +556,7 @@
       gltf.scene.children.slice().forEach(function (n) {
         if (n.name.indexOf('deco_') !== 0) return;
         ornaments[n.name.slice(5)] = n; adopt(n, true); n.visible = false; cabinet.add(n);
+        if (n.name === 'deco_artdeco') splitPlaque(n);
       });
       if (ornaments.foil && !neon) buildNeon();
       tintGlass();

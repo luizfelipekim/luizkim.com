@@ -154,6 +154,26 @@
   var flat = new THREE.MeshLambertMaterial({ color: 0x040404 });   // reads as black through the palette; only the very top of the key catches a few grey blocks
   // the arcade's finish: black lacquer under a hard clear coat, sharp enough to mirror the room's screens and tubes
   var lacquer = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.02, 0.016, 0.035), roughness: 0.05, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.6 });
+  // Broadsheet's finish: the crane cabinet's walnut under the same satin varnish. The grain is drawn on first use:
+  // growth rings round the ball's axis, bent a little, with fine fibres along them
+  var walnut = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.42, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.2, envMapIntensity: 0.55 });
+  function walnutGrain() {
+    var W = 1024, H = 512, c = document.createElement('canvas'); c.width = W; c.height = H;
+    var ctx = c.getContext('2d'), im = ctx.createImageData(W, H), d = im.data, TAU = Math.PI * 2;
+    function hash(x, y) { var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); }
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var u = x / W, v = y / H;
+      var t = v * 44 + 1.0 * Math.sin(u * TAU * 2 + v * 6) + 0.45 * Math.sin(u * TAU * 5 - v * 17) + 0.18 * Math.sin(u * TAU * 11 + v * 41);
+      var ring = t - Math.floor(t); ring = ring < 0.82 ? ring / 0.82 : (1 - ring) / 0.18;   // a slow rise, then the dark late wood
+      var fibre = hash(x, Math.floor(t * 9)) * 0.5 + hash(x * 0.37, y) * 0.5;
+      var k = Math.min(1, Math.max(0, 0.18 + ring * 0.62 + (fibre - 0.5) * 0.3));
+      var i = (y * W + x) * 4;
+      d[i] = 70 + k * 70; d[i + 1] = 43 + k * 48; d[i + 2] = 25 + k * 32; d[i + 3] = 255;   // #462b19 to #8c5b39, the cabinet's walnut
+    }
+    ctx.putImageData(im, 0, 0);
+    var tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.wrapS = THREE.RepeatWrapping; tex.anisotropy = 8;
+    return tex;
+  }
   // the mirrored room turns a few degrees with the visitor's pointer (three r128 has no rotation for an
   // environment, so the reflection vector is turned in the shader), and the reflections slide over the ball
   var roomTurn = { value: new THREE.Matrix3() }, roomTurn4 = new THREE.Matrix4(), roomEuler = new THREE.Euler();
@@ -260,7 +280,7 @@
     manual: { mat: 'matte', body: 0x141414, env: null, ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'hard',
       paper: '#efede7', ink: '#0c0c0c', face: '#efede7', text: '#0c0c0c', ink2: '#0c0c0c', ring: 'rgba(12,12,12,0.6)', cover: 'rgba(12,12,12,', swirl: 'rgba(196,22,28,',
       font: '500 26px "IBM Plex Mono",ui-monospace,Menlo,monospace' },
-    press: { mat: 'ink', env: 'pressroom', own: true, set: 'paper', ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'pool',
+    press: { mat: 'walnut', env: 'pressroom', own: true, set: 'paper', ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'pool',
       paper: '#faf8f4', ink: '#1a1715', face: '#faf8f4', text: '#1a1715', ink2: '#1a1715', ring: 'rgba(26,23,21,0.6)', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
       font: '400 30px "Source Serif 4",Georgia,"Times New Roman",serif' }
   };
@@ -275,9 +295,11 @@
     var e = pal.env ? (envs[pal.env] || (envs[pal.env] = bakeEnv(ENVS[pal.env], room.dark, room.blur))) : null;
     scene.environment = pal.own ? null : e; gloss.envMap = e; gloss.needsUpdate = true;
     ink.envMap = pal.own ? e : null; ink.needsUpdate = true;
+    if (pal.mat === 'walnut' && !walnut.map) walnut.map = walnutGrain();
+    walnut.envMap = pal.mat === 'walnut' ? e : null; walnut.needsUpdate = true;
     eyeMat.envMap = winMat.envMap = pal.print ? (envs[pal.print] || (envs[pal.print] = bakeEnv(ENVS[pal.print]))) : null;
     if (pal.body) matte.color.setHex(pal.body);
-    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'lacquer' ? lacquer : pal.mat === 'ink' ? ink : pal.mat === 'flat' ? flat : matte;
+    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'lacquer' ? lacquer : pal.mat === 'ink' ? ink : pal.mat === 'walnut' ? walnut : pal.mat === 'flat' ? flat : matte;
     // a filmic curve where the ball mirrors a room, so the sources roll off instead of clipping. In the arcade
     // also the stage's own colour behind the ball (the glow is added over it, which a see-through canvas cannot carry)
     var tone = pal.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
