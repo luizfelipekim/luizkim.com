@@ -159,19 +159,24 @@ html[data-theme="esports"] .hero__bottom {
   padding: 0 calc(var(--card-w) * 0.07) calc(var(--card-w) * 0.075);
   color: var(--print); --cut: calc(var(--card-w) * 0.05);
   transform: perspective(calc(var(--card-w) * 2.2)) rotateX(calc(var(--lean-y) * 13deg)) rotateY(calc(var(--lean-x) * 15deg));
-  /* thickness: the edge of the stock shows on the side that leans toward the reader. Then the two rim lights
-     of the hall, cyan from the left and magenta from the right, as the claw machine has them. */
+}
+/* The stock sits behind the words on its own element, which carries the filters. Thickness: the edge of the
+   stock shows on the side that leans toward the reader. Then the two rim lights of the hall, cyan from the left
+   and magenta from the right, as the claw machine has them. Kept off the card itself, so the name and the
+   line under it are drawn sharp and not through a filter. */
+html[data-theme="esports"] .hero__back {
+  display: block; position: absolute; inset: 0; z-index: -1;
   filter:
     drop-shadow(calc(var(--lean-x) * -4.5px) calc(var(--lean-y) * 4px) 0 #7d74bd)
     drop-shadow(-8px 0 14px rgb(0 200 255 / 0.4)) drop-shadow(8px 0 14px rgb(255 0 192 / 0.38));
 }
 /* the stock is two die-cut plates: a bevel that catches the rim lights, and the printed face a hair inside it */
-html[data-theme="esports"] .hero__bottom::before, html[data-theme="esports"] .hero__bottom::after { content: ""; position: absolute; z-index: -1; clip-path: var(--die); }
-html[data-theme="esports"] .hero__bottom::before {
+html[data-theme="esports"] .hero__back::before, html[data-theme="esports"] .hero__back::after { content: ""; position: absolute; clip-path: var(--die); }
+html[data-theme="esports"] .hero__back::before {
   inset: 0;
   background: linear-gradient(to bottom, rgb(255 255 255 / 0.9), transparent 12%, transparent 88%, rgb(60 40 140 / 0.7)), linear-gradient(to right, #35e0ff, #f4f1ff 14%, #f4f1ff 86%, #ff4fd0);
 }
-html[data-theme="esports"] .hero__bottom::after { inset: 2px; --cut: calc(var(--card-w) * 0.05 - 1px); }
+html[data-theme="esports"] .hero__back::after { inset: 2px; --cut: calc(var(--card-w) * 0.05 - 1px); }
 /* the art window: a well cut through the stock. The portrait sits behind the frame, so it slides against
    the frame as the card leans; the hall behind it sits further back and slides more. */
 html[data-theme="esports"] .hero__art {
@@ -279,23 +284,112 @@ html[data-theme="esports"] .claw__hint { color: var(--ink); font-size: 14px; fon
 /* the foil cabinet fills its stage, crown to control deck, so the caption leaves the stage and sits under it at every width (as the narrow layout already does) */
 html[data-theme="esports"] .claw__hint { position: static; max-width: none; padding: 0 14px; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 
-/* ---------- about: a small card in the sleeve ---------- */
+/* ---------- about: the hero card's pair, small ---------- */
 html[data-theme="esports"] .about { gap: 3rem; padding-top: 0; }
 html[data-theme="esports"] .about__row { align-items: center; column-gap: 3rem; }
-html[data-theme="esports"] .who {
-  align-items: flex-start; text-align: left; padding: 12px 12px 16px; color: var(--print); --cut: 14px; clip-path: var(--die);
-  background: var(--foil); background-size: 260% 100%, 140% 140%, 100% 100%; background-position: 70% 0, 0 0, 0 0; background-blend-mode: normal, multiply, normal;
-  transition: background-position 900ms var(--ease);
+/* a wash of the hall's violet on the page behind the card, as on the wall behind the hero card */
+html[data-theme="esports"] .about__row--1 { background: radial-gradient(330px 400px at 130px 50%, rgb(90 43 255 / 0.3), rgb(90 43 255 / 0.08) 55%, transparent 80%) no-repeat; }
+/* The same object as the hero card: the two die-cut plates, the edge, the two rim lights, the lean, and the
+   portrait in a well with the same foil. It leans less, and it rests turned toward the words beside it.
+   js/motion.js writes --lx / --ly and --sc (how far the card has crossed the screen, -0.5 to 0.5), so it rocks
+   back as the page carries it up. `.about .who` outranks the reveal, which would otherwise own `transform`;
+   the reveal keeps its fade and its rise, the rise moved to `translate`. */
+html[data-theme="esports"] .about .who {
+  position: relative; isolation: isolate; align-items: flex-start; text-align: left; padding: 12px 12px 16px; color: var(--print); --cut: 14px;
+  --lean-x: clamp(-1, calc(var(--lx, 0) * 0.7 + 0.3), 1);
+  --lean-y: clamp(-1, calc(var(--ly, 0) * -0.6 + 0.12 + var(--sc, 0) * 1.3), 1);
+  transform: perspective(620px) rotateX(calc(var(--lean-y) * 9deg)) rotateY(calc(var(--lean-x) * 11deg));
+  transition: opacity 700ms var(--ease-out), translate 900ms var(--ease-out);
 }
-/* the portrait keeps its own soft mask (not themed on purpose); a dark die-cut art window sits
-   behind it, so the mask fades into the window rather than onto the foil */
-html[data-theme="esports"] .who { position: relative; }
+@media (prefers-reduced-motion: no-preference) {
+  html.js[data-theme="esports"] .about .who[data-reveal]:not(.is-in) { translate: 0 24px; }
+}
+/* the stock sits behind the words on its own element, which carries the filters: the edge of the stock, the cyan
+   and magenta rims, and the card's shadow on the page, thrown away from the lean. Kept off the card itself, so
+   the words are drawn sharp and not through a filter. */
+html[data-theme="esports"] .who__back {
+  display: block; position: absolute; inset: 0; z-index: -2;
+  filter:
+    drop-shadow(calc(var(--lean-x) * -3px) calc(var(--lean-y) * 2.6px) 0 #7d74bd)
+    drop-shadow(-5px 0 9px rgb(0 200 255 / 0.36)) drop-shadow(5px 0 9px rgb(255 0 192 / 0.34))
+    drop-shadow(calc(var(--lean-x) * -12px) calc(16px + var(--lean-y) * 8px) 16px rgb(4 2 12 / 0.7));
+}
+html[data-theme="esports"] .who__back::before, html[data-theme="esports"] .who__back::after { content: ""; position: absolute; clip-path: var(--die); }
+html[data-theme="esports"] .who__back::before {
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.9), transparent 12%, transparent 88%, rgb(60 40 140 / 0.7)), linear-gradient(to right, #35e0ff, #f4f1ff 14%, #f4f1ff 86%, #ff4fd0);
+}
+html[data-theme="esports"] .who__back::after { inset: 1.5px; --cut: 13px; }
+/* the hairline printed inside the edge, as on the hero card. This card's height follows its words, so the line is
+   drawn from four sides and four corners, not from one picture that would stretch. */
 html[data-theme="esports"] .who::before {
-  content: ""; position: absolute; top: 12px; left: 12px; right: 12px; aspect-ratio: 1 / 1;
-  background: #232324; --cut: 10px; clip-path: var(--die);
+  content: ""; position: absolute; inset: 6px; z-index: -1; pointer-events: none;
+  --k: rgb(18 10 44 / 0.5); --c: 10px; --d: transparent calc(50% - 0.6px), var(--k) calc(50% - 0.6px) calc(50% + 0.6px), transparent calc(50% + 0.6px);
+  background:
+    linear-gradient(var(--k), var(--k)) var(--c) 0 / calc(100% - 2 * var(--c)) 1px,
+    linear-gradient(var(--k), var(--k)) var(--c) 100% / calc(100% - 2 * var(--c)) 1px,
+    linear-gradient(var(--k), var(--k)) 0 var(--c) / 1px calc(100% - 2 * var(--c)),
+    linear-gradient(var(--k), var(--k)) 100% var(--c) / 1px calc(100% - 2 * var(--c)),
+    linear-gradient(to bottom right, var(--d)) 0 0 / var(--c) var(--c),
+    linear-gradient(to bottom left, var(--d)) 100% 0 / var(--c) var(--c),
+    linear-gradient(to bottom left, var(--d)) 0 100% / var(--c) var(--c),
+    linear-gradient(to bottom right, var(--d)) 100% 100% / var(--c) var(--c);
+  background-repeat: no-repeat;
 }
-html[data-theme="esports"] .who__pics { position: relative; margin-bottom: 0.75rem; }
-html[data-theme="esports"] .who__name { font-size: 2rem; color: var(--print); }
+/* the art window, as on the hero card: a well cut through the stock, the portrait set back in it. The portrait's
+   own fade at the shoulders is switched off in this look only: here the frame of the well crops them. */
+html[data-theme="esports"] .who__pics {
+  position: relative; isolation: isolate; margin-bottom: 0.75rem; --cut: 10px; clip-path: var(--die);
+  -webkit-mask-image: none; mask-image: none;
+  background: linear-gradient(135deg, #1a1040, #0a0619 45%, #8b7fe0);   /* the cut edge of the well */
+}
+html[data-theme="esports"] .who__pics::before, html[data-theme="esports"] .who__pics::after, html[data-theme="esports"] .who__pics :is(.who__pic, canvas) {
+  position: absolute; inset: auto; left: 2px; top: 2px; width: calc(100% - 4px); height: calc(100% - 4px); --cut: 9px; clip-path: var(--die);
+}
+html[data-theme="esports"] .who__pics canvas { display: block; opacity: 0; transition: opacity 700ms var(--ease); }
+html[data-theme="esports"] .who__pics canvas.is-on { opacity: 1; }
+/* Foil on the bust, the first paint and the fallback, built as the hero's is: patches of the foil palette lend
+   their hue to the render and keep its light and shade. Both halves take it: the clay reads as pressed foil,
+   and on the wireframe half the mesh lines stay, drawn in the foil. The well paints the picture once the card
+   has been revealed (so the file is still fetched late, by the image), and the image then hides but stays for
+   its words. js/hero-foil.js places the portrait as here (110% wide, 20% down, the same slide). */
+html[data-theme="esports"] .who__pics::before {
+  content: "";
+  background-color: #0a0619;
+  background-image:
+    radial-gradient(closest-side, rgb(0 217 255 / 0.9), transparent),
+    radial-gradient(closest-side, rgb(255 20 184 / 0.85), transparent),
+    radial-gradient(closest-side, rgb(255 184 31 / 0.8), transparent),
+    linear-gradient(rgb(107 46 255 / 0.6), rgb(107 46 255 / 0.6)),
+    var(--pic, none),
+    radial-gradient(ellipse 60% 62% at 50% 40%, rgb(120 70 255 / 0.55), rgb(60 30 160 / 0.2) 60%, transparent);
+  background-blend-mode: color, color, color, color, normal, normal;
+  background-repeat: no-repeat;
+  background-size: 90% 80%, 90% 80%, 80% 70%, auto, 110% auto, 140% 140%;
+  background-position:
+    calc(10% + var(--u) * 60%) calc(20% + var(--v) * 50%),
+    calc(95% - var(--u) * 70%) calc(70% - var(--v) * 60%),
+    calc(40% + var(--u) * 90%) calc(110% - var(--v) * 80%),
+    0 0,
+    calc(50% - var(--lean-x) * 4px) calc(20% + var(--lean-y) * 4px),
+    calc(50% - var(--lean-x) * 9px) calc(50% + var(--lean-y) * 8px);
+}
+html[data-theme="esports"] .who.is-in .who__pics { --pic: url("../../img/portrait-mesh.webp"); }
+html[data-theme="esports"] .who.is-in .who__pic { opacity: 0; }
+/* the well's own shadow under the frame, and the gloss over the art */
+html[data-theme="esports"] .who__pics::after {
+  content: "";
+  background:
+    linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.2) 46%, rgb(255 255 255 / 0.05) 51%, transparent 58%) calc(50% - var(--u) * 45%) 0 / 260% 100% no-repeat,
+    linear-gradient(to bottom, rgb(4 2 12 / 0.7), transparent 8%),
+    linear-gradient(to right, rgb(4 2 12 / 0.5), transparent 5%),
+    linear-gradient(to left, rgb(4 2 12 / 0.5), transparent 5%);
+}
+html[data-theme="esports"] .who__name {
+  font-size: 2rem; color: var(--print);
+  translate: calc(var(--lean-x) * 2px) calc(var(--lean-y) * -1.5px);
+  text-shadow: calc(var(--lean-x) * -3px) calc(var(--lean-y) * 3px + 1px) 2px rgb(18 10 44 / 0.11);
+}
 html[data-theme="esports"] :is(.who__role, .who__prev, .who__link) { color: var(--print); }
 html[data-theme="esports"] .who__prev { color: #2a1a5e; }
 html[data-theme="esports"] .about__para { font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.25rem); line-height: 1.25; font-weight: 500; letter-spacing: -0.01em; max-width: 32ch; }
@@ -305,11 +399,9 @@ html[data-theme="esports"] .about__para { font-size: clamp(1.4rem, 1.1rem + 1.2v
    pressed grain, six soft patches of the foil palette (cyan, violet, magenta, gold), a faint sheen of the
    same four so the stock is never plain, and silver under them. Each patch slides its own way with
    --u / --v, so the colour at any point changes as the light moves. The light is the pointer or a phone's
-   tilt (js/motion.js sets --lx / --ly) and the scroll (--sc on the hero; --ls on the small card, where
-   scroll timelines exist); with none moving, the foil holds still. Every colour keeps the dark print above 4.5:1. */
-@property --ls { syntax: "<number>"; inherits: false; initial-value: 0; }
+   tilt (js/motion.js sets --lx / --ly) and the scroll (--sc, on every browser); with none moving, the foil
+   holds still. Every colour keeps the dark print above 4.5:1. */
 html[data-theme="esports"] :is(.hero__bottom, .who) {
-  --u: calc(var(--lx, 0) + var(--ls) * 1.4); --v: calc(var(--ly, 0) + var(--ls) * 0.9);
   --holo:
     linear-gradient(105deg, transparent 41%, rgb(255 255 255 / 0.8) 47%, rgb(255 255 255 / 0.18) 51%, transparent 56%),
     repeating-linear-gradient(118deg, transparent 0 3px, rgb(255 255 255 / 0.16) 4px, transparent 5px 7px),
@@ -335,10 +427,11 @@ html[data-theme="esports"] :is(.hero__bottom, .who) {
   --holo-size: 260% 100%, 100% 100%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 320% 320%, 100% 100%;
   --holo-rep: no-repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
 }
-/* the hero card: the page's scroll moves its light too (--sc, from js/motion.js, on every browser) */
+/* where the light sits on each card: the pointer or the tilt, pushed on by the page's scroll */
 html[data-theme="esports"] .hero__bottom { --u: clamp(-1.1, calc(var(--lx, 0) * 0.85 + var(--sc, 0) * 1.3 - 0.3), 1.2); --v: clamp(-1.1, calc(var(--ly, 0) * 0.85 + var(--sc, 0) * 0.9 - 0.2), 1.2); }
+html[data-theme="esports"] .who { --u: clamp(-1.1, calc(var(--lx, 0) * 0.85 + var(--sc, 0) * 1.6 + 0.25), 1.2); --v: clamp(-1.1, calc(var(--ly, 0) * 0.85 + var(--sc, 0) * 1.2 - 0.1), 1.2); }
 /* its face: the rarity tier is the gold band foil-stamped across the top edge of the stock, the only gold on the site */
-html[data-theme="esports"] .hero__bottom::after {
+html[data-theme="esports"] .hero__back::after {
   background-image:
     linear-gradient(100deg, #e9b020, var(--gold) 30%, #fff0a6 calc(50% + var(--u) * 28%), var(--gold) 72%, #e9b020),
     /* a hairline printed inside the edge, following the die-cut */
@@ -347,17 +440,11 @@ html[data-theme="esports"] .hero__bottom::after {
   background-size: 100% calc(var(--card-w) * 0.022), 100% 100%, var(--holo-size); background-position: 0 0, 0 0, var(--holo-pos);
   background-repeat: no-repeat, no-repeat, var(--holo-rep);
 }
-html[data-theme="esports"] .who {
+html[data-theme="esports"] .who__back::after {
   background-image: var(--holo); background-size: var(--holo-size); background-position: var(--holo-pos);
-  background-repeat: var(--holo-rep); background-blend-mode: normal; transition: none;
+  background-repeat: var(--holo-rep);
 }
 html[data-theme="esports"] .who__prev { color: #1c1048; }   /* a step lighter than the print, and still 4.5:1 on the violet patch */
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) {
-    html[data-theme="esports"] .who { animation: holo-scroll linear both; animation-timeline: view(); }
-  }
-}
-@keyframes holo-scroll { from { --ls: -0.5; } to { --ls: 0.5; } }
 
 /* ---------- contact: the card back ---------- */
 html[data-theme="esports"] .contact {
@@ -406,6 +493,8 @@ html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); --cut
   html[data-theme="esports"] .decision:last-child { clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut))); }
 }
 @media (max-width: 900px) {
+  /* the About card sits above its words, centred: the wash follows it */
+  html[data-theme="esports"] .about__row--1 { background-image: radial-gradient(260px 340px at 50% 232px, rgb(90 43 255 / 0.3), rgb(90 43 255 / 0.08) 55%, transparent 80%); }
   html[data-theme="esports"] .case { padding: 10px; }
   html[data-theme="esports"] .case__visual { width: 100%; }
   html[data-theme="esports"] .case__cluster { padding: 1rem 0.5rem 0.75rem; }
@@ -424,7 +513,7 @@ html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); --cut
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-theme="esports"] :is(.button, .copy-btn, .stats__row) { transition: none; }
-  html[data-theme="esports"] .hero__art canvas { transition: none; }
+  html[data-theme="esports"] :is(.hero__art, .who__pics) canvas { transition: none; }
 }
 
 /* ---------- theme picker: the icon in a pale-foil tab; the menu is a die-cut card in the sleeve ---------- */
