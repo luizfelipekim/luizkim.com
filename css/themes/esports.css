@@ -130,17 +130,6 @@ html[data-theme="esports"] .hero__name {
 }
 html[data-theme="esports"] .hero__row { order: 1; border-top: 1px solid rgb(18 10 44 / 0.35); padding-top: 0.7rem; }
 html[data-theme="esports"] .hero__lead { max-width: none; font-size: clamp(13px, 3.6cqi, 15px); line-height: 1.4; font-weight: 500; color: var(--print); }
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) {
-    html[data-theme="esports"] .hero__bottom { animation: foil-drift linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
-  }
-}
-@keyframes foil-drift { from { background-position: 0 0, 70% 0, 0 0, 0 0; } to { background-position: 0 0, -40% 0, 100% 100%, 0 0; } }
-/* without scroll timelines (Safari, Firefox) the band travels on hover instead, so the foil is never inert */
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="esports"] .hero__bottom:hover { background-position: 0 0, -40% 0, 60% 60%, 0 0; }
-  html[data-theme="esports"] .who:hover { background-position: -40% 0, 60% 60%, 0 0; }
-}
 
 /* ---------- stats: the stat block on the card's reverse ---------- */
 html[data-theme="esports"] .stats { padding-top: 7rem; padding-bottom: 7rem; }
@@ -185,6 +174,7 @@ html[data-theme="esports"] .ball__q { font-family: var(--font-display); font-wei
 html[data-theme="esports"] .ball__meter i { background: #f6b8ff; }
 html[data-theme="esports"] .claw { padding: 0 0 12px; border-radius: 14px; overflow: hidden; }   /* the neon blooms inside the 3D scene (js/claw-machine.js); --claw-plate: glow would add the 2D library's bloom over the whole frame, which hazes it */
 html[data-theme="esports"] .claw__stage { border: 0; }
+html[data-theme="esports"] .claw { background: #0a0619; }   /* a dark hall: the 3D scene clears to this colour, and the cabinet is lit in pools against it */
 html[data-theme="esports"] .claw__key { background: var(--surface-2); border-color: var(--line); border-radius: 10px; }
 html[data-theme="esports"] .claw__drop { border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 html[data-theme="esports"] .claw__hint { color: var(--ink); font-size: 14px; font-weight: 600; }
@@ -211,6 +201,53 @@ html[data-theme="esports"] .who__name { font-size: 2rem; color: var(--print); }
 html[data-theme="esports"] :is(.who__role, .who__prev, .who__link) { color: var(--print); }
 html[data-theme="esports"] .who__prev { color: #2a1a5e; }
 html[data-theme="esports"] .about__para { font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2.25rem); line-height: 1.25; font-weight: 500; letter-spacing: -0.01em; max-width: 32ch; }
+
+/* ---------- holographic stock: the two cards that carry the portrait ----------
+   The same foil as the claw's sticker and the poker cards, made from gradients: a specular band, six soft
+   patches of the foil palette (cyan, violet, magenta, gold) and silver stock under them. Each patch slides
+   its own way with --u / --v, so the colour at any point changes as the light moves. The light is the
+   pointer (js/motion.js sets --lx / --ly) and, where scroll timelines exist, the scroll (--ls); with
+   neither moving, the foil holds still. Every patch colour keeps the dark print above 4.5:1. */
+@property --ls { syntax: "<number>"; inherits: false; initial-value: 0; }
+html[data-theme="esports"] :is(.hero__bottom, .who) {
+  --u: calc(var(--lx, 0) + var(--ls) * 1.4); --v: calc(var(--ly, 0) + var(--ls) * 0.9);
+  --holo:
+    linear-gradient(105deg, transparent 41%, rgb(255 255 255 / 0.8) 47%, rgb(255 255 255 / 0.18) 51%, transparent 56%),
+    radial-gradient(closest-side, #19d9ff 0%, #19d9ff 22%, transparent 100%),
+    radial-gradient(closest-side, #8f6bff 0%, #8f6bff 22%, transparent 100%),
+    radial-gradient(closest-side, #ff3fc0 0%, #ff3fc0 22%, transparent 100%),
+    radial-gradient(closest-side, #ffc530 0%, #ffc530 22%, transparent 100%),
+    radial-gradient(closest-side, #19d9ff 0%, #19d9ff 22%, transparent 100%),
+    radial-gradient(closest-side, #ff3fc0 0%, #ff3fc0 22%, transparent 100%),
+    linear-gradient(160deg, #e9e7f2, #cfcce0 55%, #ecebf4);
+  --holo-pos:
+    calc(50% - var(--u) * 45%) 0,
+    calc(167% + var(--u) * -150%) calc(-250% + var(--v) * 250%),
+    calc(-50% + var(--u) * 133%) calc(-300% + var(--v) * 350%),
+    calc(-67% + var(--u) * 167%) calc(200% + var(--v) * -300%),
+    calc(150% + var(--u) * -133%) calc(400% + var(--v) * -350%),
+    calc(33% + var(--u) * 117%) calc(600% + var(--v) * -450%),
+    calc(83% + var(--u) * -100%) calc(-550% + var(--v) * 500%),
+    0 0;
+  --holo-size: 260% 100%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 130% 90%, 100% 100%;
+}
+html[data-theme="esports"] .hero__bottom {
+  background-image: linear-gradient(var(--gold), var(--gold)), var(--holo);
+  background-size: 100% 12px, var(--holo-size); background-position: 0 0, var(--holo-pos);
+  background-repeat: no-repeat; background-blend-mode: normal; transition: none;
+}
+html[data-theme="esports"] .who {
+  background-image: var(--holo); background-size: var(--holo-size); background-position: var(--holo-pos);
+  background-repeat: no-repeat; background-blend-mode: normal; transition: none;
+}
+html[data-theme="esports"] .who__prev { color: #1c1048; }   /* a step lighter than the print, and still 4.5:1 on the violet patch */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-theme="esports"] .hero__bottom { animation: holo-scroll linear both; animation-timeline: scroll(root); animation-range: 0 100vh; }
+    html[data-theme="esports"] .who { animation: holo-scroll linear both; animation-timeline: view(); }
+  }
+}
+@keyframes holo-scroll { from { --ls: -0.5; } to { --ls: 0.5; } }
 
 /* ---------- contact: the card back ---------- */
 html[data-theme="esports"] .contact {

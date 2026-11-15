@@ -23,7 +23,7 @@
     boundX: 2.5, boundZ: 2.0,
     speed: 3.2,
     chute: { x: -2.1, z: 1.7, size: 1.3 },
-    grabRadius: 0.95
+    grabRadius: 1.25, sureRadius: 0.75   // a prize within sureRadius of the claw is always caught; out to grabRadius the odds fall, never below 45%
   };
   var LABELS = { toggle: 'Toggle', pill: 'Pill', checkbox: 'Checkbox', radio: 'Radio', button: 'Button', input: 'Text input' };
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -66,6 +66,31 @@
   key.shadow.camera.near = 2; key.shadow.camera.far = 25;
   key.shadow.bias = -0.0008; key.shadow.normalBias = 0.03;
   var fill = new THREE.DirectionalLight(0xffffff, 0.4); fill.position.set(-6, 3, 6); scene.add(fill);
+  // the arcade (a look asks with spots: true): a dark hall where light comes in pools, not evenly. One spot on
+  // the marquee, one from behind that pools on the floor and edges the tops, two coloured rims from the back
+  // corners, and a gloss floor that fades into the dark so the cabinet stands on something. No extra shadow maps.
+  var arcade = null, arcadeFollow = null;
+  function buildArcade() {
+    var g = new THREE.Group();
+    function spot(color, power, from, to, angle, soft) {
+      var l = new THREE.SpotLight(color, power, 30, angle, soft, 1);
+      l.position.set(from[0], from[1], from[2]); l.target.position.set(to[0], to[1], to[2]); g.add(l); g.add(l.target); return l;
+    }
+    spot(0xfff2ff, 0.75, [1.5, 14, 6], [0, 8.1, 2.6], 0.26, 0.8);    // the crown; the sticker under it lights itself and stays out of the beam's centre
+    spot(0xc9b8ff, 1.3, [0, 12, -7], [0, -1.4, -2.5], 0.6, 0.9);    // behind: the floor pool, and an edge on the tops
+    arcadeFollow = new THREE.SpotLight(0xf2f6ff, 1.6, 30, 0.13, 0.6, 1);   // a follow spot on the claw: the hard highlight on the chrome, and a little light on what it carries
+    arcadeFollow.position.set(-1.2, 10.5, 6.5); arcadeFollow.target = clawGroup; g.add(arcadeFollow);
+    var rimA = new THREE.DirectionalLight(0x00c8ff, 0.9); rimA.position.set(-7, 4, -6); g.add(rimA);
+    var rimB = new THREE.DirectionalLight(0xff00c0, 0.9); rimB.position.set(8, 4, -5); g.add(rimB);
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var x = c.getContext('2d'), fade = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    fade.addColorStop(0, '#fff'); fade.addColorStop(0.45, '#fff'); fade.addColorStop(1, '#000');
+    x.fillStyle = fade; x.fillRect(0, 0, 256, 256);
+    var floor = new THREE.Mesh(new THREE.CircleGeometry(11, 48), new THREE.MeshStandardMaterial({ color: 0x0d0822, roughness: 0.35, metalness: 0.4, envMapIntensity: 0.6, transparent: true, alphaMap: new THREE.CanvasTexture(c), depthWrite: false }));
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -1.41; floor.receiveShadow = true; floor.renderOrder = -1;
+    g.add(floor);
+    scene.add(g); arcade = g;
+  }
   // everything solid casts and receives; the glass and the lines are left out
   function shadowed(obj) { obj.traverse(function (o) { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } }); return obj; }
 
@@ -84,11 +109,33 @@
       [6, 1.4, [1.3, 0.7, 1.2], [0, -3.2, 0.6]],     // table bounce, rose
       [0.6, 5, [0.5, 1.5, 1.7], [6, 0.5, -3]],       // edge line, cyan
       [14, 1.1, [7, 3.8, 7.2], [0, 3.6, -5.5]]       // rim strip, rose
+    ],
+    // the claw's own room under the foil look: a dark arcade. Other machines' screens, tube runs at the floor and
+    // ceiling, two ceiling cans. A gloss face mirrors one part of the room each: the fronts see front-left and low,
+    // the right sides see back-right and low, the tops see back-left and high, so the light is placed there.
+    arcade: [
+      [11, 5, [0.26, 0.18, 0.52], [-3, -3.5, 9]],    // front, low: a violet wash, so a front face is never plain black
+      [1.7, 1.25, [0.2, 4.6, 5.4], [-6.5, -1.2, 7.5]],   // screens of the machines across the aisle
+      [1.7, 1.25, [5.6, 0.4, 3.8], [-3.6, -2.4, 9]],
+      [1.7, 1.25, [5.2, 3.0, 0.5], [-0.6, -1.4, 9.5]],
+      [1.7, 1.25, [0.5, 1.2, 5.8], [2.6, -2.6, 9]],
+      [13, 0.28, [0.3, 5.5, 6.5], [-2, -5.2, 8]],    // floor tube, front, cyan
+      [9, 4, [0.85, 0.3, 0.75], [7, -3.5, -8]],      // back right, low: a rose wash for the right sides
+      [1.7, 1.25, [5.8, 0.5, 4.2], [8.5, -1.5, -5.5]],
+      [1.7, 1.25, [0.3, 4.2, 5.2], [5.5, -2.5, -9]],
+      [11, 0.28, [6.5, 0.4, 4.6], [8, -5, -6]],      // floor tube, right, rose
+      [2.2, 2.2, [11, 10.5, 12], [-3.5, 8.5, -6]],   // ceiling can, back left: the hard highlight on the tops
+      [1.8, 1.8, [9, 9.5, 10.5], [2.5, 9.5, 3]],     // ceiling can, over the marquee
+      [12, 0.3, [3.8, 1.2, 6.2], [-5, 6.5, -9]],     // ceiling tube, back, violet
+      [0.5, 6, [0.4, 3.2, 3.8], [-9.5, 1, -2]],      // an edge line, left, cyan
+      [0.5, 6, [4.2, 0.4, 3.0], [9.5, 1.5, 2]]       // an edge line, right, rose
     ]
   };
-  function bakeEnv(panels) {
+  var ENV_DARK = { arcade: [0.012, 0.008, 0.03] };   // how dark the room itself is; the studio default is a neutral 0.035
+  function bakeEnv(panels, dark) {
     var room = new THREE.Scene();
-    room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.035, 0.035, 0.035), side: THREE.BackSide })));
+    dark = dark || [0.035, 0.035, 0.035];
+    room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(dark[0], dark[1], dark[2]), side: THREE.BackSide })));
     panels.forEach(function (pn) {
       var m = new THREE.Mesh(new THREE.PlaneGeometry(pn[0], pn[1]), new THREE.MeshBasicMaterial({ color: new THREE.Color(pn[2][0], pn[2][1], pn[2][2]), side: THREE.DoubleSide }));
       m.position.set(pn[3][0], pn[3][1], pn[3][2]); m.lookAt(0, 0, 0); room.add(m);
@@ -98,7 +145,7 @@
   }
   var envs = {};
   function setEnvironment(name) {
-    var e = envs[name] || (envs[name] = bakeEnv(ENVS[name] || ENVS.default));
+    var e = envs[name] || (envs[name] = bakeEnv(ENVS[name] || ENVS.default, ENV_DARK[name]));
     if (scene.environment !== e) scene.environment = e;
   }
   setEnvironment('default');
@@ -123,7 +170,7 @@
   var FINISH = {
     default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, prizes: [0xdedbd4, 0xb8b4ac],
                   body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null,
-                  floorRough: 0.95, floorMetal: 0, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
+                  floorRough: 0.95, floorMetal: 0, steelRough: 0.35, steelMetal: 0.15, topY: 5.2, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
                   neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6, prizeEnv: 1, prizeRough: 0.55, glassEnv: 1.3 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
@@ -134,10 +181,11 @@
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
     // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
-    foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, prizes: [0x5a2bff, 0xff1fb4, 0x00a8ff, 0x9a6bff],   // the iris dealt round the pile, deep enough that the lights do not bleach them
+    foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xeef1f8, steelRough: 0.16, steelMetal: 1, steelEnv: 2.2,   // the claw and gantry as polished chrome: it shows the room, pushed bright so it never sinks into the dark
+                  prizes: [0x5a2bff, 0xff1fb4, 0x00a8ff, 0x9a6bff],   // the iris dealt round the pile, deep enough that the lights do not bleach them
                   floor: 0x1a0f4e, floorRough: 0.25, floorMetal: 0.5, roughness: 0.24, metalness: 0.85, env: 1.1, glass: 0.2,
-                  neonA: 0x00c8ff, neonB: 0xff00c0, glow: 0xe8e2ff, ornament: 'foil', lit: 0.6, room: 'foil', bloom: true,   // pure cyan and pink, the minor channel at zero (the sRGB curve lifts any small channel toward white); the tubes skip the tone curve
-                  rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
+                  neonA: 0x00c8ff, neonB: 0xff00c0, glow: 0xe8e2ff, ornament: 'foil', lit: 0.6, room: 'arcade', spots: true, bloom: true,   // pure cyan and pink, the minor channel at zero (the sRGB curve lifts any small channel toward white); the tubes skip the tone curve
+                  rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, topY: 4.35,   /* the claw rests lower here, clear of the marquee */ prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
@@ -189,11 +237,14 @@
       var f = finish();
       BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
       PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); m.envMapIntensity = f.prizeEnv; m.roughness = f.prizeRough; });
-      STEEL.envMapIntensity = f.steelEnv;
+      S.topY = f.topY;   // where the claw rests and carries
+      STEEL.envMapIntensity = f.steelEnv; STEEL.roughness = f.steelRough; STEEL.metalness = f.steelMetal;
       pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
       key.intensity = f.rig[0]; fill.intensity = f.rig[1]; hemi.intensity = f.rig[2];
       setEnvironment(f.room);
+      if (f.spots && !arcade) buildArcade();
+      if (arcade) arcade.visible = !!f.spots;
       if (f.bloom && !bloom) buildBloom();
       if (bloom) {
         bloom.on = !!f.bloom;
@@ -242,7 +293,16 @@
           if (tm.toneMapped !== false) { tm.toneMapped = false; tm.needsUpdate = true; }
         }
         if (cabMats.gold) { cabMats.gold.color.setHex(f.gold); cabMats.gold.metalness = 1; cabMats.gold.roughness = 0.3; cabMats.gold.envMapIntensity = 1.2; }
-        if (cabMats.foil_body) { cabMats.foil_body.color.setHex(0x0b0820); cabMats.foil_body.roughness = 0.7; cabMats.foil_body.envMapIntensity = 0.3; }   // the sign and deck plates stay near black so the lit type carries
+        if (cabMats.foil_body) {   // the kit's panels: gloss-black lacquer, so every edge and face carries a piece of the room
+          var fb = cabMats.foil_body;
+          if (!fb.isMeshPhysicalMaterial) {   // the clear coat needs the physical material; the file brings the standard one
+            var ph = new THREE.MeshPhysicalMaterial(); THREE.MeshStandardMaterial.prototype.copy.call(ph, fb);
+            ph.defines = { STANDARD: '', PHYSICAL: '' };
+            cabinet.traverse(function (o) { if (o.isMesh && o.material === fb) o.material = ph; });
+            cabMats.foil_body = fb = ph;
+          }
+          fb.color.setHex(0x0b0820); fb.roughness = 0.26; fb.envMapIntensity = 1.0; fb.clearcoat = 1; fb.clearcoatRoughness = 0.12;
+        }
       }
       setPlate(plate);
     };
@@ -271,30 +331,31 @@
   crossbar.position.y = S.gantryY; scene.add(shadowed(crossbar));
   var carriage = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.42), STEEL);
   scene.add(shadowed(carriage));
-  var cable = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 8), STEEL);
+  var cable = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 12), STEEL);
   scene.add(cable);
 
   /* ---------- claw ---------- */
   var clawGroup = new THREE.Group();
   scene.add(clawGroup);
-  clawGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.32, 24), STEEL));
-  var cap = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), STEEL);
+  // enough segments that a highlight runs smooth along every curve
+  clawGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.32, 48), STEEL));
+  var cap = new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 20), STEEL);
   cap.position.y = 0.2; clawGroup.add(cap);
   var prongs = [];
   (function buildProngs() {
     var curve = new THREE.CubicBezierCurve3(
       new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.34, -0.45, 0),
       new THREE.Vector3(0.36, -0.95, 0), new THREE.Vector3(0, -1.2, 0));
-    var tube = new THREE.TubeGeometry(curve, 14, 0.05, 8, false);
+    var tube = new THREE.TubeGeometry(curve, 48, 0.05, 20, false);
     for (var i = 0; i < 3; i++) {
       var yaw = new THREE.Group();
       yaw.rotation.y = i * Math.PI * 2 / 3;
       var pivot = new THREE.Group();
       pivot.position.set(0.24, -0.12, 0);
       pivot.add(new THREE.Mesh(tube, STEEL));
-      var tip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), STEEL);
+      var tip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 24, 16), STEEL);
       tip.position.set(0, -1.2, 0); pivot.add(tip);
-      pivot.add(new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), STEEL));
+      pivot.add(new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 16), STEEL));
       yaw.add(pivot); clawGroup.add(yaw);
       prongs.push(pivot);
     }
@@ -372,7 +433,7 @@
     var loader = new THREE.TextureLoader(), aniso = renderer.capabilities.getMaxAnisotropy();
     var art = loader.load(ROOT + 'img/claw/sticker-lk.webp'); art.encoding = THREE.sRGBEncoding; art.anisotropy = aniso;
     var foil = loader.load(ROOT + 'img/claw/sticker-lk-foil.webp'); foil.anisotropy = aniso;   // linear data, see above
-    var mat = new THREE.MeshPhysicalMaterial({ map: art, alphaTest: 0.5, metalness: 0, roughness: 0.65, clearcoat: 1, clearcoatRoughness: 0.14, envMapIntensity: 0.9 });
+    var mat = new THREE.MeshPhysicalMaterial({ map: art, alphaTest: 0.5, metalness: 0, roughness: 0.65, clearcoat: 1, clearcoatRoughness: 0.14, envMapIntensity: 0.4 });   // the laminate mirrors the room only faintly, so the print stays sharp
     mat.extensions = { derivatives: true };
     // x: colour cycles per unit of grating phase, y: foil brightness, z: hex cells across the sticker's height, w: lettering sheen
     var foilK = new THREE.Vector4(1.2, 0.7, 34, 0.35);
@@ -715,6 +776,21 @@
     });
     left = items.length;
     if (refillBtn) refillBtn.hidden = true;
+    centrePiece(true);
+  }
+  // The claw's home is the middle, so the middle always holds a prize: an easy first catch. If it is empty, the
+  // nearest piece on the floor hops over (at once when the pile is dealt, or under reduced motion).
+  function centrePiece(now) {
+    var best = null, bestD = Infinity;
+    items.forEach(function (it) {
+      if (it.state !== 'floor') return;
+      var p = it.slide || it.group.position, d = Math.sqrt(p.x * p.x + p.z * p.z);
+      if (d < bestD) { bestD = d; best = it; }
+    });
+    if (!best || bestD < 0.3) return;
+    var tx = (Math.random() - 0.5) * 0.2, tz = (Math.random() - 0.5) * 0.2;
+    if (now) { best.group.position.x = tx; best.group.position.z = tz; best.slide = null; }
+    else best.slide = { x: tx, z: tz, d0: bestD };
   }
 
   /* ---------- game state ---------- */
@@ -725,7 +801,7 @@
   var keys = { left: false, right: false, up: false, down: false };
   var pad = { left: false, right: false, up: false, down: false };
 
-  function go(s) { state = s; st = 0; closeChecked = false; slipChecked = false; dropBtn.disabled = (s !== 'idle'); }
+  function go(s) { state = s; st = 0; closeChecked = false; slipChecked = false; dropBtn.disabled = (s !== 'idle'); if (s === 'return') centrePiece(reduced); }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function inChute(x, z) { return Math.abs(x - S.chute.x) < S.chute.size / 2 && Math.abs(z - S.chute.z) < S.chute.size / 2; }
 
@@ -736,7 +812,7 @@
     go('drop');
   }
 
-  var tmp = new THREE.Vector3();
+  var tmp = new THREE.Vector3(), cableTop = new THREE.Vector3(), cableDir = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
   function tryGrab() {
     var best = null, bestD = Infinity;
     items.forEach(function (it) {
@@ -746,12 +822,12 @@
       if (d < bestD) { bestD = d; best = it; }
     });
     if (!best || bestD > S.grabRadius) { setStatus('Nothing in reach.'); return false; }
-    var p = bestD < 0.45 ? 1 : clamp(1.25 - bestD / S.grabRadius, 0.2, 1);
+    var p = bestD < S.sureRadius ? 1 : clamp(1.4 - bestD / S.grabRadius, 0.45, 1);
     if (Math.random() > p) { setStatus('Just missed the ' + LABELS[best.type].toLowerCase() + '.'); return false; }
     best.group.getWorldPosition(tmp);
     clawGroup.add(best.group);
-    best.group.position.set(tmp.x - claw.x, tmp.y - claw.y, tmp.z - claw.z);
-    best.state = 'held';
+    best.group.position.copy(clawGroup.worldToLocal(tmp));   // the claw may be mid-swing
+    best.state = 'held'; best.slide = null;
     claw.held = best; claw.grabDist = bestD;
     setStatus('Got a grip on the <b>' + LABELS[best.type].toLowerCase() + '</b>…');
     return true;
@@ -786,6 +862,29 @@
     } else {
       setStatus('<b>' + LABELS[it.type] + '</b> collected. ' + left + ' left.');
     }
+  }
+
+  /* The claw hangs on its cable, so it swings: it lags when the carriage starts and whips past when it stops.
+     A damped pendulum, driven by the carriage's change of speed. sway.x / sway.z are the claw's sideways
+     offset from the carriage; the swing is faster on a short cable and slower on a long one, as in life.
+     Toned down from the real thing: 40% of the push, and it settles in a few swings. The game still plays
+     from the carriage's position, so the swing never changes what a drop can reach. */
+  var sway = { x: 0, z: 0, vx: 0, vz: 0, px: 0, pz: 0, cvx: 0, cvz: 0 };
+  var SWAY = { gravity: 40, push: 0.4, damp: 0.16, dampBusy: 0.4, max: 0.26 };   // max is the largest swing angle, in radians
+  function swing(dt) {
+    if (reduced || dt < 1e-4) { sway.px = claw.x; sway.pz = claw.z; return; }
+    var lim = S.speed * 1.5;   // a drag can jump the carriage; cap the speed the pendulum feels
+    var vx = clamp((claw.x - sway.px) / dt, -lim, lim), vz = clamp((claw.z - sway.pz) / dt, -lim, lim);
+    sway.px = claw.x; sway.pz = claw.z;
+    // the carriage's change of speed pushes the claw the other way
+    sway.vx -= SWAY.push * (vx - sway.cvx); sway.vz -= SWAY.push * (vz - sway.cvz);
+    sway.cvx = vx; sway.cvz = vz;
+    var len = Math.max(0.6, S.gantryY - claw.y), w = Math.sqrt(SWAY.gravity / len);
+    var z = (state === 'idle' || state === 'carry' || state === 'return') ? SWAY.damp : SWAY.dampBusy;   // it steadies while it drops and grips
+    sway.vx += (-w * w * sway.x - 2 * z * w * sway.vx) * dt; sway.vz += (-w * w * sway.z - 2 * z * w * sway.vz) * dt;
+    sway.x += sway.vx * dt; sway.z += sway.vz * dt;
+    var m = SWAY.max * len, d = Math.sqrt(sway.x * sway.x + sway.z * sway.z);
+    if (d > m) { sway.x *= m / d; sway.z *= m / d; }
   }
 
   function moveToward(tx, tz, dt) {
@@ -829,7 +928,7 @@
           g.position.y += (-1.05 - g.position.y) * Math.min(1, dt * 5);
           if (!slipChecked && st > 0.45) {
             slipChecked = true;
-            var slipP = claw.grabDist > 0.6 ? 0.22 : 0.0;
+            var slipP = claw.grabDist > 1.0 ? 0.1 : 0.0;   // only a grip at the edge of reach can slip
             if (Math.random() < slipP) {
               setStatus('It slipped out.');
               releaseHeld(inChute(claw.x, claw.z));
@@ -853,6 +952,12 @@
         break;
     }
 
+    items.forEach(function (it) {   // a piece on its way to the middle: a short hop across the pile
+      if (!it.slide || it.state !== 'floor') return;
+      var g = it.group.position, dx = it.slide.x - g.x, dz = it.slide.z - g.z, d = Math.sqrt(dx * dx + dz * dz), step = 2.2 * dt;
+      if (d <= step) { g.x = it.slide.x; g.z = it.slide.z; g.y = it.rest; it.slide = null; return; }
+      g.x += dx / d * step; g.z += dz / d * step; g.y = it.rest + Math.sin(Math.PI * clamp(1 - d / it.slide.d0, 0, 1)) * 0.22;
+    });
     for (var i = falling.length - 1; i >= 0; i--) {
       var f = falling[i];
       f.vy -= 14 * dt;
@@ -864,15 +969,22 @@
       }
     }
 
-    clawGroup.position.set(claw.x, claw.y, claw.z);
+    swing(dt);
+    // the claw hangs from the carriage: tilt it about that point, and run the cable to it
+    var hang = S.gantryY - claw.y, tx = sway.x / hang, tz = sway.z / hang;
+    clawGroup.position.set(claw.x + sway.x, S.gantryY - hang * Math.sqrt(Math.max(0, 1 - tx * tx - tz * tz)), claw.z + sway.z);
+    clawGroup.rotation.set(-Math.asin(clamp(tz, -1, 1)), 0, Math.asin(clamp(tx, -1, 1)));
     var ang = claw.open * 0.5;
     if (state === 'idle' && !reduced) ang += Math.sin(st * 2.2) * 0.03;
     prongs.forEach(function (p) { p.rotation.z = ang; });
     crossbar.position.z = claw.z;
     carriage.position.set(claw.x, S.gantryY, claw.z);
-    var len = S.gantryY - claw.y - 0.2;
+    cableTop.set(claw.x, S.gantryY, claw.z);
+    cableDir.set(0, 0.2, 0).applyEuler(clawGroup.rotation).add(clawGroup.position).sub(cableTop);   // from the carriage to the top of the claw's cap
+    var len = cableDir.length();
     cable.scale.y = Math.max(0.01, len);
-    cable.position.set(claw.x, claw.y + 0.2 + len / 2, claw.z);
+    cable.position.copy(cableTop).addScaledVector(cableDir, 0.5);
+    cable.quaternion.setFromUnitVectors(UP, cableDir.multiplyScalar(-1 / Math.max(0.01, len)));
   }
 
   /* ---------- input ---------- */
