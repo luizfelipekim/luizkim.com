@@ -155,7 +155,7 @@
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       if (!shown) { shown = true; canvas.classList.add('is-on'); }
     }
-    function ask() { if (!queued && gl) { queued = true; requestAnimationFrame(draw); } }
+    function ask() { if (!queued && gl && foil && seen) { queued = true; requestAnimationFrame(draw); } }   // no frame is asked for in another look, or off the screen
 
     // the portrait is the well's own image if it holds one, or else the one its stylesheet paints
     function source() {

@@ -112,8 +112,11 @@ html[data-theme="esports"] .hero__mark { font-family: var(--font-display); font-
 @property --lean-x { syntax: "<number>"; inherits: true; initial-value: 0; }   /* typed, so js/hero-foil.js can read the lean as a number */
 @property --lean-y { syntax: "<number>"; inherits: true; initial-value: 0; }
 html[data-theme="esports"] .hero {
-  --tilt: 1;   /* asks js/motion.js to follow the tilt of a phone */
-  --card-w: min(600px, 86vw, calc((max(100svh, 560px) - 196px) * 0.716));
+  --tilt: 1;   /* asks js/motion.js for the light: the pointer, the scroll and the tilt of a phone. A look that does not ask gets no writes */
+  /* the card is sized from the hero's height, and the hero is never shorter than 600px here, in any window
+     (a short laptop window, a phone on its side): below that the card could not hold its words */
+  min-height: 600px;
+  --card-w: min(600px, 86vw, calc((max(100svh, 600px) - 196px) * 0.716));
   --card-h: calc(var(--card-w) * 88 / 63);
   --card-y: calc(50% - 8px);   /* the card's centre: room under it for the floor */
   --lean-x: clamp(-1, calc(var(--lx, 0) * 0.7 - 0.32), 1);                         /* the lean, -1 to 1: left and right */
@@ -231,6 +234,14 @@ html[data-theme="esports"] .hero__name {
 }
 html[data-theme="esports"] .hero__row { order: 1; border-top: 1px solid rgb(18 10 44 / 0.35); padding-top: 0.7rem; }
 html[data-theme="esports"] .hero__lead { max-width: none; font-size: clamp(13px, 3.6cqi, 15px); line-height: 1.4; font-weight: 500; color: var(--print); }
+/* a small card (a short window): the line under the name stays 13px and takes more rows, so the well gives up
+   some height and the name some size, and the name stays clear of the portrait. The smallest card gives a little
+   more. The widths are the card's inside its padding: 327px is a card of 380px, 258px one of 300px. */
+@container (max-width: 327px) {
+  html[data-theme="esports"] .hero__art { height: 52%; }
+  html[data-theme="esports"] .hero__name { font-size: 24cqi; }
+}
+@container (max-width: 258px) { html[data-theme="esports"] .hero__art { height: 48%; } }
 
 /* ---------- stats: the stat block on the card's reverse ---------- */
 html[data-theme="esports"] .stats { padding-top: 7rem; padding-bottom: 7rem; }
@@ -487,14 +498,14 @@ html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); --cut
 
 /* ---------- small screens ---------- */
 @media (max-width: 800px) {
+  /* where the About row stacks, the card sits above its words, centred: the wash follows it */
+  html[data-theme="esports"] .about__row--1 { background-image: radial-gradient(260px 340px at 50% 232px, rgb(90 43 255 / 0.3), rgb(90 43 255 / 0.08) 55%, transparent 80%); }
   /* stacked decisions: the sheet clips its top and bottom corners, seams run across */
   html[data-theme="esports"] .decision + .decision { border-left: 0; border-top: 1px solid var(--line); }
   html[data-theme="esports"] .decision:first-child { clip-path: polygon(var(--cut) 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%, 0 var(--cut)); }
   html[data-theme="esports"] .decision:last-child { clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, var(--cut) 100%, 0 calc(100% - var(--cut))); }
 }
 @media (max-width: 900px) {
-  /* the About card sits above its words, centred: the wash follows it */
-  html[data-theme="esports"] .about__row--1 { background-image: radial-gradient(260px 340px at 50% 232px, rgb(90 43 255 / 0.3), rgb(90 43 255 / 0.08) 55%, transparent 80%); }
   html[data-theme="esports"] .case { padding: 10px; }
   html[data-theme="esports"] .case__visual { width: 100%; }
   html[data-theme="esports"] .case__cluster { padding: 1rem 0.5rem 0.75rem; }
@@ -503,6 +514,7 @@ html[data-theme="esports"] .field { margin-inline: clamp(12px, 2vw, 28px); --cut
 @media (max-width: 600px) {
   html[data-theme="esports"] .hero { height: auto; min-height: 0; aspect-ratio: auto; --card-w: 86vw; --card-y: calc(84px + var(--card-h) / 2); padding-bottom: calc(var(--card-h) + 150px); }
   html[data-theme="esports"] .hero__art { height: 52%; }
+  @container (max-width: 258px) { html[data-theme="esports"] .hero__art { height: 48%; } }   /* the narrowest phones: room for a fourth row under the name */
   html[data-theme="esports"] .hero__name { font-size: 24cqi; }
   html[data-theme="esports"] .stats { padding-top: 3.5rem; }
   html[data-theme="esports"] .stats__rows { padding-inline: 1rem; }
