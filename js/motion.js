@@ -121,7 +121,11 @@
     if (!heard) { heard = true; addEventListener('deviceorientation', onTilt, { passive: true }); }
     if (tapped && !asked && typeof D.requestPermission === 'function') { asked = true; D.requestPermission().catch(function () {}); }
   }
-  addEventListener('click', function (e) { if (!asked && e.target.closest && e.target.closest('.hero__bottom, .who')) askTilt(true); });
+  // a tap on either card. iOS Safari sends no click to the window for a tap on an element that is not a
+  // control, so the end of the touch is heard too; either one is a gesture the permission accepts
+  function tapAsks(e) { if (!asked && e.target && e.target.closest && e.target.closest('.hero__bottom, .who')) askTilt(true); }
+  addEventListener('click', tapAsks);
+  addEventListener('touchend', tapAsks, { passive: true });
   addEventListener('load', function () { askTilt(false); trackScroll(); });
   document.addEventListener('theme:change', function () { heroH = 0; askTilt(false); });
 
