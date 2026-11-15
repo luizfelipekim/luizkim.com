@@ -303,7 +303,7 @@
     default: { base: '#0d0d0d', stripe: '#f4f4f4', mark: '#f4f4f4', font: '900 50px ' + DISPLAY, rough: 0.45, metal: 0.05 },
     manual: { base: PAPER, stripe: CARBON, mark: CARBON, font: ARCHIVO + '58px ' + ARCHIVO_F, rough: 0.92, metal: 0,
       cap: { base: HAZARD, stripe: PAPER, mark: PAPER } },
-    press: { base: CREAM, stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.88, metal: 0, hatched: true },
+    press: { base: '#f6f2e8', stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.1, metal: 0, deboss: true },   // dominoes: gloss ivory, the blocks and the mark cut in and filled black
     win95: { base: '#ff0000', stripe: '#ffffff', mark: '#ffffff', font: '900 50px ' + DISPLAY, rough: 1, metal: 0, pixel: 8 },
     foil: { base: '#140b3a', stripe: '#9a6bff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.28, metal: 0.35,
       low: { stripe: '#00b4ff' }, high: { stripe: '#ff1fb4' }, cap: { base: '#140b3a', stripe: '#ffcf3a', mark: '#ffcf3a' } }   // dark lacquer, the inlays running cyan, violet, magenta up the stack to the one gold chip
@@ -617,7 +617,11 @@
     [[chipMain, {}], [chipCap, pal.cap], [chipLow, pal.low], [chipHigh, pal.high]].forEach(([set, own]) => chipTextures(Object.assign({}, pal, own || {}), set.sideC, set.topC));
     [chipMain, chipCap, chipLow, chipHigh].forEach(set => {
       set.side.needsUpdate = set.top.needsUpdate = true;
-      set.mats.forEach(m => { m.roughness = pal.rough; m.metalness = pal.metal; });
+      set.mats.forEach(m => {
+        m.roughness = pal.rough; m.metalness = pal.metal;
+        const groove = pal.deboss ? m.map : null;   // the artwork is its own height map: dark is cut in
+        if (m.bumpMap !== groove) { m.bumpMap = groove; m.bumpScale = 0.05; m.needsUpdate = true; }
+      });
     });
   }
   const chipPlain = new THREE.CylinderGeometry(1.95, 1.95, 0.33, 48);

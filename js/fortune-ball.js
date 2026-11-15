@@ -280,7 +280,7 @@
     manual: { mat: 'matte', body: 0x141414, env: null, ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'hard',
       paper: '#efede7', ink: '#0c0c0c', face: '#efede7', text: '#0c0c0c', ink2: '#0c0c0c', ring: 'rgba(12,12,12,0.6)', cover: 'rgba(12,12,12,', swirl: 'rgba(196,22,28,',
       font: '500 26px "IBM Plex Mono",ui-monospace,Menlo,monospace' },
-    press: { mat: 'walnut', env: 'pressroom', own: true, set: 'paper', ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'pool',
+    press: { mat: 'walnut', domino: true, env: 'pressroom', own: true, set: 'paper', ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'pool',
       paper: '#faf8f4', ink: '#1a1715', face: '#faf8f4', text: '#1a1715', ink2: '#1a1715', ring: 'rgba(26,23,21,0.6)', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
       font: '400 30px "Source Serif 4",Georgia,"Times New Roman",serif' }
   };
@@ -315,6 +315,12 @@
     var wm = winMat, em = eyeMat;
     if (pal.pixel) { wm.color.setHex(0x000000); wm.emissive.setHex(0xffffff); wm.emissiveMap = win.t; wm.emissiveIntensity = 1; em.color.setHex(0x000000); em.emissiveIntensity = 1; }
     else { wm.color.setHex(0xffffff); wm.emissive.setHex(0x000000); wm.emissiveMap = null; wm.emissiveIntensity = 1; em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
+    // a domino's face: gloss ivory that takes the room, the drawn lines cut in as grooves (the artwork is its own height map)
+    var dom = !!pal.domino;
+    em.roughness = wm.roughness = dom ? 0.1 : 0.55; em.bumpScale = wm.bumpScale = 0.02;
+    em.bumpMap = dom ? eye.t : null; wm.bumpMap = dom ? win.t : null;
+    if (dom) { em.envMap = wm.envMap = e; em.envMapIntensity = wm.envMapIntensity = 0.7; em.emissiveIntensity = 0.15; }
+    else { em.envMapIntensity = wm.envMapIntensity = 1; }
     wm.needsUpdate = em.needsUpdate = true;
     setL(ambient, pal.ambient); setL(key, pal.key); setL(rim, pal.rim); setL(rimTop, pal.rimTop);
     drawShadow(pal.shadow, pal.ink);

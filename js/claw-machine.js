@@ -252,11 +252,11 @@
   var FINISH = {
     default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, prizes: [0xdedbd4, 0xb8b4ac],
                   body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null,
-                  floorRough: 0.95, floorMetal: 0, steelRough: 0.35, steelMetal: 0.15, topY: 5.2, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
+                  floorRough: 0.95, floorMetal: 0, floorEnv: 1, steelRough: 0.35, steelMetal: 0.15, topY: 5.2, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
                   neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6, prizeEnv: 1, prizeRough: 0.55, glassEnv: 1.3,   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
                   // the art deco kit's parts: panels (wood, or metal with no grain), polished trim, frosted lamps, the lever's ball
                   wood: 0x1c1e22, woodMap: false, woodRough: 0.34, woodMetal: 0.9, woodEnv: 1.2, woodCoat: 0, trim: 0xf0f1f4, trimRough: 0.14, trimEnv: 1.7,
-                  lamp: 0xffcf9a, lampLit: 1.0, knob: 0x8fa68e },   // the ball in the page's sage
+                  lamp: 0xffcf9a, lampLit: 1.0, knob: 0x8fa68e, knobRough: 0.25, knobEnv: 0.9, mark: 0x1c1c1c, markEnv: 1 },   // the ball in the page's sage
     // the default look: the art deco kit in black lacquer. Mirror-black panels under a clear coat (no grain, no metal),
     // chrome trim, the lever's ball in the page's vermilion, a dark studio round it
     charcoal:   { ornament: 'artdeco', room: 'atelier', stage: 'studio', rig: [0.5, 0.2, 0.3], fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35,   // the claw rests lower, clear of the roof
@@ -273,7 +273,12 @@
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'artdeco', room: 'pressroom', stage: 'paper', rig: [0.95, 0.3, 0.5],
                   fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35, inner: 0.16, plaque: false,   // no header plate: the walnut beam shows
                   wood: 0x4f3423, woodMap: true, woodRough: 0.42, woodMetal: 0, woodEnv: 0.55, woodCoat: 0.7, trim: 0xd9d5cb, trimRough: 0.16, trimEnv: 1.0,
-                  steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7, knob: 0x8b1a1a },
+                  steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7,
+                  knob: 0x3d2313, knobRough: 0.4, knobEnv: 0.3,   // the lever's ball turned from the same walnut
+                  // the pieces as dominoes: gloss ivory, their marks cut in and filled black; the board under them in dark leather
+                  prizes: [0xf4f0e6, 0xebe6d9], prizeRough: 0.1, prizeEnv: 1.15, deboss: true,
+                  floor: 0x0a0604, floorRough: 0.7, floorEnv: 0.05, leather: true, glass: 0.07, glassEnv: 0.2,   // clearer glass, so the dark board and the black pips stay dark
+                  mark: 0x050505, markEnv: 0.08 },   // little of the bright room in it, so it stays dark
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
     // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
     foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xeef1f8, steelRough: 0.16, steelMetal: 1, steelEnv: 2.2,   // the claw and gantry as polished chrome: it shows the room, pushed bright so it never sinks into the dark
@@ -341,7 +346,11 @@
       topYWant = f.topY;   // where the claw rests and carries; eased in update()
       STEEL.envMapIntensity = f.steelEnv; STEEL.roughness = f.steelRough; STEEL.metalness = f.steelMetal;
       pixelOn = !!f.pixel;
-      FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
+      FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal; FLOOR.envMapIntensity = f.floorEnv;
+      var hide = f.leather ? (leatherTex || (leatherTex = leatherGrain())) : null;
+      if (FLOOR.bumpMap !== hide) { FLOOR.bumpMap = hide; FLOOR.bumpScale = 0.015; FLOOR.needsUpdate = true; }
+      setInlay(!!f.deboss);
+      INK.color.setHex(f.mark); INK.envMapIntensity = f.markEnv;
       key.intensity = f.rig[0]; fill.intensity = f.rig[1]; hemi.intensity = f.rig[2];
       setEnvironment(f.room);
       if (f.spots && !arcade) buildArcade();
@@ -416,7 +425,7 @@
           var dl = cabMats.deco_lamp;   // frosted glass, lit from inside
           dl.color.setHex(0x6b665c); dl.emissive.setHex(f.lamp); dl.emissiveIntensity = f.lampLit; dl.roughness = 0.6; dl.metalness = 0;
           cabMats.deco_dark.color.setHex(0x0b0b0b); cabMats.deco_dark.roughness = 0.45; cabMats.deco_dark.metalness = 0; cabMats.deco_dark.envMapIntensity = 0.6;
-          var dk = cabMats.deco_knob; dk.color.setHex(f.knob); dk.roughness = 0.25; dk.metalness = 0; dk.envMapIntensity = 0.9;
+          var dk = cabMats.deco_knob; dk.color.setHex(f.knob); dk.roughness = f.knobRough; dk.metalness = 0; dk.envMapIntensity = f.knobEnv;
         }
       }
       setPlate(plate);
@@ -903,6 +912,43 @@
   };
 
   var items = [], falling = [];
+  /* A look may cut the pieces' black marks into the surface, as a domino's pips are. The marks are built standing
+     on the piece; cut in, each is pressed down to a film at its own foot, so it lies flush as a filled groove.
+     markInk() notes each mark's foot and height while its piece still lies square; setInlay() presses or restores. */
+  function markInk(group) {
+    group.updateMatrixWorld(true);
+    group.children.forEach(function (o) {
+      if (!o.isMesh || o.material !== INK) return;
+      var b = new THREE.Box3().setFromObject(o);
+      o.userData.ink = { y: o.position.y, min: b.min.y, h: Math.max(b.max.y - b.min.y, 0.001), axis: Math.abs(o.rotation.x) > 1 ? 'z' : 'y' };
+    });
+  }
+  function setInlay(on) {
+    (items || []).forEach(function (it) {
+      it.group.children.forEach(function (o) {
+        var u = o.userData.ink; if (!u) return;
+        var k = on ? Math.min(1, 0.008 / u.h) : 1;
+        o.scale[u.axis] = k; o.position.y = u.min + (u.y - u.min) * k;
+      });
+    });
+  }
+  // leather for the board: a pebbled grain as a height map, tiled
+  var leatherTex = null;
+  function leatherGrain() {
+    var N = 256, c = document.createElement('canvas'); c.width = c.height = N;
+    var ctx = c.getContext('2d'); ctx.fillStyle = '#505050'; ctx.fillRect(0, 0, N, N);
+    for (var i = 0; i < 1500; i++) {
+      var x = Math.random() * N, y = Math.random() * N, r = 3 + Math.random() * 5;
+      for (var ox = -N; ox <= N; ox += N) for (var oy = -N; oy <= N; oy += N) {   // drawn round the edges too, so the tile has no seam
+        if (x + ox < -r || x + ox > N + r || y + oy < -r || y + oy > N + r) continue;
+        var g = ctx.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+        g.addColorStop(0, 'rgba(235,235,235,0.5)'); g.addColorStop(0.7, 'rgba(150,150,150,0.25)'); g.addColorStop(1, 'rgba(20,20,20,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + ox, y + oy, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    var t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5, 4); t.anisotropy = 4;
+    return t;
+  }
   function spawnItems() {
     items.forEach(function (it) { if (it.group.parent) it.group.parent.remove(it.group); });
     items = []; falling = [];
@@ -916,6 +962,7 @@
         if (x === -2.2 && z === 1.7) return;
         var type = types[k++ % types.length];
         var group = builders[type]();
+        markInk(group);
         var pm = PRIZE[k % PRIZE.length];
         if (pm !== WHITE) group.traverse(function (o) { if (o.isMesh && o.material === WHITE) o.material = pm; });
         var stacked = k % 4 === 0;
@@ -928,6 +975,7 @@
         items.push({ group: group, type: type, state: 'floor', rest: rest });
       });
     });
+    setInlay(!!finish().deboss);
     left = items.length;
     if (refillBtn) refillBtn.hidden = true;
     centrePiece(true);
