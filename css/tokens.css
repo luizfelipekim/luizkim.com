@@ -19,8 +19,8 @@
    Every page loads this first. A theme overrides these under html[data-theme="name"]
    and never touches the markup. See PLAN.md for the full token set and rules.
 
-   Charcoal is the default look: charcoal ground, one grotesk at two sizes, one sage action,
-   one pale concrete field for the hardest conversation. */
+   The values on :root are the neutral base every theme starts from. The default look itself
+   (Charcoal, lacquer finish) is set just below, under html:not([data-theme]). */
 :root {
   color-scheme: dark;
 
@@ -96,6 +96,41 @@
   --t-dissolve-out: 500ms;
   --t-dissolve-in: 700ms;
 }
+
+/* Charcoal, the default look: a black lacquer box. One polished black ground from top to bottom, ivory
+   type, and the box's vermilion inside kept for two things: the action, and the field that ends every page.
+   The ground is the black of the portrait render (img/portrait.webp), so the bust stands in the page with no edge.
+   Scoped to the default look, so the alternate looks keep the neutral base above. */
+html:not([data-theme]) {
+  --bg: #070707;
+  --surface: #111110;
+  --surface-2: #1b1b1a;
+  --ink: #f2eee6;
+  --muted: #a39f96;
+  --line: #2a2927;
+  --accent: #ea4a30;
+  --accent-ink: #070707;
+
+  --field: #ea4a30;
+  --field-ink: #070707;
+  --field-muted: #2b0b06;
+  --field-accent: #070707;
+
+  --hero-bg: #070707;
+  --hero-ink: #f2eee6;
+
+  --stage-bg: #0c0c0c;
+  --stage-muted: #a39f96;
+  --stage-line: #2a2927;
+
+  --radius: 3px;
+  /* the gloss: the one highlight a polished surface carries, laid over a stage */
+  --sheen: linear-gradient(112deg, rgb(255 255 255 / 0.075) 0%, rgb(255 255 255 / 0.02) 22%, transparent 38%);
+  scrollbar-color: var(--surface-2) var(--bg);
+  caret-color: var(--accent);
+}
+/* on the vermilion field the action is black, so a selection there takes the field's colour as its ink */
+html:not([data-theme]) :is(.contact, .field) { --accent-ink: var(--field); }
 
 /* The dissolve: between pages, and between looks (js/theme.js). The ground stops a light flash mid-fade,
    and the reader can keep clicking through it. Browsers without view transitions keep the plain cut. */

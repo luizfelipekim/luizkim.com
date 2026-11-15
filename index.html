@@ -330,42 +330,112 @@ html:not([data-theme]) {
   --step-section: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
   --step-case: clamp(2rem, 1.2rem + 2.3vw, 3.25rem);
 }
-html:not([data-theme]) .hero__lead { max-width: 34ch; font-size: var(--step-lead); line-height: 1.35; letter-spacing: -0.01em; }
+/* the hero: the dark room. The clay bust stands at the right on the page's own black; the name is the
+   film title across the bottom edge, in front of it, over a scrim. */
+html:not([data-theme]) .hero { color-scheme: dark; }
+html:not([data-theme]) .hero__pic { background: var(--bg) url("img/portrait.webp") right clamp(0px, 7vw, 9rem) bottom / auto min(92%, 62vw) no-repeat; }
+html:not([data-theme]) .hero__scrim { height: 58%; background: linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 78%, transparent) 38%, transparent 100%); }
+html:not([data-theme]) .hero__lead { max-width: 30ch; font-size: var(--step-lead); line-height: 1.35; letter-spacing: -0.01em; }
+html:not([data-theme]) .hero__name { font-weight: var(--weight); letter-spacing: -0.04em; }
+html:not([data-theme]) .hero__bottom { padding-bottom: 1.25rem; }
+html:not([data-theme]) .hero__nav .button { background: var(--accent); color: var(--accent-ink); }
+html:not([data-theme]) .hero__top.is-stuck { background: color-mix(in srgb, var(--page-bg) 80%, transparent); border-bottom-color: transparent; }
+@media (prefers-reduced-motion: no-preference) {
+  /* the one authored moment: the bust comes up out of the dark as the name rises, then sinks a little as the page leaves */
+  html.js:not([data-theme]) .hero__pic { animation: bust-in 1800ms var(--ease-silk) both; }
+  @supports (animation-timeline: scroll()) {
+    html.js:not([data-theme]) .hero__pic { animation: bust-in 1800ms var(--ease-silk) both, bust-sink linear both; animation-timeline: auto, scroll(root); animation-range: normal, 0 100vh; }
+  }
+}
+@keyframes bust-in { from { opacity: 0; scale: 1.04; filter: blur(10px); } }
+@keyframes bust-sink { to { translate: 0 9%; } }
+
+/* buttons: ivory lacquerware on the black; the vermilion is kept for the header's one action and the Drop */
+html:not([data-theme]) .button { background: var(--ink); color: var(--bg); min-height: 2.875rem; padding: 0 1.35rem; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, color var(--t-hover) ease; }
+html:not([data-theme]) .hero__nav .button { min-height: 2.5rem; padding: 0 1rem; }
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-theme]) .button:hover { background: var(--accent); color: var(--accent-ink); }
+  html:not([data-theme]) .hero__nav .button:hover { background: var(--ink); color: var(--bg); }
+}
 
 html:not([data-theme]) .stats { padding-top: var(--rhythm); padding-bottom: var(--rhythm); }
 html:not([data-theme]) .stats__list { grid-column: 1 / -1; }
 html:not([data-theme]) .stats__head { font-size: var(--step-section); line-height: 1.05; letter-spacing: -0.025em; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
-html:not([data-theme]) .stats__row { gap: 1rem; padding-top: 1.25rem; border-top: var(--border) solid var(--line); }
-html:not([data-theme]) .stats__fig { font-size: clamp(3.5rem, 2rem + 4.2vw, 6rem); font-weight: var(--weight); line-height: 0.9; letter-spacing: -0.035em; font-variant-numeric: proportional-nums; }
-html:not([data-theme]) .stats__txt { color: var(--muted); }
-html:not([data-theme]) .stats__txt strong { color: var(--ink); }
+html:not([data-theme]) .stats__row { gap: 1.25rem; transition: color var(--t-hover) ease; }
+html:not([data-theme]) .stats__fig { font-size: clamp(4rem, 2rem + 6.4vw, 8.5rem); font-weight: var(--weight); line-height: 0.86; letter-spacing: -0.04em; font-variant-numeric: proportional-nums; white-space: nowrap; transition: color var(--t-hover) ease; }
+html:not([data-theme]) .stats__txt { color: var(--muted); max-width: 30ch; }
+html:not([data-theme]) .stats__txt strong { color: var(--ink); font-weight: var(--weight-strong); }
+@media (hover: hover) and (pointer: fine) { html:not([data-theme]) .stats__row:hover .stats__fig { color: var(--accent); } }
 
 html:not([data-theme]) .ball__eyebrow { font-size: var(--step-small); letter-spacing: 0; text-transform: none; }
 
+/* the three stages are one family of lacquer trays: a step up from the ground, one gloss highlight, no frame */
 html:not([data-theme]) .work { gap: var(--rhythm); padding-top: 0; padding-bottom: var(--rhythm); }
-html:not([data-theme]) .case__cluster { gap: 0; }
-html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; max-width: 30rem; }
+html:not([data-theme]) .case { align-items: center; }
+html:not([data-theme]) .case__visual { position: relative; }
+html:not([data-theme]) .case__visual::after { content: ""; position: absolute; inset: 0; z-index: 2; background: var(--sheen); pointer-events: none; }
+html:not([data-theme]) .case__visual--claw::after { display: none; }
+html:not([data-theme]) .claw__stage { border: 0; }
+html:not([data-theme]) .claw__stage::after { content: ""; position: absolute; inset: 0; background: var(--sheen); pointer-events: none; }
+html:not([data-theme]) .case__visual--peek { background: var(--stage-bg); }
+html:not([data-theme]) :is(.ball__hint, .ball__btn) { letter-spacing: 0; text-transform: none; }
+html:not([data-theme]) .ball__btn { border-color: var(--line); border-radius: var(--radius); min-height: 2.5rem; padding: 0 1rem; }
+html:not([data-theme]) .ball__btn:hover { border-color: var(--ink); }
+/* the Drop is the cabinet's arcade button: the second and last place the vermilion goes */
+html:not([data-theme]) .claw__drop { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); letter-spacing: 0.04em; }
+html:not([data-theme]) .claw__drop:disabled { background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
+html:not([data-theme]) .claw__key { background: color-mix(in srgb, var(--bg) 70%, transparent); border-color: var(--line); border-radius: var(--radius); }
+html:not([data-theme]) .case__cluster { gap: 0; padding-left: clamp(0.5rem, 2vw, 2.5rem); }
+html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; max-width: 30rem; }
 html:not([data-theme]) .case__title { font-size: var(--step-case); line-height: 1; letter-spacing: -0.035em; }
+html:not([data-theme]) .case__title a { transition: color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) { html:not([data-theme]) .case__title a:hover { color: var(--accent); } }
 html:not([data-theme]) .case__desc { color: var(--muted); }
 html:not([data-theme]) .case__who { margin-top: 0.75rem; }
 html:not([data-theme]) .case__cta { margin-top: 1.75rem; }
 
 html:not([data-theme]) .about { padding-top: 0; padding-bottom: var(--rhythm); }
-html:not([data-theme]) .about__para { font-size: var(--step-head); line-height: 1.3; letter-spacing: -0.015em; max-width: 34ch; }
+html:not([data-theme]) .about__para { font-size: var(--step-section); line-height: 1.18; letter-spacing: -0.025em; max-width: 26ch; text-wrap: balance; }
+@media (hover: hover) and (pointer: fine) { html:not([data-theme]) .who__link:hover { color: var(--accent); } }
 
-html:not([data-theme]) .contact { height: auto; min-height: 88svh; padding-top: clamp(3rem, 6vw, 5rem); }
+/* the ending: the inside of the box */
+html:not([data-theme]) .contact { height: auto; min-height: 92svh; padding-top: clamp(3rem, 6vw, 5rem); }
 html:not([data-theme]) .contact__intro { font-size: var(--step-section); line-height: 1.1; letter-spacing: -0.025em; max-width: 20ch; }
-html:not([data-theme]) .contact__foot { color: var(--muted); }
-html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--muted); }
+html:not([data-theme]) .contact__mail { font-size: clamp(2.75rem, 9.1vw, 9.75rem); }
+html:not([data-theme]) .contact__copy { gap: 1.5rem; }
+html:not([data-theme]) .contact .copy-btn { min-height: 2.875rem; padding: 0 1.35rem; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, color var(--t-hover) ease; }
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-theme]) .contact__mail:hover { color: var(--field-ink); text-decoration: underline; text-decoration-thickness: 0.05em; text-underline-offset: 0.12em; }
+  html:not([data-theme]) .contact .copy-btn:hover { background: var(--hero-ink); color: var(--field-ink); }
+}
+html:not([data-theme]) .contact__foot, html:not([data-theme]) .contact__foot :is(a, .muted) { color: var(--field-ink); }
 
-/* the default look's machine wears a tall art deco kit that fills the glass, so the invitation sits under the stage at every width */
-html:not([data-theme]) .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 @media (max-width: 900px) {
   html:not([data-theme]) .claw__box { margin-bottom: 1rem; }
+  html:not([data-theme]) .case__cluster { padding-left: 0; }
+  html:not([data-theme]) .stats__rows { grid-template-columns: minmax(0, 1fr); row-gap: 3rem; }
 }
 @media (max-width: 700px) {
+  html:not([data-theme]) .hero__pic { background-position: center top 4.5rem; background-size: auto 68%; }
+  html:not([data-theme]) .hero__scrim { height: 62%; }
   html:not([data-theme]) .hero__name { font-size: 25vw; }
   html:not([data-theme]) .contact { min-height: 80svh; }
+  html:not([data-theme]) .contact__mail { font-size: 11.5vw; }
+}
+/* the default look's machine wears a tall art deco kit that fills the glass, so the invitation sits under the stage at every width */
+html:not([data-theme]) .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* the claw's tray runs off the left edge like the other two; its invitation keeps the page margin */
+html:not([data-theme]) .claw { padding-left: 0; background: transparent; }
+html:not([data-theme]) .claw__hint { padding-left: max(16px, env(safe-area-inset-left, 0px), var(--m)); color: var(--muted); }
+html:not([data-theme]) .claw__hint b { color: var(--ink); }
+html:not([data-theme]) .who { width: min(320px, 100%); align-items: flex-start; text-align: left; }
+html:not([data-theme]) .who__link { margin-left: -11px; }
+html:not([data-theme]) .about__row { grid-template-columns: 41.666% minmax(0, 1fr); }
+@media (max-width: 900px) {
+  html:not([data-theme]) .claw__hint { padding-left: 0; }
+}
+@media (max-width: 800px) {
+  html:not([data-theme]) .who { align-self: flex-start; }
 }
 </style>
 <script src="js/theme.js" data-preload-esports="img/portrait.webp"></script>

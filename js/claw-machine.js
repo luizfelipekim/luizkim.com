@@ -254,9 +254,11 @@
                   // the art deco kit's parts: panels (wood, or metal with no grain), polished trim, frosted lamps, the lever's ball
                   wood: 0x1c1e22, woodMap: false, woodRough: 0.34, woodMetal: 0.9, woodEnv: 1.2, woodCoat: 0, trim: 0xf0f1f4, trimRough: 0.14, trimEnv: 1.7,
                   lamp: 0xffcf9a, lampLit: 1.0, knob: 0x8fa68e },   // the ball in the page's sage
-    // the default look: the art deco kit in metal. Gunmetal panels, chrome trim, a dark grey studio round it
+    // the default look: the art deco kit in black lacquer. Mirror-black panels under a clear coat (no grain, no metal),
+    // chrome trim, the lever's ball in the page's vermilion, a dark studio round it
     charcoal:   { ornament: 'artdeco', room: 'atelier', stage: 'studio', rig: [0.5, 0.2, 0.3], fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35,   // the claw rests lower, clear of the roof
-                  body: 0x101010, steel: 0xeef0f4, steelRough: 0.18, steelMetal: 1, steelEnv: 1.8, floor: 0x1e1e1e, inner: 0.1 },
+                  body: 0x060606, steel: 0xeef0f4, steelRough: 0.18, steelMetal: 1, steelEnv: 1.8, floor: 0x121212, inner: 0.1,
+                  wood: 0x050505, woodRough: 0.06, woodMetal: 0, woodEnv: 1.5, woodCoat: 1, knob: 0xea4a30, prizes: [0xece7dc, 0xc8c2b5] },
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
