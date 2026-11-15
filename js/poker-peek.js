@@ -106,9 +106,10 @@
   // Broadsheet: an engraved card. Cream newsprint, a hatched border band between rules, the
   // nameplate LK in the Playfair black, a line of small capitals with hairlines, as a masthead.
   const CREAM = '#faf8f4', INK = '#1a1715';
+  const WALNUT = '#5a3a22', WALNUT_DARK = '#33200f';   // the crane cabinet's wood, for the card's border
   function hatch(ctx, x, y, w, h, step, alpha, both) {
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-    ctx.strokeStyle = INK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
+    ctx.strokeStyle = WALNUT_DARK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
     for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke(); }
     if (both) for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d + h, y); ctx.lineTo(x + d, y + h); ctx.stroke(); }
     ctx.restore();
@@ -119,7 +120,8 @@
     roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = CREAM; ctx.fill();
     const m = 40, w = CW - 2 * m, h = CH - 2 * m, band = 54;
     // the border: rule, hatched band, rule; cross-hatched in the corners
-    ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
+    ctx.fillStyle = WALNUT; ctx.fillRect(m, m, w, h); ctx.fillStyle = CREAM; ctx.fillRect(m + band, m + band, w - 2 * band, h - 2 * band);
+    ctx.strokeStyle = WALNUT_DARK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
     hatch(ctx, m, m, w, band, 7, 0.55, false); hatch(ctx, m, CH - m - band, w, band, 7, 0.55, false);
     hatch(ctx, m, m + band, band, h - 2 * band, 7, 0.55, false); hatch(ctx, CW - m - band, m + band, band, h - 2 * band, 7, 0.55, false);
     [[m, m], [CW - m - band, m], [m, CH - m - band], [CW - m - band, CH - m - band]].forEach(([x, y]) => hatch(ctx, x, y, band, band, 7, 0.5, true));
@@ -301,7 +303,7 @@
     default: { base: '#0d0d0d', stripe: '#f4f4f4', mark: '#f4f4f4', font: '900 50px ' + DISPLAY, rough: 0.45, metal: 0.05 },
     manual: { base: PAPER, stripe: CARBON, mark: CARBON, font: ARCHIVO + '58px ' + ARCHIVO_F, rough: 0.92, metal: 0,
       cap: { base: HAZARD, stripe: PAPER, mark: PAPER } },
-    press: { base: CREAM, stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.88, metal: 0, hatched: true },
+    press: { base: '#f6f2e8', stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.1, metal: 0, deboss: true },   // dominoes: gloss ivory, the blocks and the mark cut in and filled black
     win95: { base: '#ff0000', stripe: '#ffffff', mark: '#ffffff', font: '900 50px ' + DISPLAY, rough: 1, metal: 0, pixel: 8 },
     foil: { base: '#140b3a', stripe: '#9a6bff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.28, metal: 0.35,
       low: { stripe: '#00b4ff' }, high: { stripe: '#ff1fb4' }, cap: { base: '#140b3a', stripe: '#ffcf3a', mark: '#ffcf3a' } }   // dark lacquer, the inlays running cyan, violet, magenta up the stack to the one gold chip
@@ -615,7 +617,11 @@
     [[chipMain, {}], [chipCap, pal.cap], [chipLow, pal.low], [chipHigh, pal.high]].forEach(([set, own]) => chipTextures(Object.assign({}, pal, own || {}), set.sideC, set.topC));
     [chipMain, chipCap, chipLow, chipHigh].forEach(set => {
       set.side.needsUpdate = set.top.needsUpdate = true;
-      set.mats.forEach(m => { m.roughness = pal.rough; m.metalness = pal.metal; });
+      set.mats.forEach(m => {
+        m.roughness = pal.rough; m.metalness = pal.metal;
+        const groove = pal.deboss ? m.map : null;   // the artwork is its own height map: dark is cut in
+        if (m.bumpMap !== groove) { m.bumpMap = groove; m.bumpScale = 0.05; m.needsUpdate = true; }
+      });
     });
   }
   const chipPlain = new THREE.CylinderGeometry(1.95, 1.95, 0.33, 48);
