@@ -35,6 +35,9 @@
   /* ---------- renderer / scene ---------- */
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // if the GPU drops the context, the baked environment and bloom targets are gone with it: stop and show the flat machine
+  var lost = false;
+  canvas.addEventListener('webglcontextlost', function () { lost = true; root.classList.add('is-flat'); }, false);
   // the stage colour is whatever the page paints behind the machine; read it, never assume it
   function stageColor() { var c = getComputedStyle(root).backgroundColor; return (c && c.indexOf('rgba(0, 0, 0, 0)') < 0) ? c : '#1c1c1c'; /* fallback */ }
   renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1);
@@ -1197,6 +1200,7 @@
   }
   var clock = new THREE.Clock();
   function frame() {
+    if (lost) return;
     requestAnimationFrame(frame);
     var dt = Math.min(0.05, clock.getDelta());
     if (!visible) return;

@@ -36,6 +36,9 @@
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.outputEncoding = THREE.sRGBEncoding;
+  // if the GPU drops the context, the baked environment is gone with it: stop and show the flat ball
+  var lost = false;
+  canvas.addEventListener('webglcontextlost', function () { lost = true; stage.classList.add('is-flat'); }, false);
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
   camera.position.set(0, 0.15, 6.4);
@@ -598,6 +601,7 @@
 
   var lastFrame = performance.now(), onScreen = new THREE.Vector3();
   function frame(now) {
+    if (lost) return;
     requestAnimationFrame(frame);
     if (!visible) { lastFrame = now; return; }
     var dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now; var t = (now - t0) / 1000;
