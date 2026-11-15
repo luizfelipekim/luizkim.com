@@ -329,6 +329,9 @@
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
+  // if the GPU drops the context, the baked environments are gone with it: stop and show the flat hand
+  let lost = false;
+  canvas.addEventListener('webglcontextlost', () => { lost = true; stage.classList.add('is-flat'); }, false);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true;
@@ -1273,6 +1276,7 @@
   io.observe(pin);
 
   function frame(t) {
+    if (lost) return;
     requestAnimationFrame(frame);
     const dt = Math.min(0.05, Math.max(0.001, (t - lastT) / 1000)); lastT = t;
     if (!visible) return;
