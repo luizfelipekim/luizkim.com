@@ -185,6 +185,7 @@ html[data-theme="esports"] .ball__q { font-family: var(--font-display); font-wei
 html[data-theme="esports"] .ball__meter i { background: #f6b8ff; }
 html[data-theme="esports"] .claw { padding: 0 0 12px; border-radius: 14px; overflow: hidden; }   /* the neon blooms inside the 3D scene (js/claw-machine.js); --claw-plate: glow would add the 2D library's bloom over the whole frame, which hazes it */
 html[data-theme="esports"] .claw__stage { border: 0; }
+html[data-theme="esports"] .claw { background: #0a0619; }   /* a dark hall: the 3D scene clears to this colour, and the cabinet is lit in pools against it */
 html[data-theme="esports"] .claw__key { background: var(--surface-2); border-color: var(--line); border-radius: 10px; }
 html[data-theme="esports"] .claw__drop { border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 html[data-theme="esports"] .claw__hint { color: var(--ink); font-size: 14px; font-weight: 600; }
