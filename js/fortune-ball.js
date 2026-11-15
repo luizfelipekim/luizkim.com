@@ -3,10 +3,12 @@
    or shake the phone); it flips to its window and the printed answer clears through
    the ink. Needs js/three.min.js (r128) loaded first. All artwork is drawn on canvas.
    The ball follows the theme through --look, which each theme stylesheet sets on <html>:
-   default (charcoal) is a gloss black ball in a grey studio; foil (esports) the same ball in a
-   violet, rose and cyan studio; manual (brutalist) a matte black ball under one hard shadow;
+   default (charcoal) is a gloss black ball in a grey studio; foil (esports) a lacquer ball in a dark
+   arcade, which it mirrors, with the eye and the window redrawn as lit displays under the lacquer;
+   manual (brutalist) a matte black ball under one hard shadow;
    press (broadsheet) the same matte ball with ink and newsprint decals; win95 a flat ball drawn through a 32-colour
-   palette with an ordered dither, at half the resolution. One fixed light rig, driven per look. */
+   palette with an ordered dither, at half the resolution. One fixed light rig, driven per look; the
+   arcade adds its own floor, pool and second rim. */
 (function () {
   'use strict';
   var stage = document.querySelector('.ball');
@@ -38,6 +40,7 @@
   camera.position.set(0, 0.15, 6.4);
 
   // one fixed rig (ambient, key, rim, rim from above); each look sets colours and intensities, never the set
+  // (the arcade brings its own floor, pool and second rim besides: buildArcade)
   var ambient = new THREE.AmbientLight(0xffffff, 0.08); scene.add(ambient);
   var key = new THREE.DirectionalLight(0xffffff, 0.5); key.position.set(-0.5, 5, 2.5); scene.add(key);
   var rim = new THREE.DirectionalLight(0x8fa68e, 0.22); rim.position.set(3, -0.5, -2.5); scene.add(rim);
@@ -52,22 +55,60 @@
       [0.6, 5, [0.85, 0.95, 0.85], [6, 0.5, -3]],    // edge line, right
       [14, 1.1, [7, 7.3, 7], [0, 3.6, -5.5]]         // rim strip, top
     ],
-    foil: [
-      [12, 9, [4.2, 3.6, 6.2], [0, 5.5, 2.2]],       // overhead, violet
-      [6, 1.4, [1.3, 0.7, 1.2], [0, -3.2, 0.6]],     // table bounce, rose
-      [0.6, 5, [0.5, 1.5, 1.7], [6, 0.5, -3]],       // edge line, cyan
-      [14, 1.1, [7, 3.8, 7.2], [0, 3.6, -5.5]]       // rim strip, rose
+    // the arcade the foil ball stands in (the claw's hall, js/claw-machine.js, laid out for a sphere). A sphere
+    // mirrors every direction: the middle of its face shows what is behind the viewer, a ring halfway out shows
+    // the walls, floor and ceiling, and the last sliver before the edge shows what is behind the ball. So the
+    // room is dark behind the viewer, where the eye and the answer sit, the screens and cans stand to the
+    // sides and above, and the tubes run behind the ball, where they wrap its edge as a rim.
+    arcade: [
+      [22, 16, [0.07, 0.045, 0.16], [0, -1, 11], 'soft'],  // behind the viewer: a dim violet wash with no edge, so the face is never plain black
+      [2.4, 2.4, [11, 10.5, 12], [-6, 8, 2.5], 1],         // ceiling can, front left: the hard highlight
+      [2.0, 2.0, [9, 9.5, 10.5], [5.5, 8.5, -3], 1],       // ceiling can, back right
+      [3.0, 2.2, [0.2, 4.6, 5.4], [-10.5, 1.2, 2.5]],      // screens of the machines along the left wall,
+      [3.0, 0.42, [3.4, 2.2, 0.4], [-10.5, 2.85, 2.5]],    // each under the strip of its marquee
+      [3.0, 2.2, [5.6, 0.4, 3.8], [-10.5, 0.2, -2]],
+      [3.0, 0.42, [0.2, 2.6, 3.2], [-10.5, 1.85, -2]],
+      [3.0, 2.2, [5.2, 3.0, 0.5], [10.5, -0.2, 3]],        // and along the right
+      [3.0, 0.42, [3.4, 0.3, 2.4], [10.5, 1.45, 3]],
+      [3.0, 2.2, [0.5, 1.2, 5.8], [10.5, 0.9, -1.5]],
+      [3.0, 0.42, [2.4, 1.6, 4.2], [10.5, 2.55, -1.5]],
+      [13, 0.45, [0.25, 4.6, 5.4], [-9, -5.5, 0.5]],       // floor tube, left, cyan
+      [10, 0.45, [5.4, 0.35, 3.8], [9, -4.4, -2.5]],       // floor tube, right and further back, magenta
+      [16, 0.35, [3.8, 1.2, 6.2], [0, 7, -10]],            // ceiling tube, back, violet: the edge on the top
+      [0.9, 9, [0.2, 6, 8], [-7.5, 0, -9]],                // tube, back left, cyan: the left rim
+      [0.9, 9, [8, 0.3, 5.5], [7.5, 0, -9]],               // tube, back right, magenta: the right rim
+      [5, 10, [0.03, 0.5, 0.7], [-5, 0, -10.5]],           // a wash behind each tube gives the rim some body
+      [5, 10, [0.5, 0.02, 0.32], [5, 0, -10.5]],
+      [9, 9, [0.75, 0.55, 1.5], [0, -6.5, -1], 'soft']     // the pool of light on the floor, seen from above it
     ]
   };
-  function bakeEnv(panels) {
+  for (var bulb = 0; bulb < 9; bulb++) ENVS.arcade.push([0.5, 0.5, [12, 8.5, 2.5], [10, 5, -4.4 + bulb * 1.1], 1]);   // a marquee's row of bulbs, gold
+  var ENV_ROOM = { arcade: { dark: [0.012, 0.008, 0.03], blur: 0.02 } };   // how dark the room itself is, and how sharp its sources stay
+  // white in the middle, black at the edge: the alpha of anything that fades out round, from `hold` of the way out
+  function radialFade(hold) {
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var x = c.getContext('2d'), fade = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    fade.addColorStop(0, '#fff'); fade.addColorStop(hold, '#fff'); fade.addColorStop(1, '#000');
+    x.fillStyle = fade; x.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(c);
+  }
+  function bakeEnv(panels, dark, blur) {
     var room = new THREE.Scene();
-    room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.035, 0.035, 0.035), side: THREE.BackSide })));
+    dark = dark || [0.035, 0.035, 0.035];
+    room.add(new THREE.Mesh(new THREE.BoxGeometry(24, 24, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(dark[0], dark[1], dark[2]), side: THREE.BackSide })));
     panels.forEach(function (pn) {
-      var m = new THREE.Mesh(new THREE.PlaneGeometry(pn[0], pn[1]), new THREE.MeshBasicMaterial({ color: new THREE.Color(pn[2][0], pn[2][1], pn[2][2]), side: THREE.DoubleSide }));
+      var geo = pn[4] ? new THREE.CircleGeometry(pn[0] / 2, 40) : new THREE.PlaneGeometry(pn[0], pn[1]);   // a fifth entry makes the source round: a can, a bulb; 'soft' also fades it to its edge: a pool of light
+      var m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: new THREE.Color(pn[2][0], pn[2][1], pn[2][2]), side: THREE.DoubleSide }));
+      if (pn[4]) m.scale.y = pn[1] / pn[0];
+      if (pn[4] === 'soft') {   // by vertex colour, full at the centre and the room's dark at the rim: the bake cannot blend
+        var n = geo.attributes.position.count, tint = new Float32Array(n * 3);
+        for (var v = 0; v < n * 3; v++) tint[v] = v < 3 ? 1 : dark[v % 3] / pn[2][v % 3];
+        geo.setAttribute('color', new THREE.BufferAttribute(tint, 3)); m.material.vertexColors = true;
+      }
       m.position.set(pn[3][0], pn[3][1], pn[3][2]); m.lookAt(0, 0, 0); room.add(m);
     });
     var pm = new THREE.PMREMGenerator(renderer); pm.compileEquirectangularShader();
-    var rt = pm.fromScene(room, 0.04); pm.dispose(); return rt.texture;
+    var rt = pm.fromScene(room, blur == null ? 0.04 : blur); pm.dispose(); return rt.texture;
   }
   var envs = {};
 
@@ -78,6 +119,20 @@
   var gloss = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.2, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
   var matte = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95, metalness: 0 });
   var flat = new THREE.MeshLambertMaterial({ color: 0x040404 });   // reads as black through the palette; only the very top of the key catches a few grey blocks
+  // the arcade's finish: black lacquer under a hard clear coat, sharp enough to mirror the room's screens and tubes
+  var lacquer = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.02, 0.016, 0.035), roughness: 0.05, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.6 });
+  // the mirrored room turns a few degrees with the visitor's pointer (three r128 has no rotation for an
+  // environment, so the reflection vector is turned in the shader), and the reflections slide over the ball
+  var roomTurn = { value: new THREE.Matrix3() }, roomTurn4 = new THREE.Matrix4(), roomEuler = new THREE.Euler();
+  function turnsWithRoom(m) {
+    m.onBeforeCompile = function (sh) {
+      sh.uniforms.roomTurn = roomTurn;
+      sh.fragmentShader = 'uniform mat3 roomTurn;\n' + sh.fragmentShader.replace('#include <envmap_physical_pars_fragment>',
+        THREE.ShaderChunk.envmap_physical_pars_fragment.replace('reflectVec = inverseTransformDirection( reflectVec, viewMatrix );', 'reflectVec = roomTurn * inverseTransformDirection( reflectVec, viewMatrix );'));
+    };
+    return m;
+  }
+  turnsWithRoom(lacquer);
   var sphere = new THREE.Mesh(new THREE.SphereGeometry(R, 96, 64), gloss);
   body.add(sphere);
 
@@ -93,6 +148,11 @@
   }
   var eyeCap = capMesh(Math.PI / 2, eye.t, 0.6); body.add(eyeCap);
   var winCap = capMesh(3 * Math.PI / 2, win.t); body.add(winCap);
+  var eyeMat = eyeCap.material, winMat = winCap.material;
+  // in the arcade both decals are displays under the lacquer: drawn in light on black and added over the
+  // ball, so the room's reflections run across them unbroken, and kept off the tone curve so the neon stays pure
+  function display(tex) { return new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, premultipliedAlpha: true, depthWrite: false, toneMapped: false }); }
+  var eyeLit = display(eye.t), winLit = display(win.t);
 
   // ground shadow: soft (a blob), hard (one cast edge), or hatched (cut in ink)
   var shadowC = document.createElement('canvas'); shadowC.width = shadowC.height = 256;
@@ -100,7 +160,7 @@
   var shadow = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.2), new THREE.MeshBasicMaterial({ map: shadowT, transparent: true, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = -R - 0.35; scene.add(shadow);
   function drawShadow(kind, ink) {
-    var x = shadowC.getContext('2d'); x.clearRect(0, 0, 256, 256);
+    var x = shadowC.getContext('2d'); x.globalAlpha = 1; x.clearRect(0, 0, 256, 256);   // a hard shadow leaves the alpha at half; start each look clean
     if (kind === 'soft') {
       var g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
       x.fillStyle = g; x.fillRect(0, 0, 256, 256);
@@ -115,6 +175,20 @@
     shadowT.needsUpdate = true;
   }
 
+  // the arcade's own set, built the first time the foil look is dealt: a dark gloss floor that fades into the
+  // stage, a spot from behind that pools on it, and the cyan rim that pairs with the rig's (magenta) rim
+  var arcade = null;
+  function buildArcade() {
+    var g = new THREE.Group();
+    var floor = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshStandardMaterial({ color: 0x0d0822, roughness: 0.35, metalness: 0.4, envMapIntensity: 0.6, transparent: true, alphaMap: radialFade(0.4), depthWrite: false }));
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -R - 0.352; floor.renderOrder = -1;
+    g.add(floor); g.floor = floor;
+    var pool = new THREE.SpotLight(0xc9b8ff, 1.3, 30, 0.6, 0.9, 1);
+    pool.position.set(0, 7, -5); pool.target.position.set(0, -R - 0.35, -0.6); g.add(pool); g.add(pool.target);
+    var rimL = new THREE.DirectionalLight(0x00c8ff, 0.9); rimL.position.set(-3, 0.5, -2.5); g.add(rimL);
+    scene.add(g); arcade = g;
+  }
+
   /* ---------- the looks ----------
      Keyed by --look. Finish and environment for the ball, the rig's colours and intensities, the
      shadow's kind, and the colours and type of the two decals: paper and ink for the eye; face,
@@ -123,9 +197,9 @@
     default: { mat: 'gloss', env: 'default', ambient: [0xffffff, 0.08], key: [0xffffff, 0.5], rim: [0x8fa68e, 0.22], rimTop: [0xe6ece4, 0.9], shadow: 'soft',
       paper: '#f1f1ef', ink: '#1c1c1c', face: '#1f2420', text: '#f1f1ef', ink2: '#111412', ring: 'rgba(143,166,142,0.35)', cover: 'rgba(14,18,16,', swirl: 'rgba(96,118,96,',
       font: '500 30px "Hanken Grotesk","Helvetica Neue",Arial,sans-serif' },
-    foil: { mat: 'gloss', env: 'foil', ambient: [0xc9c3ff, 0.1], key: [0xe8e2ff, 0.45], rim: [0xf6b8ff, 0.65], rimTop: [0xc9c3ff, 0.9], shadow: 'soft',
-      paper: '#e8e2ff', ink: '#120a2c', face: '#2a1a66', text: '#f4f1ff', ink2: '#120a2c', ring: 'rgba(183,162,255,0.5)', cover: 'rgba(18,10,44,', swirl: 'rgba(246,184,255,',
-      font: '600 30px "Figtree",system-ui,sans-serif' },
+    // neon: the decals are drawn in light (drawEyeNeon, drawWindowNeon), so of the decal colours only the answer's text and type are read
+    foil: { mat: 'lacquer', env: 'arcade', neon: true, ambient: [0x8f7bff, 0.05], key: [0xf2f0ff, 0], rim: [0xff00c0, 0.9], rimTop: [0xc9b8ff, 0.4], shadow: 'soft',
+      ink: '#120a2c', text: '#f4f1ff', font: '600 30px "Figtree",system-ui,sans-serif' },
     win95: { mat: 'flat', env: null, ambient: [0xffffff, 0.35], key: [0xffffff, 0.9], rim: [0xffffff, 0], rimTop: [0xffffff, 0.5], shadow: 'hard', pixel: true,
       paper: '#ffffff', ink: '#000000', face: '#000080', text: '#ffffff', ink2: '#000000', ring: 'rgba(255,255,255,0.6)', cover: 'rgba(0,0,0,', swirl: 'rgba(0,128,128,',
       font: '900 38px "Arial Black","Helvetica Neue",Arial,sans-serif' },   // heavy strokes survive the 4 px blocks; the pixel face does not
@@ -142,12 +216,23 @@
   function applyLook() {
     var l = look(); if (l === current) return; current = l;
     pal = LOOKS[l] || LOOKS.default;
-    var e = pal.env ? (envs[pal.env] || (envs[pal.env] = bakeEnv(ENVS[pal.env]))) : null;
+    var room = ENV_ROOM[pal.env] || {};
+    var e = pal.env ? (envs[pal.env] || (envs[pal.env] = bakeEnv(ENVS[pal.env], room.dark, room.blur))) : null;
     scene.environment = e; gloss.envMap = e; gloss.needsUpdate = true;
     if (pal.body) matte.color.setHex(pal.body);
-    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'flat' ? flat : matte;
+    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'lacquer' ? lacquer : pal.mat === 'flat' ? flat : matte;
+    // the arcade: a filmic curve so the mirrored sources roll off instead of clipping, the stage's own colour
+    // behind the ball (the glow is added over it, which a see-through canvas cannot carry), and its own set
+    var tone = pal.neon ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    if (renderer.toneMapping !== tone) { renderer.toneMapping = tone; shadow.material.needsUpdate = true; }
+    var hall = getComputedStyle(stage).backgroundColor;
+    if (pal.neon) renderer.setClearColor(new THREE.Color().setStyle(hall && hall.indexOf('rgba(0, 0, 0, 0)') < 0 ? hall : '#0a0619'), 1); else renderer.setClearColor(0x000000, 0);
+    if (pal.neon && !arcade) buildArcade();
+    if (arcade) arcade.visible = !!pal.neon;
+    if (pal.neon && !bloom) buildBloom();
+    eyeCap.material = pal.neon ? eyeLit : eyeMat; winCap.material = pal.neon ? winLit : winMat;
     // under the palette both decals light themselves, so their white and black reach it as white and black
-    var wm = winCap.material, em = eyeCap.material;
+    var wm = winMat, em = eyeMat;
     if (pal.pixel) { wm.color.setHex(0x000000); wm.emissive.setHex(0xffffff); wm.emissiveMap = win.t; wm.emissiveIntensity = 1; em.color.setHex(0x000000); em.emissiveIntensity = 1; }
     else { wm.color.setHex(0xffffff); wm.emissive.setHex(0x000000); wm.emissiveMap = null; wm.emissiveIntensity = 1; em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
     wm.needsUpdate = em.needsUpdate = true;
@@ -161,6 +246,45 @@
      Under win95 the scene goes through the shared palette pass (js/pixel-pass.js), the same one the claw
      and the poker peek use: drawn at half the size, snapped to 32 colours after an ordered dither. */
   var pixelPass = THREE.PixelPass ? new THREE.PixelPass(renderer) : null;
+
+  /* ---------- the glow ----------
+     In the arcade the lit drawings bloom, as the claw's tubes do (js/claw-machine.js): the scene is drawn once
+     more at half size with the ball black, so only the displays carry light, the Unreal bloom pass blurs
+     that, and a last pass adds it over the normal frame. Needs js/postprocessing.js; without it the
+     drawings still light themselves, only without the halo. */
+  var bloom = null, winGlow = 0;
+  function buildBloom() {
+    if (!THREE.EffectComposer || !THREE.UnrealBloomPass) return;
+    var glow = new THREE.EffectComposer(renderer);
+    glow.renderToScreen = false;
+    glow.addPass(new THREE.RenderPass(scene, camera));
+    glow.addPass(new THREE.UnrealBloomPass(renderer.getDrawingBufferSize(new THREE.Vector2()), 1.25, 0.3, 0.0));
+    var mix = new THREE.ShaderPass(new THREE.ShaderMaterial({
+      uniforms: { baseTexture: { value: null }, bloomTexture: { value: glow.renderTarget2.texture } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform sampler2D baseTexture; uniform sampler2D bloomTexture; varying vec2 vUv; void main() { gl_FragColor = texture2D(baseTexture, vUv) + max(texture2D(bloomTexture, vUv) - 0.012, 0.0); }'   // the faint far end of the blur is cut, or it would lift the whole box off the stage's colour
+    }), 'baseTexture');
+    mix.needsSwap = true;
+    var base = new THREE.EffectComposer(renderer);
+    base.addPass(new THREE.RenderPass(scene, camera));
+    base.addPass(mix);
+    // the frame is written to the targets in sRGB, as the renderer would write it to the screen
+    [glow, base].forEach(function (c) { c.renderTarget1.texture.encoding = THREE.sRGBEncoding; c.renderTarget2.texture.encoding = THREE.sRGBEncoding; });
+    glow.setPixelRatio(renderer.getPixelRatio() / 2);
+    bloom = { base: base, glow: glow, dark: new THREE.MeshBasicMaterial({ color: 0x000000 }), clear: new THREE.Color() };
+  }
+  function render() {
+    if (pal.pixel && pixelPass) { pixelPass.render(scene, camera); return; }
+    if (!pal.neon || !bloom) { renderer.render(scene, camera); return; }
+    // the glow pass: the ball goes black and still hides whichever display is behind it; the floor and shadow step out
+    var lit = sphere.material; sphere.material = bloom.dark; arcade.floor.visible = false; shadow.visible = false;
+    winLit.color.setScalar(winGlow);
+    renderer.getClearColor(bloom.clear); renderer.setClearColor(0x000000, 1);
+    bloom.glow.render();
+    renderer.setClearColor(bloom.clear, 1);
+    sphere.material = lit; arcade.floor.visible = true; shadow.visible = true; winLit.color.setScalar(1);
+    bloom.base.render();
+  }
 
   /* ---------- eye drawing (line art) ---------- */
   var pupil = { x: 0, y: 0 }, pupilT = { x: 0, y: 0 }, nextBlink = 2.5;
@@ -181,8 +305,54 @@
     ctx.lineWidth = 30; lid(); ctx.stroke();
     eye.t.needsUpdate = true;
   }
+  // In the arcade the same eye is redrawn in light: the lids are one neon line that runs cyan to magenta, as the
+  // rims on the ball do; the iris is a lens (a limbal ring, a broken ring that turns, fibres, a lit pupil
+  // edge); the lashes are the ticks of a gauge; and a fine scale stands where the paper disc ended.
+  var NEON = { cyan: '#00c8ff', violet: '#8a5cff', magenta: '#ff00c0', white: '#f4f1ff' }, irisTurn = 0;
+  function sweep(ctx, x0, x1) { var g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, NEON.cyan); g.addColorStop(0.5, NEON.violet); g.addColorStop(1, NEON.magenta); return g; }
+  function scale(ctx, cx, cy, r) {
+    ctx.lineCap = 'butt';
+    for (var i = 0; i < 72; i++) { var a = i / 72 * Math.PI * 2, big = i % 6 === 0;
+      ctx.strokeStyle = big ? 'rgba(183,162,255,0.85)' : 'rgba(138,92,255,0.5)'; ctx.lineWidth = big ? 2.5 : 1.5;
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (big ? r - 12 : r - 7), cy + Math.sin(a) * (big ? r - 12 : r - 7)); ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.stroke(); }
+  }
+  function drawEyeNeon(open) {
+    var ctx = eye.ctx, S = 512, cx = 256, cy = 256, i, a;
+    ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
+    scale(ctx, cx, cy, 214);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    var w = 184, h = 92 * open, line = sweep(ctx, cx - w, cx + w);
+    function lid() { ctx.beginPath(); ctx.moveTo(cx - w, cy); ctx.quadraticCurveTo(cx, cy - h * 2, cx + w, cy); ctx.quadraticCurveTo(cx, cy + h * 2, cx - w, cy); ctx.closePath(); }
+    ctx.save(); lid(); ctx.clip();
+    var ix = cx + pupil.x * 38, iy = cy + pupil.y * 17;
+    var glass = ctx.createRadialGradient(ix, iy, 60, ix, iy, 210); glass.addColorStop(0, 'rgba(90,43,255,0.22)'); glass.addColorStop(1, 'rgba(90,43,255,0.02)');
+    ctx.fillStyle = glass; ctx.fillRect(0, 0, S, S);
+    var iris = ctx.createRadialGradient(ix, iy, 26, ix, iy, 72); iris.addColorStop(0, 'rgba(255,0,192,0.46)'); iris.addColorStop(0.6, 'rgba(110,60,255,0.32)'); iris.addColorStop(1, 'rgba(0,200,255,0.12)');
+    ctx.fillStyle = iris; ctx.beginPath(); ctx.arc(ix, iy, 72, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,190,240,0.9)'; ctx.lineWidth = 1.5; ctx.lineCap = 'butt';
+    for (i = 0; i < 48; i++) { a = i / 48 * Math.PI * 2; var r0 = 34 + (i % 2) * 7; ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * r0, iy + Math.sin(a) * r0); ctx.lineTo(ix + Math.cos(a) * 50, iy + Math.sin(a) * 50); ctx.stroke(); }
+    var turn = irisTurn + pupil.x * 0.9;
+    ctx.strokeStyle = '#d9ceff'; ctx.lineWidth = 3.5;
+    for (i = 0; i < 3; i++) { a = turn + i * Math.PI * 2 / 3; ctx.beginPath(); ctx.arc(ix, iy, 60, a, a + 1.5); ctx.stroke(); }
+    ctx.strokeStyle = NEON.cyan; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ix, iy, 72, 0, Math.PI * 2); ctx.stroke();
+    // the pupil is an aperture: six blades, and it turns with the ring
+    ctx.beginPath(); for (i = 0; i < 6; i++) { a = -turn * 0.5 + i * Math.PI / 3; ctx.lineTo(ix + Math.cos(a) * 27, iy + Math.sin(a) * 27); } ctx.closePath();
+    ctx.fillStyle = '#000'; ctx.fill(); ctx.strokeStyle = '#ff7ae0'; ctx.lineWidth = 3; ctx.lineJoin = 'miter'; ctx.stroke();
+    ctx.fillStyle = NEON.white; ctx.beginPath(); ctx.arc(ix - 9, iy - 9, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = line;
+    ctx.globalAlpha = 0.28; ctx.lineWidth = 16; lid(); ctx.stroke();
+    ctx.globalAlpha = 1; ctx.lineWidth = 5; lid(); ctx.stroke();
+    ctx.lineWidth = 4;
+    for (var j = 0; j < 7; j++) { var t = (j + 1) / 8, px = cx - w + t * 2 * w, py = cy - 2 * h * t * (1 - t) * 2 - 14, dx = (t - 0.5) * 0.8;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + dx * 20, py - 20 * open); ctx.stroke(); }
+    ctx.lineWidth = 3;
+    for (var k = 0; k < 5; k++) { var a2 = Math.PI / 2 + (k - 2) * 0.24; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a2) * (h + 40), cy + Math.sin(a2) * (h + 40)); ctx.lineTo(cx + Math.cos(a2) * (h + 56), cy + Math.sin(a2) * (h + 56)); ctx.stroke(); }
+    eye.t.needsUpdate = true;
+  }
   function drawEye(open) {
     if (pal.pixel) return drawEyeBold(open);
+    if (pal.neon) return drawEyeNeon(open);
     var ctx = eye.ctx, S = 512, cx = 256, cy = 256;
     ctx.clearRect(0, 0, S, S);
     ctx.fillStyle = pal.paper; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.fill();
@@ -211,7 +381,38 @@
   function wrapText(ctx, text, maxW) { var words = text.split(' '), lines = [], line = '';
     words.forEach(function (wd) { var test = line ? line + ' ' + wd : wd; if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = wd; } else line = test; });
     if (line) lines.push(line); return lines; }
+  // In the arcade the window is a display: nothing is hidden under ink, the answer is switched on. While it
+  // is off, arcs of plasma turn in the glass; they thin out as the readout comes up inside its ring.
+  function drawWindowNeon() {
+    var ctx = win.ctx, S = 512, cx = 256, cy = 256, up = 1 - cover;
+    ctx.globalAlpha = 1; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
+    scale(ctx, cx, cy, 214);
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, 198, 0, Math.PI * 2); ctx.clip();
+    var sc = 0.86 + 0.14 * up, ay = cy + 40 * (1 - up);
+    ctx.save(); ctx.translate(cx, ay); ctx.scale(sc, sc); ctx.globalAlpha = up;
+    var face = ctx.createRadialGradient(0, -40, 20, 0, 0, 172); face.addColorStop(0, '#34207e'); face.addColorStop(1, '#1d1247');
+    ctx.fillStyle = face; ctx.beginPath(); ctx.arc(0, 0, 172, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = sweep(ctx, -172, 172); ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.28 * up; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(0, 0, 172, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = up; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 172, 0, Math.PI * 2); ctx.stroke();
+    // the iris's broken ring again, inside the rim: it turns into place as the readout comes up
+    ctx.strokeStyle = 'rgba(217,206,255,0.4)'; ctx.lineWidth = 2; ctx.lineCap = 'butt';
+    for (var s = 0; s < 3; s++) { var a0 = (1 - up) * 2.4 - 0.75 + s * Math.PI * 2 / 3; ctx.beginPath(); ctx.arc(0, 0, 159, a0, a0 + 1.5); ctx.stroke(); }
+    ctx.fillStyle = pal.text; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = pal.font;
+    var lines = wrapText(ctx, answer, 280), lh = 36, y0 = -(lines.length - 1) * lh / 2;
+    lines.forEach(function (l, i) { ctx.fillText(l, 0, y0 + i * lh); });
+    ctx.restore();
+    var hues = ['0,200,255', '255,0,192', '138,92,255'];
+    for (var i = 0; i < 9; i++) {
+      var a = inkPhase * (0.6 + i * 0.07) + i * 0.7, r = 60 + i * 17, alpha = Math.min(1, 0.3 + 0.7 * swirl) * cover;
+      ctx.strokeStyle = 'rgba(' + hues[i % 3] + ',' + alpha.toFixed(3) + ')'; ctx.lineWidth = 3 + (i % 3) * 4;
+      ctx.beginPath(); ctx.arc(cx + Math.sin(a * 0.5) * 20, cy + Math.cos(a * 0.4) * 20, r, a, a + 1.6 + swirl); ctx.stroke();
+    }
+    ctx.restore();
+    win.t.needsUpdate = true;
+  }
   function drawWindow() {
+    if (pal.neon) return drawWindowNeon();
     var ctx = win.ctx, S = 512, cx = 256, cy = 256;
     var faceCol = pal.face, textCol = pal.text, inkCol = pal.ink2;
     ctx.clearRect(0, 0, S, S);
@@ -241,8 +442,11 @@
   var idx = 0, state = 'idle', energy = 0, flip = 0, flipT = 0, held = false, holdStart = 0, last = null, shake = { x: 0, y: 0 }, t0 = performance.now(), prevPos = { x: 0, y: 0 };
   var PHI = 0.3063;
   function setQuestion(i) { qEl.classList.add('is-out'); setTimeout(function () { qEl.textContent = QA[i][0]; qEl.classList.remove('is-out'); }, 350);
-    answer = QA[i][1]; aEl.textContent = answer; countEl.textContent = (i + 1) + ' / ' + QA.length; }
-  setQuestion(0); qEl.classList.remove('is-out'); qEl.textContent = QA[0][0];
+    countEl.textContent = (i + 1) + ' / ' + QA.length; }
+  // an answer is written (in the window and in the caption) only while both are hidden: at the start, and when the
+  // ball has turned back and refilled. Written with its question, it could be read under the one before
+  function setAnswer(i) { answer = QA[i][1]; aEl.textContent = answer; }
+  setQuestion(0); setAnswer(0); qEl.classList.remove('is-out'); qEl.textContent = QA[0][0];
 
   function reveal() {
     if (state !== 'idle') return;
@@ -285,7 +489,7 @@
   });
 
   // phone motion where the browser allows it; dragging always works too
-  var motionOn = false;
+  var motionOn = false, motionOff = false;   // off: refused or not there in this visit, so the button does not come back
   function onMotion(e) {
     if (state !== 'idle') return;
     var a = e.accelerationIncludingGravity || e.acceleration; if (!a) return;
@@ -298,7 +502,7 @@
     btnMotion.hidden = false;
     btnMotion.addEventListener('click', function () {
       var start = function () { motionOn = true; window.addEventListener('devicemotion', onMotion); btnMotion.textContent = 'Now shake it'; hint.textContent = 'Shake your phone'; };
-      var fail = function () { btnMotion.hidden = true; hint.textContent = 'Motion is off here. Drag the ball to shake it'; };
+      var fail = function () { motionOff = true; btnMotion.hidden = true; hint.textContent = 'Motion is off here. Drag the ball to shake it'; };
       if (typeof DeviceMotionEvent.requestPermission === 'function') DeviceMotionEvent.requestPermission().then(function (s) { if (s === 'granted') start(); else fail(); }).catch(fail);
       else start();
     });
@@ -311,6 +515,7 @@
   function fit() { var w = view.clientWidth, h = view.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     fit.ready = true;
     if (pixelPass) pixelPass.setSize(w, h);
+    if (bloom) { bloom.base.setSize(w, h); bloom.glow.setSize(w, h); }
     // the ball fills its box: as large as fits above the tooltip's band (with room for its drift), centred in
     // what is left. Distance and height are solved from the box, so the ball is a circle of a known size at any shape.
     var tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -322,7 +527,12 @@
     // the answer is read at 16 px; under the palette it comes a little closer so each letter keeps enough blocks
     var dist = fontWorld * h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (pal.pixel ? TARGET_PX * 1.4 : TARGET_PX));
     zoomZ = Math.min(baseZ, R + dist);
-    camera.position.z = baseZ + (zoomZ - baseZ) * zoom; }
+    camera.position.z = baseZ + (zoomZ - baseZ) * zoom;
+    // the arcade's floor is an ellipse cut to what the camera sees of it: its near edge ends just inside the
+    // bottom of the box and its sides inside the box's sides, so the fade is never clipped at any shape
+    if (arcade) { var fl = arcade.floor, deep = 2.6, near = baseZ - (baseY - fl.position.y) / tanH;
+      fl.position.z = near - deep * 1.04;
+      fl.scale.set(Math.min(3.4, tanH * (w / h) * (baseZ - fl.position.z) * 0.96), deep, 1); } }
   applyLook(); fit(); window.addEventListener('resize', fit);
   // the view is a flexible box: it changes size when the buttons under it come and go, when fonts land, or when a
   // theme changes its padding. Fitting only on window resize left the canvas stretched over a stale aspect (an oval).
@@ -364,10 +574,11 @@
     if (state === 'flip') { flipT += dt; var k = ease(Math.min(1, flipT / 0.9)); flip = k * Math.PI; swirl = 1 - k; if (flipT >= 0.9) { state = 'clear'; flipT = 0; } }
     else if (state === 'clear') { flipT += dt; cover = 1 - ease(Math.min(1, flipT / 1.3)); swirl = cover * 0.6; if (flipT >= 1.3) { state = 'shown'; cover = 0; cap.classList.add('is-shown'); btnNext.hidden = false; } }
     else if (state === 'refill') { flipT += dt; var k2 = ease(Math.min(1, flipT / 0.9)); cover = k2; flip = Math.PI * (1 + k2); swirl = k2 * 0.5;
-      if (flipT >= 0.9) { state = 'idle'; flip = 0; cover = 1; energy = 0; swirl = 0; hint.classList.remove('is-off'); btnReveal.hidden = false; if (isTouch && typeof DeviceMotionEvent !== 'undefined' && !motionOn) btnMotion.hidden = false; } }
+      if (flipT >= 0.9) { state = 'idle'; flip = 0; cover = 1; energy = 0; swirl = 0; setAnswer(idx); hint.classList.remove('is-off'); btnReveal.hidden = false; if (isTouch && typeof DeviceMotionEvent !== 'undefined' && !motionOn && !motionOff) btnMotion.hidden = false; } }
     else { swirl += ((held ? energy : 0) - swirl) * 0.1; }
     body.rotation.y = flip;
     inkPhase += dt * (0.3 + swirl * 4);
+    irisTurn += dt * swirl * 5;   // the lens ring spins up with the shake, and rests when the hand does
 
     var zt = (state === 'clear' || state === 'shown') ? 1 : 0;
     zoom = reduce ? zt : zoom + (zt - zoom) * Math.min(1, dt * 2.6);
@@ -375,6 +586,7 @@
     camera.position.z = baseZ + (zoomZ - baseZ) * ez;
     camera.position.x = ball.position.x * ez;
     camera.position.y = baseY * (1 - ez) + ball.position.y * ez;
+    if (arcade) arcade.floor.material.opacity = 1 - ez;   // the camera closes in on the answer and leaves the floor behind
 
     if (!isTouch || held) { pupil.x += (pupilT.x - pupil.x) * 0.1; pupil.y += (pupilT.y - pupil.y) * 0.1; }
     else { pupil.x += ((dx * 4) - pupil.x) * 0.05; pupil.y += ((dy * 4) - pupil.y) * 0.05; }
@@ -383,7 +595,11 @@
     if (held && state === 'idle') open = Math.min(open, 1 - energy * 0.85);
     if (state === 'flip') open = 0;
     drawEye(open); drawWindow();
-    if (pal.pixel && pixelPass) pixelPass.render(scene, camera); else renderer.render(scene, camera);
+    if (pal.neon) {
+      winGlow = cover;   // the plasma blooms while it hides the answer; the printed answer itself never does
+      roomTurn4.makeRotationFromEuler(roomEuler.set(pupil.y * 0.07, pupil.x * 0.12, 0)); roomTurn.value.setFromMatrix4(roomTurn4);
+    }
+    render();
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWindow);
   requestAnimationFrame(frame);

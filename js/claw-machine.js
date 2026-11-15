@@ -2,7 +2,7 @@
    system's foundational components (toggle, pill, checkbox, radio, button, text input).
    Drag the glass or hold the pad to steer, press Drop, and each catch lights up a live
    component in the tray. Needs js/three.min.js (r128) loaded first.
-   A look can ask for the machine as an engraved plate (Broadsheet sets --claw-plate on .claw): the
+   A look can ask for the machine as an engraved plate (by setting --claw-plate on .claw; no look does today): the
    cabinet goes to ink and paper, and on browsers with WebGPU the frame is piped through the 2D shader
    library's Engraving effect (js/shaders.js) onto a second canvas over the first. */
 (function () {
@@ -91,12 +91,60 @@
     g.add(floor);
     scene.add(g); arcade = g;
   }
+  // What the arcade is to the foil look, for the looks that wear the art deco kit: the same method in each look's
+  // own palette. Spots as [colour, power, from, to, angle, softness]; rims as [colour, power, from]; lamps are the
+  // kit's own lights (sconces, marquee) as [finish key, power, at, reach]; the floor is a disc that fades out with a
+  // radial alpha, either a gloss surface for a pool of light or, on paper, a flat wash of ink for a pool of shadow.
+  var STAGES = {
+    // a dark grey studio: neutral light, a shade warmer from the front than from behind
+    studio: {
+      spots: [[0xfff4e6, 0.9, [2.5, 15, 7], [0, 7.6, 2.8], 0.3, 0.8],      // the crown
+              [0xdfe8ff, 0.48, [0, 13, -8], [0, -1.4, -2.6], 0.62, 0.9]],   // behind: the floor pool, and an edge on the tops
+      follow: [0xffffff, 1.3, [-1.2, 10.5, 6.5], 0.13, 0.6],
+      rims: [[0xdfe8ff, 0.8, [-7, 4, -6]], [0xfff0e0, 0.55, [8, 4, -5]]],
+      lamps: [['lamp', 0.9, [-3.3, 4.0, 3.7], 4], ['lamp', 0.9, [3.3, 4.0, 3.7], 4], ['lamp', 0.5, [0, 6.2, 3.9], 5]],
+      floor: { color: 0x101010, rough: 0.45, metal: 0.3, env: 0.4, at: [0, 0] }
+    },
+    // paper and ink: the page is the light, so the cabinet gets a pool of shadow to stand in and a hard top light
+    paper: {
+      spots: [[0xfff6e8, 0.7, [2.5, 15, 7], [0, 7.6, 2.8], 0.3, 0.8],
+              [0xfff6e8, 0.9, [0, 13, -8], [0, 3, -2.6], 0.5, 0.9]],
+      follow: [0xfffaf0, 0.9, [-1.2, 10.5, 6.5], 0.13, 0.6],
+      rims: [[0xfff6e8, 0.6, [-7, 5, -6]]],
+      lamps: [['lamp', 0.45, [-3.3, 4.0, 3.9], 5], ['lamp', 0.45, [3.3, 4.0, 3.9], 5], ['lamp', 0.35, [0, 6.2, 3.9], 5]],
+      floor: { color: 0x1a1715, wash: 0.55, at: [-1.0, -0.8] }
+    }
+  };
+  var stages = {}, stageLamps = [];
+  function buildStage(name) {
+    var sp = STAGES[name], g = new THREE.Group();
+    sp.spots.forEach(function (s) {
+      var l = new THREE.SpotLight(s[0], s[1], 30, s[4], s[5], 1);
+      l.position.fromArray(s[2]); l.target.position.fromArray(s[3]); g.add(l); g.add(l.target);
+    });
+    var follow = new THREE.SpotLight(sp.follow[0], sp.follow[1], 30, sp.follow[3], sp.follow[4], 1);   // on the claw, as in the arcade
+    follow.position.fromArray(sp.follow[2]); follow.target = clawGroup; g.add(follow);
+    sp.rims.forEach(function (r) { var l = new THREE.DirectionalLight(r[0], r[1]); l.position.fromArray(r[2]); g.add(l); });
+    sp.lamps.forEach(function (p) { var l = new THREE.PointLight(0xffffff, p[1], p[3], 2); l.position.fromArray(p[2]); l.userData.key = p[0]; g.add(l); stageLamps.push(l); });
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var x = c.getContext('2d'), fade = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    if (sp.floor.wash) { fade.addColorStop(0, '#fff'); fade.addColorStop(0.5, '#fff'); fade.addColorStop(0.72, '#666'); fade.addColorStop(1, '#000'); }
+    else { fade.addColorStop(0, '#fff'); fade.addColorStop(0.45, '#fff'); fade.addColorStop(1, '#000'); }
+    x.fillStyle = fade; x.fillRect(0, 0, 256, 256);
+    var fm = sp.floor.wash
+      ? new THREE.MeshBasicMaterial({ color: sp.floor.color, transparent: true, opacity: sp.floor.wash, alphaMap: new THREE.CanvasTexture(c), depthWrite: false })
+      : new THREE.MeshStandardMaterial({ color: sp.floor.color, roughness: sp.floor.rough, metalness: sp.floor.metal, envMapIntensity: sp.floor.env, transparent: true, alphaMap: new THREE.CanvasTexture(c), depthWrite: false });
+    var floor = new THREE.Mesh(new THREE.CircleGeometry(sp.floor.wash ? 9 : 11, 48), fm);
+    floor.rotation.x = -Math.PI / 2; floor.position.set(sp.floor.at[0], -1.41, sp.floor.at[1]); floor.receiveShadow = !sp.floor.wash; floor.renderOrder = -1;
+    g.add(floor);
+    scene.add(g); stages[name] = g;
+  }
   // everything solid casts and receives; the glass and the lines are left out
   function shadowed(obj) { obj.traverse(function (o) { if (o.isMesh && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } }); return obj; }
 
-  // the studio the fortune ball reflects (js/fortune-ball.js): a dark room with a few softboxes, one set of
-  // panels per look that has its own light, baked the first time a look asks for it and kept. The same room
-  // on both scenes, so the ball and the cabinet catch the same light under each look.
+  // the rooms the cabinet reflects: a dark room with a few bright sources, one set of panels per look that has
+  // its own light, baked the first time a look asks for it and kept. The fortune ball (js/fortune-ball.js)
+  // bakes its own rooms the same way, placed for a sphere.
   var ENVS = {
     default: [
       [12, 9, [5, 5, 4.8], [0, 5.5, 2.2]],          // overhead softbox
@@ -129,9 +177,40 @@
       [12, 0.3, [3.8, 1.2, 6.2], [-5, 6.5, -9]],     // ceiling tube, back, violet
       [0.5, 6, [0.4, 3.2, 3.8], [-9.5, 1, -2]],      // an edge line, left, cyan
       [0.5, 6, [4.2, 0.4, 3.0], [9.5, 1.5, 2]]       // an edge line, right, rose
+    ],
+    // the default look's own room: a dark photo studio set for chrome. Tall strip lights stand in a row low in front,
+    // where the fluted bands look, so each flute picks up light, dark, light; a softbox back-left and high for the
+    // tops; the right sides see only a dim wall, and that keeps them the shade side.
+    atelier: [
+      [0.8, 9, [9, 9, 9.6], [-9, -2.5, 7]],          // strip lights, front, low
+      [0.8, 9, [6, 6, 6.4], [-4.2, -3.5, 9.8]],
+      [0.8, 9, [9, 9, 9.6], [1.2, -3.5, 10.5]],
+      [0.8, 9, [4, 4, 4.3], [6.5, -3, 8.6]],
+      [12, 2.5, [0.3, 0.3, 0.33], [-3, -8, 6.5]],    // the floor in front, a dim bounce
+      [9, 1.6, [3.4, 3.4, 3.7], [-4.5, 8.5, -8.5]],  // a strip back left, high: an edge of light along the tops
+      [8, 5, [0.5, 0.5, 0.55], [-5, 5, -9]],         // and a dim wash under it, so a top face is never plain black
+      [6, 6, [0.36, 0.36, 0.4], [8, -3.5, -7.5]],    // back right, low: the right sides, kept dim
+      [0.5, 9, [6, 6, 6.5], [10.5, 0, -2]],          // an edge line, right
+      [0.5, 9, [4, 4, 4.4], [-10.5, 1, -3]],         // an edge line, left
+      [5, 3, [2.2, 2.2, 2.4], [1, 10.5, 3]]          // overhead softbox
+    ],
+    // Broadsheet's room: paper and ink. A grey room lit by two windows the colour of the page, with black cards
+    // stood in it: polished metal only reads against white when it is darker than the page and has ink to mirror.
+    pressroom: [
+      [5, 7, [5.2, 5.0, 4.5], [-6.5, 3, 8.5]],       // window, front left
+      [1.0, 9, [6.5, 6.3, 5.7], [-1.5, -3.5, 10.5]], // a slot of light low in front: the bright line in each flute
+      [1.0, 9, [4.5, 4.3, 3.9], [4.2, -3.5, 9.8]],
+      [1.4, 9, [0.005, 0.005, 0.005], [-4.6, -3.5, 9.8]],   // black cards between them: the ink line in each flute
+      [1.4, 9, [0.005, 0.005, 0.005], [1.4, -3.5, 10.4]],
+      [12, 3, [0.22, 0.21, 0.19], [-3, -8.5, 6]],    // the floor in front: paper, in shade
+      [9, 1.8, [4.2, 4.0, 3.6], [-4.5, 8.5, -8.5]],  // skylight, back left, high: an edge of light along the tops
+      [8, 5, [0.9, 0.86, 0.78], [-5, 5, -9]],        // and a wash under it
+      [7, 7, [0.3, 0.29, 0.26], [8, -3.5, -7.5]],    // back right, low: the right sides stay the shade side
+      [0.6, 9, [4.5, 4.3, 3.9], [10.5, 0, -1]],      // an edge line, right
+      [5, 3, [2.6, 2.5, 2.3], [1, 10.5, 3]]          // overhead
     ]
   };
-  var ENV_DARK = { arcade: [0.012, 0.008, 0.03] };   // how dark the room itself is; the studio default is a neutral 0.035
+  var ENV_DARK = { arcade: [0.012, 0.008, 0.03], atelier: [0.02, 0.02, 0.023], pressroom: [0.09, 0.087, 0.08] };   // how dark the room itself is; the studio default is a neutral 0.035
   function bakeEnv(panels, dark) {
     var room = new THREE.Scene();
     dark = dark || [0.035, 0.035, 0.035];
@@ -164,21 +243,32 @@
      One neutral cabinet, dressed per look. Each look names the colours of the procedural parts (floor,
      chute, steel, prizes) and of the model's three materials (body, paper, ink), the surface (roughness,
      metalness, how much of the environment shows), the glass, and which ornament set of the model to show.
-     Looks are keyed by --look, which each theme stylesheet sets on <html>; they inherit from the default
-     (charcoal) and override what they need. The plate (engraving pass) is a separate
+     Looks are keyed by --look, which each theme stylesheet sets on <html>; they inherit from `default`
+     (the bare neutral cabinet) and override what they need. The site's default look is `charcoal`. The plate (engraving pass) is a separate
      flag the theme sets in CSS, so a look can be dressed without being engraved. */
   var FINISH = {
     default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, prizes: [0xdedbd4, 0xb8b4ac],
                   body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null,
                   floorRough: 0.95, floorMetal: 0, steelRough: 0.35, steelMetal: 0.15, topY: 5.2, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
-                  neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6, prizeEnv: 1, prizeRough: 0.55, glassEnv: 1.3 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
+                  neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6, prizeEnv: 1, prizeRough: 0.55, glassEnv: 1.3,   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
+                  // the art deco kit's parts: panels (wood, or metal with no grain), polished trim, frosted lamps, the lever's ball
+                  wood: 0x1c1e22, woodMap: false, woodRough: 0.34, woodMetal: 0.9, woodEnv: 1.2, woodCoat: 0, trim: 0xf0f1f4, trimRough: 0.14, trimEnv: 1.7,
+                  lamp: 0xffcf9a, lampLit: 1.0, knob: 0x8fa68e },   // the ball in the page's sage
+    // the default look: the art deco kit in metal. Gunmetal panels, chrome trim, a dark grey studio round it
+    charcoal:   { ornament: 'artdeco', room: 'atelier', stage: 'studio', rig: [0.5, 0.2, 0.3], fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35,   // the claw rests lower, clear of the roof
+                  body: 0x101010, steel: 0xeef0f4, steelRough: 0.18, steelMetal: 1, steelEnv: 1.8, floor: 0x1e1e1e, inner: 0.1 },
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
     win95:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet', pixel: true },
-    press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,                     // near-black cabinet, paper trim, the deco front on
-                  roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
+    // Broadsheet: the same kit as a 1940s cabinet. Walnut under a satin varnish (the grain is a baked image only
+    // this look fetches), nickel trim, the lever's ball in the page's one red
+    press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
+                  roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'artdeco', room: 'pressroom', stage: 'paper', rig: [0.95, 0.3, 0.5],
+                  fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35, inner: 0.16,
+                  wood: 0x4f3423, woodMap: true, woodRough: 0.42, woodMetal: 0, woodEnv: 0.55, woodCoat: 0.7, trim: 0xd9d5cb, trimRough: 0.16, trimEnv: 1.0,
+                  steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7, knob: 0x8b1a1a },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
     // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
     foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xeef1f8, steelRough: 0.16, steelMetal: 1, steelEnv: 2.2,   // the claw and gantry as polished chrome: it shows the room, pushed bright so it never sinks into the dark
@@ -188,7 +278,12 @@
                   rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, topY: 4.35,   /* the claw rests lower here, clear of the marquee */ prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
-  function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
+  // no --look means charcoal, the look with no stylesheet. But while another look's sheet is still on its way the
+  // variable is empty too: then the machine waits as the bare cabinet, and does not dress (and download) as charcoal
+  function look() {
+    var v = getComputedStyle(document.documentElement).getPropertyValue('--look').trim();
+    return v || (document.documentElement.hasAttribute('data-theme') ? 'default' : 'charcoal');
+  }
   function finish() { var f = Object.assign({}, FINISH.default); Object.assign(f, FINISH[look()] || {}); return f; }
   var plate = '';   // the post pass a look asks for on the overlay: '' (none), 'engraving' or 'glow'
   var shell = new THREE.Group();  // the procedural cabinet: plinth, posts, frame; stands in until the modelled one loads
@@ -237,7 +332,7 @@
       var f = finish();
       BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
       PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); m.envMapIntensity = f.prizeEnv; m.roughness = f.prizeRough; });
-      S.topY = f.topY;   // where the claw rests and carries
+      topYWant = f.topY;   // where the claw rests and carries; eased in update()
       STEEL.envMapIntensity = f.steelEnv; STEEL.roughness = f.steelRough; STEEL.metalness = f.steelMetal;
       pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
@@ -245,6 +340,9 @@
       setEnvironment(f.room);
       if (f.spots && !arcade) buildArcade();
       if (arcade) arcade.visible = !!f.spots;
+      if (f.stage && !stages[f.stage]) buildStage(f.stage);
+      for (var sn in stages) stages[sn].visible = (sn === f.stage);
+      stageLamps.forEach(function (l) { l.color.setHex(f[l.userData.key]); });
       if (f.bloom && !bloom) buildBloom();
       if (bloom) {
         bloom.on = !!f.bloom;
@@ -273,7 +371,7 @@
         var ribbed = f.ribs ? ribTex : null;
         if (cabMats.body.normalMap !== ribbed) { cabMats.body.normalMap = ribbed; cabMats.body.needsUpdate = true; }
         if (ribbed) { ribTex.repeat.set(f.ribs, f.ribs); cabMats.body.normalScale.set(f.ribDepth || 0.6, f.ribDepth || 0.6); }
-        if (f.ornament && !ornaments[f.ornament]) loadOrnaments();   // the ornament sets live in a second file, fetched the first time a look asks
+        if (f.ornament && !ornaments[f.ornament]) loadOrnament(f.ornament);   // each ornament set is a file of its own, fetched the first time a look asks
         for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
         if (f.sticker && !sticker) buildSticker();
         if (sticker) sticker.visible = !!f.sticker;
@@ -294,14 +392,24 @@
         }
         if (cabMats.gold) { cabMats.gold.color.setHex(f.gold); cabMats.gold.metalness = 1; cabMats.gold.roughness = 0.3; cabMats.gold.envMapIntensity = 1.2; }
         if (cabMats.foil_body) {   // the kit's panels: gloss-black lacquer, so every edge and face carries a piece of the room
-          var fb = cabMats.foil_body;
-          if (!fb.isMeshPhysicalMaterial) {   // the clear coat needs the physical material; the file brings the standard one
-            var ph = new THREE.MeshPhysicalMaterial(); THREE.MeshStandardMaterial.prototype.copy.call(ph, fb);
-            ph.defines = { STANDARD: '', PHYSICAL: '' };
-            cabinet.traverse(function (o) { if (o.isMesh && o.material === fb) o.material = ph; });
-            cabMats.foil_body = fb = ph;
-          }
+          var fb = physical('foil_body');
           fb.color.setHex(0x0b0820); fb.roughness = 0.26; fb.envMapIntensity = 1.0; fb.clearcoat = 1; fb.clearcoatRoughness = 0.12;
+        }
+        if (cabMats.deco_wood) {   // the art deco kit: one shell, its panels in wood or in metal by look
+          var dw = physical('deco_wood');   // varnish is a clear coat
+          if (f.woodMap && !woodTex && THREE.TextureLoader) {   // the grain, baked in the kit's own UV layout; fetched only by a look that shows wood
+            woodTex = new THREE.TextureLoader().load(ROOT + 'img/claw/deco-walnut.webp', function () { woodReady = true; tintGlass(); });
+            woodTex.encoding = THREE.sRGBEncoding; woodTex.flipY = false; woodTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          }
+          var grain = (f.woodMap && woodReady) ? woodTex : null;   // until the image is here, and if it never comes, the wood is its flat colour
+          if (dw.map !== grain) { dw.map = grain; dw.needsUpdate = true; }
+          dw.color.setHex(grain ? 0xffffff : f.wood); dw.roughness = f.woodRough; dw.metalness = f.woodMetal; dw.envMapIntensity = f.woodEnv;
+          dw.clearcoat = f.woodCoat; dw.clearcoatRoughness = 0.2;
+          var dt = cabMats.deco_trim; dt.color.setHex(f.trim); dt.metalness = 1; dt.roughness = f.trimRough; dt.envMapIntensity = f.trimEnv;
+          var dl = cabMats.deco_lamp;   // frosted glass, lit from inside
+          dl.color.setHex(0x6b665c); dl.emissive.setHex(f.lamp); dl.emissiveIntensity = f.lampLit; dl.roughness = 0.6; dl.metalness = 0;
+          cabMats.deco_dark.color.setHex(0x0b0b0b); cabMats.deco_dark.roughness = 0.45; cabMats.deco_dark.metalness = 0; cabMats.deco_dark.envMapIntensity = 0.6;
+          var dk = cabMats.deco_knob; dk.color.setHex(f.knob); dk.roughness = 0.25; dk.metalness = 0; dk.envMapIntensity = 0.9;
         }
       }
       setPlate(plate);
@@ -365,10 +473,11 @@
   /* ---------- the modelled cabinet ----------
      Built in Blender (models/claw-cabinet.blend) to the same dimensions: a neutral shell with bevels and
      baked ambient occlusion, plus ornament nodes named deco_<set> that a look can ask for (Broadsheet's
-     1930s art deco front is the first). models/optimize-glb.py splits the export in two: claw-cabinet.glb
-     is the shell every visitor downloads; claw-cabinet-deco.glb holds the ornament sets and is fetched the
-     first time a look asks for one. Loaded when the r128 GLTFLoader is on the page; until then, and if it
-     fails, the procedural shell stands in. The claw, gantry, floor and prizes stay procedural. */
+     1930s art deco front is the first). models/optimize-glb.py splits the export: claw-cabinet.glb is the
+     shell every visitor downloads; each ornament set is a file of its own, claw-deco-<set>.glb, fetched the
+     first time a look asks for that set, so no look pays for another look's kit. Loaded when the r128
+     GLTFLoader is on the page; until then, and if it fails, the procedural shell stands in. The claw,
+     gantry, floor and prizes stay procedural. */
   var ROOT = document.documentElement.getAttribute('data-root') || '';
   // register a node tree's meshes: shadows, and its materials by name (a name already known is shared, so
   // the look tints one material and both files follow)
@@ -397,13 +506,23 @@
       renderer.compile(scene, camera);   // the cabinet's shaders compile now, while the machine is still a scroll away
     }, undefined, function (e) { console.warn('Claw cabinet did not load:', e); });
   }
-  var ribTex;
-  var ornamentsState = '';   // '', 'loading' or 'done'
-  function loadOrnaments() {
-    if (ornamentsState || !cabinet || !THREE.GLTFLoader) return;
-    ornamentsState = 'loading';
-    new THREE.GLTFLoader().load(ROOT + 'models/claw-cabinet-deco.glb', function (gltf) {
-      ornamentsState = 'done';
+  var ribTex, woodTex, woodReady = false;
+  // the clear coat needs the physical material; the files bring the standard one. Swapped once, wherever the model uses it
+  function physical(name) {
+    var m = cabMats[name];
+    if (m.isMeshPhysicalMaterial) return m;
+    var ph = new THREE.MeshPhysicalMaterial(); THREE.MeshStandardMaterial.prototype.copy.call(ph, m);
+    ph.defines = { STANDARD: '', PHYSICAL: '' };
+    cabinet.traverse(function (o) { if (o.isMesh && o.material === m) o.material = ph; });
+    return (cabMats[name] = ph);
+  }
+  var topYWant = S.topY;
+  var ornamentState = {}, ornamentTries = {};   // per set: 'loading' or 'done'; and how often its fetch has failed
+  function loadOrnament(set) {
+    if (ornamentState[set] || !cabinet || !THREE.GLTFLoader) return;
+    ornamentState[set] = 'loading';
+    new THREE.GLTFLoader().load(ROOT + 'models/claw-deco-' + set + '.glb', function (gltf) {
+      ornamentState[set] = 'done';
       // ornament is dressing: it receives light but never throws shadows onto the playfield
       gltf.scene.children.slice().forEach(function (n) {
         if (n.name.indexOf('deco_') !== 0) return;
@@ -412,7 +531,12 @@
       if (ornaments.foil && !neon) buildNeon();
       tintGlass();
       renderer.compile(scene, camera);
-    }, undefined, function (e) { ornamentsState = ''; console.warn('Claw ornaments did not load:', e); });
+    }, undefined, function (e) {
+      delete ornamentState[set]; console.warn('Claw ornament did not load:', e);
+      // try again, twice, a little later each time: tintGlass asks for the set only if the look on the page still wants it
+      ornamentTries[set] = (ornamentTries[set] || 0) + 1;
+      if (ornamentTries[set] <= 2) setTimeout(tintGlass, 4000 * ornamentTries[set]);
+    });
   }
 
 
@@ -612,7 +736,7 @@
   var ink = null, inkShader = null, inkVideo = null, inkStarting = false;
   function stageInk() { var c = getComputedStyle(root); return { ink: c.color, paper: stageColor() }; }
   // the cut is counted in lines per canvas height; keep the pitch near 3px whatever the stage's size
-  function inkLines() { return Math.round(Math.max(80, Math.min(220, stage.getBoundingClientRect().height / 3.2))); }
+  function inkLines() { return Math.round(Math.max(80, Math.min(220, canvas.getBoundingClientRect().height / 3.2))); }
   var inkKind = '';
   // what each pass is: the engraving in the stage's ink and paper; the glow a bloom on the brightest tenth of the frame
   var PASSES = {
@@ -644,7 +768,7 @@
       inkVideo.srcObject = canvas.captureStream();
       ink = document.createElement('canvas');
       ink.className = 'claw__ink'; ink.setAttribute('aria-hidden', 'true');
-      var r = stage.getBoundingClientRect();
+      var r = canvas.getBoundingClientRect();   // the picture's box, as in resize()
       ink.style.width = Math.round(r.width) + 'px'; ink.style.height = Math.round(r.height) + 'px';
       canvas.parentNode.insertBefore(ink, canvas.nextSibling);
       // a media component of our own: the library's video source only takes a URL, this one hands it the element
@@ -896,6 +1020,7 @@
 
   function update(dt) {
     st += dt;
+    if (S.topY !== topYWant) { S.topY += (topYWant - S.topY) * Math.min(1, dt * 5); if (Math.abs(topYWant - S.topY) < 0.002) S.topY = topYWant; }
     switch (state) {
       case 'idle': {
         var mx = (keys.right || pad.right ? 1 : 0) - (keys.left || pad.left ? 1 : 0);
@@ -1040,7 +1165,7 @@
 
   /* ---------- sizing / loop ---------- */
   function resize() {
-    var r = stage.getBoundingClientRect();
+    var r = canvas.getBoundingClientRect();   // the picture's own box: on a narrow screen the stage also holds the control deck
     var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false);
     if (pixelPass) pixelPass.setSize(w, h);
@@ -1054,6 +1179,10 @@
     var dist = Math.max((ff.fitW || 3.9) / Math.tan(hf / 2), (ff.fitH || 4.75) / Math.tan(vf / 2)) * 1.02;
     camera.position.copy(camTarget).addScaledVector(camDir, dist);
     camera.lookAt(camTarget);
+    // on a wide stage a look can stand the machine left of centre, in the room its controls leave free (0.73: the
+    // kit's width on screen, as a share of the stage's height)
+    var slide = (ff.slide && w > h * 1.3) ? Math.round(ff.slide * (w - h * 0.73) / 2) : 0;
+    if (slide) camera.setViewOffset(w, h, slide, 0, w, h); else if (camera.view) camera.clearViewOffset();
     camera.updateProjectionMatrix();
     aimHalos();
   }
