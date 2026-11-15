@@ -24,6 +24,10 @@
     html.setAttribute('data-theme', initial);
     // document.write keeps the stylesheet render-blocking, so there is no flash of charcoal
     document.write('<link rel="stylesheet" href="' + href(initial) + '" data-theme-css="' + initial + '">');
+    // a page may name a picture that a look paints on its first screen (data-preload-<look> on this script tag):
+    // the look's stylesheet names it too late, so it is fetched beside the sheet, not after it
+    var art = document.currentScript && document.currentScript.getAttribute('data-preload-' + initial);
+    if (art) document.write('<link rel="preload" as="image" fetchpriority="low" href="' + art + '">');   // low: the sheet still goes first
     loaded[initial] = true;
   }
 

@@ -85,6 +85,7 @@ p { max-width: 62ch; text-wrap: pretty; }
 .hero__nav a { text-decoration: none; opacity: 0.92; transition: opacity var(--t-hover) ease; }
 @media (hover: hover) and (pointer: fine) { .hero__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.2em; } }
 .hero__bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 1.1rem; padding-bottom: 1.6rem; }
+.hero__back { display: none; }   /* a ground for a look that builds the hero as an object behind its words; unused unless a look shows it */
 .hero__art { display: none; }   /* an art window for a look that frames the portrait in the hero; unused unless a look shows it */
 .hero__row { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; }
 .hero__lead { max-width: 28ch; font-size: var(--step-body); line-height: 1.45; }
@@ -203,7 +204,8 @@ p { max-width: 62ch; text-wrap: pretty; }
   .work { gap: 88px; padding-top: 3rem; }
   .case { display: flex; flex-direction: column; gap: 1.25rem; align-items: stretch; }
   .case__visual, .case--2 .case__visual, .case--3 .case__visual { height: auto; min-height: 0; width: 110%; aspect-ratio: 4 / 5; max-height: 56svh; }
-  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 440px; max-height: none; }
+  .case__visual--ball { width: 100%; aspect-ratio: auto; height: 62svh; min-height: 540px; max-height: none; }   /* tall enough that the ball keeps its size when the two buttons wrap on a short phone */
+  .ball__view { min-height: 220px; }
   .case__visual--peek { width: 100%; aspect-ratio: auto; height: 58svh; min-height: 400px; }
   .case__visual svg { width: 100%; margin-left: 0; height: 100%; }
   .case__cluster { gap: 1rem; }
@@ -245,7 +247,10 @@ p { max-width: 62ch; text-wrap: pretty; }
 @media (max-width: 900px) {
   .case.case--2 .case__visual--claw { width: 100%; margin-left: 0; aspect-ratio: auto; height: auto; max-height: none; }
   .claw { padding-left: 0; }
-  .claw__stage { aspect-ratio: 1 / 1; }
+  /* on a narrow screen the pad would cover the prizes, so the stage grows a control deck under the square picture */
+  .claw__stage { aspect-ratio: auto; display: flex; flex-direction: column; }
+  .claw__canvas { height: auto; aspect-ratio: 1 / 1; }
+  .claw__controls { position: static; justify-content: space-between; padding: 10px 12px 12px; }
   .claw__hint { position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
@@ -257,6 +262,8 @@ p { max-width: 62ch; text-wrap: pretty; }
   /* the render is cut out of its ground; only the flat crop at the shoulders is faded away */
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
 .who__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.who__pics canvas { display: none; }   /* a look that prints the portrait in foil draws it here (js/hero-foil.js); no other look shows it */
+.who__back { display: none; }   /* a ground for a look that builds the card as an object behind its words; unused unless a look shows it */
 .who__name { font-size: var(--step-head); font-weight: var(--weight-strong); line-height: 1.1; letter-spacing: -0.02em; }
 .who__role { font-size: var(--step-body); }
 .who__prev { font-size: var(--step-body); color: var(--muted); }
@@ -361,7 +368,7 @@ html:not([data-theme]) .claw__hint { position: static; max-width: none; padding:
   html:not([data-theme]) .contact { min-height: 80svh; }
 }
 </style>
-<script src="js/theme.js"></script>
+<script src="js/theme.js" data-preload-esports="img/portrait.webp"></script>
 <script src="js/analytics.js" defer></script>
 <script src="js/hero-foil.js" defer></script>
 </head>
@@ -383,6 +390,7 @@ html:not([data-theme]) .claw__hint { position: static; max-width: none; padding:
       </nav>
     </div>
     <div class="hero__bottom wrap">
+      <span class="hero__back" aria-hidden="true"></span>
       <div class="hero__art" aria-hidden="true"></div>
       <div class="hero__row">
         <p class="hero__lead" data-rise style="--i:0">Product design leader in London. I lead design teams and measure design by what it changes for the business.</p>
@@ -512,6 +520,7 @@ html:not([data-theme]) .claw__hint { position: static; max-width: none; padding:
   <section class="about wrap" id="about" aria-label="About">
     <div class="about__row about__row--1">
       <div class="who" data-reveal>
+        <span class="who__back" aria-hidden="true"></span>
         <div class="who__pics">
           <img class="who__pic who__pic--mesh" src="img/portrait-mesh.webp" width="1254" height="1254" alt="Luiz Kim, sculpted portrait: grey clay on one side, blue wireframe on the other" loading="lazy">
         </div>

@@ -1153,7 +1153,7 @@
 
   /* ---------- sizing / loop ---------- */
   function resize() {
-    var r = stage.getBoundingClientRect();
+    var r = canvas.getBoundingClientRect();   // the picture's own box: on a narrow screen the stage also holds the control deck
     var w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false);
     if (pixelPass) pixelPass.setSize(w, h);
