@@ -371,7 +371,7 @@ html:not([data-theme]) .ball__eyebrow { font-size: var(--step-small); letter-spa
 
 /* the three stages are one family of lacquer trays: a step up from the ground, one gloss highlight, no frame */
 html:not([data-theme]) .work { gap: var(--rhythm); padding-top: 0; padding-bottom: var(--rhythm); }
-html:not([data-theme]) .case { align-items: center; }
+@media (min-width: 901px) { html:not([data-theme]) .case { align-items: center; } }
 html:not([data-theme]) .case__visual { position: relative; }
 html:not([data-theme]) .case__visual::after { content: ""; position: absolute; inset: 0; z-index: 2; background: var(--sheen); pointer-events: none; }
 html:not([data-theme]) .case__visual--claw::after { display: none; }
@@ -416,7 +416,7 @@ html:not([data-theme]) .contact__foot, html:not([data-theme]) .contact__foot :is
   html:not([data-theme]) .stats__rows { grid-template-columns: minmax(0, 1fr); row-gap: 3rem; }
 }
 @media (max-width: 700px) {
-  html:not([data-theme]) .hero__pic { background-position: center top 4.5rem; background-size: auto 68%; }
+  html:not([data-theme]) .hero__pic { background-position: center top 4.5rem; background-size: auto 66%; }
   html:not([data-theme]) .hero__scrim { height: 62%; }
   html:not([data-theme]) .hero__name { font-size: 25vw; }
   html:not([data-theme]) .contact { min-height: 80svh; }
@@ -431,8 +431,13 @@ html:not([data-theme]) .claw__hint b { color: var(--ink); }
 html:not([data-theme]) .who { width: min(320px, 100%); align-items: flex-start; text-align: left; }
 html:not([data-theme]) .who__link { margin-left: -11px; }
 html:not([data-theme]) .about__row { grid-template-columns: 41.666% minmax(0, 1fr); }
+@media (min-width: 701px) and (max-width: 1000px) {
+  html:not([data-theme]) .hero__pic { background-size: auto min(86%, 96vw); background-position: right -6vw bottom; }
+}
 @media (max-width: 900px) {
-  html:not([data-theme]) .claw__hint { padding-left: 0; }
+  /* stacked: the three trays run edge to edge, the same width */
+  html:not([data-theme]) :is(.case__visual, .case.case--2 .case__visual--claw) { width: auto; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px), var(--m))); }
+  html:not([data-theme]) .ball { padding-inline: max(16px, var(--m)); }
 }
 @media (max-width: 800px) {
   html:not([data-theme]) .who { align-self: flex-start; }
