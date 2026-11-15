@@ -2,7 +2,7 @@ Claude outputs/
 .DS_Store
 *.blend1
 
-# raw Blender export of the cabinet; models/optimize-glb.py turns it into the two files the site loads
+# raw Blender export of the cabinet; models/optimize-glb.py turns it into the files the site loads (the cabinet, and one file per ornament set)
 models/claw-cabinet-export.glb
 
 # working Blender file for the esports cabinet; never committed

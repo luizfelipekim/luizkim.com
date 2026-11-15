@@ -3,10 +3,11 @@
 
     python3 models/optimize-glb.py models/claw-cabinet-export.glb   (the raw Blender export; kept out of git)
 
-Reads the Blender export and writes two files the site loads with the vendored r128 GLTFLoader:
-  models/claw-cabinet.glb        the neutral cabinet only (what every visitor downloads)
-  models/claw-cabinet-deco.glb   the deco_* ornament nodes, fetched only when a look asks for one
-Both are quantized (KHR_mesh_quantization: int16 positions, int8 normals, uint16 UVs, no decoder needed)
+Reads the Blender export and writes the files the site loads with the vendored r128 GLTFLoader:
+  models/claw-cabinet.glb       the neutral cabinet only (what every visitor downloads)
+  models/claw-deco-<set>.glb    one file per ornament node deco_<set>, fetched only when a look asks for that set
+A set that is not in the export keeps the file it has, so one set can be rebuilt without touching the others.
+All are quantized (KHR_mesh_quantization: int16 positions, int8 normals, uint16 UVs, no decoder needed)
 and their baked ambient-occlusion JPEGs are downscaled (the cabinet is at most ~700 px wide on screen).
 Needs numpy and Pillow (both in the stock Anaconda python)."""
 import sys, json, struct, io, os
@@ -115,7 +116,9 @@ js, bin_ = read_glb(src)
 names = [n['name'] for n in js['nodes']]
 deco = [n for n in names if n.startswith('deco_')]; cab = [n for n in names if n not in deco]
 print('cabinet nodes', cab, '| ornament nodes', deco)
-for kind, nodes, name in (('cabinet', cab, 'claw-cabinet.glb'), ('deco', deco, 'claw-cabinet-deco.glb')):
+files = [('cabinet', cab, 'claw-cabinet.glb')] if cab else []
+files += [('deco', [n], 'claw-deco-' + n[5:] + '.glb') for n in deco]
+for kind, nodes, name in files:
     o, bb = build(js, bin_, nodes, kind)
     size = write_glb(os.path.join(out_dir, name), o, bb)
     print(f"  wrote {name}: {size//1024} KB")
