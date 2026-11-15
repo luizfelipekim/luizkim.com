@@ -44,7 +44,7 @@
     return [c.r, c.g, c.b].reduce(function (sum, v, i) { v = v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); return sum + v * [0.2126, 0.7152, 0.0722][i]; }, 0);
   }
   var tintGlass = function () {};
-  document.addEventListener('theme:change', function () { renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1); tintGlass(); });
+  document.addEventListener('theme:change', function () { renderer.setClearColor(new THREE.Color().setStyle(stageColor()), 1); tintGlass(); resize(); });
   renderer.outputEncoding = THREE.sRGBEncoding;
   // a filmic curve so lit whites roll off instead of clipping flat; shadows so the prizes and claw sit on something
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -124,7 +124,7 @@
     default:    { floor: 0x262626, hole: 0x0e0e0e, steel: 0xdedbd4, prizes: [0xdedbd4, 0xb8b4ac],
                   body: 0x202020, paper: 0xdedbd4, ink: 0x141414, roughness: 0.8, metalness: 0, env: 0.6, steelEnv: 1, glass: 0.16, ornament: null,
                   floorRough: 0.95, floorMetal: 0, room: 'default', rig: [1.1, 0.4, 0.5],   // key, fill, hemisphere
-                  neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
+                  neonA: 0x8fe4ff, neonB: 0xff9df0, glow: 0xffffff, gold: 0xffcf3a, lit: 1.6, prizeEnv: 1, prizeRough: 0.55, glassEnv: 1.3 },   // the lit parts of an ornament set: two tube colours, bulbs and type, the tier band
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
@@ -134,10 +134,10 @@
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet' },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
     // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
-    foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, prizes: [0x8f72ff, 0xff5fd6, 0x3fcfff, 0xbfb0ff],   // the iris dealt round the pile, deep enough that the lights do not bleach them
-                  floor: 0x1a0f4e, floorRough: 0.25, floorMetal: 0.5, roughness: 0.3, metalness: 0.4, env: 0.7, glass: 0.2,
+    foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xf4f1ff, prizes: [0x5a2bff, 0xff1fb4, 0x00a8ff, 0x9a6bff],   // the iris dealt round the pile, deep enough that the lights do not bleach them
+                  floor: 0x1a0f4e, floorRough: 0.25, floorMetal: 0.5, roughness: 0.24, metalness: 0.85, env: 1.1, glass: 0.2,
                   neonA: 0x00c8ff, neonB: 0xff00c0, glow: 0xe8e2ff, ornament: 'foil', lit: 0.6, room: 'foil', bloom: true,   // pure cyan and pink, the minor channel at zero (the sRGB curve lifts any small channel toward white); the tubes skip the tone curve
-                  rig: [0.4, 0.15, 0.22] }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
+                  rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   function look() { return getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default'; }
@@ -188,7 +188,7 @@
       plate = wantsPlate();
       var f = finish();
       BODY.color.setHex(f.body); FLOOR.color.setHex(f.floor); HOLE.color.setHex(f.hole); STEEL.color.setHex(f.steel);
-      PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); });
+      PRIZE.forEach(function (m, i) { m.color.setHex(f.prizes[i % f.prizes.length]); m.envMapIntensity = f.prizeEnv; m.roughness = f.prizeRough; });
       STEEL.envMapIntensity = f.steelEnv;
       pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
@@ -204,8 +204,8 @@
         neon.lights.forEach(function (l) { l.color.setHex(f[l.userData.key]); });
         neon.halos.forEach(function (h) { h.material.color.setHex(f[h.userData.key]); h.visible = !(f.bloom && bloom); h.material.opacity = 0.6; });   // the bloom replaces the halos where it runs
       }
-      inner.material.opacity = plate === 'engraving' ? 0.1 : (light ? 0.42 : 0.08);
-      GLASS.opacity = f.glass;
+      inner.material.opacity = plate === 'engraving' ? 0.1 : (f.inner != null ? f.inner : (light ? 0.42 : 0.08));
+      GLASS.opacity = f.glass; GLASS.envMapIntensity = f.glassEnv;
       LINE.color.setHex(light ? 0x1c1c1c : 0x4a4a46);
       // the clear colour is not tone mapped; on the plate it is pure white so the engraving leaves it as clean paper
       renderer.setClearColor(plate === 'engraving' ? new THREE.Color(0xffffff) : new THREE.Color().setStyle(stageColor()), 1);
@@ -214,8 +214,18 @@
           var m = cabMats[pair[0]];
           m.color.setHex(pair[1]); m.roughness = f.roughness; m.metalness = f.metalness; m.envMapIntensity = f.env;
         });
+        // a look can ask for a ribbed surface on the body (the comb of a foil card): one small tiling normal map, fetched the first time it is asked for
+        if (f.ribs && !ribTex && THREE.TextureLoader) {
+          ribTex = new THREE.TextureLoader().load(ROOT + 'img/claw/foil-rib-normal.png');
+          ribTex.wrapS = ribTex.wrapT = THREE.RepeatWrapping; ribTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        }
+        var ribbed = f.ribs ? ribTex : null;
+        if (cabMats.body.normalMap !== ribbed) { cabMats.body.normalMap = ribbed; cabMats.body.needsUpdate = true; }
+        if (ribbed) { ribTex.repeat.set(f.ribs, f.ribs); cabMats.body.normalScale.set(f.ribDepth || 0.6, f.ribDepth || 0.6); }
         if (f.ornament && !ornaments[f.ornament]) loadOrnaments();   // the ornament sets live in a second file, fetched the first time a look asks
         for (var name in ornaments) ornaments[name].visible = (name === f.ornament);
+        if (f.sticker && !sticker) buildSticker();
+        if (sticker) sticker.visible = !!f.sticker;
         // an ornament set's lit parts: black surfaces that emit the look's colours; the tier band is gold metal
         var lit = { neon_a: f.neonA, neon_b: f.neonB, glow: f.glow };
         for (var ln in lit) if (cabMats[ln]) {
@@ -326,6 +336,7 @@
       renderer.compile(scene, camera);   // the cabinet's shaders compile now, while the machine is still a scroll away
     }, undefined, function (e) { console.warn('Claw cabinet did not load:', e); });
   }
+  var ribTex;
   var ornamentsState = '';   // '', 'loading' or 'done'
   function loadOrnaments() {
     if (ornamentsState || !cabinet || !THREE.GLTFLoader) return;
@@ -341,6 +352,94 @@
       tintGlass();
       renderer.compile(scene, camera);
     }, undefined, function (e) { ornamentsState = ''; console.warn('Claw ornaments did not load:', e); });
+  }
+
+
+  /* ---------- holographic sticker ----------
+     The marquee artwork as a printed collectible, in three layers: satin printed ink (the artwork, lit from
+     behind like a marquee so it reads at any angle), holographic foil on the border, the pink accents and
+     the clouds, and a clear glossy laminate over both. The foil never animates by itself: its colours come
+     from the grating equation, driven by the view and by one light that follows the pointer and the claw.
+     The data map (img/claw/sticker-lk-foil.webp): R foil strength (1 border and accents, 0.85 clouds,
+     0.2 lettering, which gets a thin-film sheen only), G hex emboss weight (1 border, 0.5 clouds). */
+  var sticker = null, foilLight = new THREE.Vector3(0.1, 0.45, 1), foilAim = { x: 0.1, y: 0.25 };
+  stage.addEventListener('pointermove', function (e) {
+    var r = stage.getBoundingClientRect();
+    foilAim.x = ((e.clientX - r.left) / r.width) * 2 - 1; foilAim.y = 1 - ((e.clientY - r.top) / r.height) * 2;
+  }, { passive: true });
+  function buildSticker() {
+    if (!cabinet || !THREE.TextureLoader) return;
+    var loader = new THREE.TextureLoader(), aniso = renderer.capabilities.getMaxAnisotropy();
+    var art = loader.load(ROOT + 'img/claw/sticker-lk.webp'); art.encoding = THREE.sRGBEncoding; art.anisotropy = aniso;
+    var foil = loader.load(ROOT + 'img/claw/sticker-lk-foil.webp'); foil.anisotropy = aniso;   // linear data, see above
+    var mat = new THREE.MeshPhysicalMaterial({ map: art, alphaTest: 0.5, metalness: 0, roughness: 0.65, clearcoat: 1, clearcoatRoughness: 0.14, envMapIntensity: 0.9 });
+    mat.extensions = { derivatives: true };
+    // x: colour cycles per unit of grating phase, y: foil brightness, z: hex cells across the sticker's height, w: lettering sheen
+    var foilK = new THREE.Vector4(1.2, 0.7, 34, 0.35);
+    mat.onBeforeCompile = function (sh) {
+      sh.uniforms.uFoilMap = { value: foil }; sh.uniforms.uLight = { value: foilLight }; sh.uniforms.uK = { value: foilK };
+      mat.userData.shader = sh;
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', [
+          '#include <common>',
+          'uniform sampler2D uFoilMap; uniform vec3 uLight; uniform vec4 uK;',
+          'float fHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
+          '// the foil palette, art-directed rather than a full spectrum: cyan, violet, magenta, gold, round again',
+          'vec3 fPal(float t){ t = fract(t) * 4.0; float i = floor(t), f = smoothstep(0.0, 1.0, fract(t));',
+          '  vec3 c0 = vec3(0.0, 0.85, 1.0), c1 = vec3(0.42, 0.18, 1.0), c2 = vec3(1.0, 0.08, 0.72), c3 = vec3(1.0, 0.72, 0.12);',
+          '  vec3 a = i < 1.0 ? c0 : i < 2.0 ? c1 : i < 3.0 ? c2 : c3; vec3 b = i < 1.0 ? c1 : i < 2.0 ? c2 : i < 3.0 ? c3 : c0;',
+          '  return mix(a, b, f); }',
+          '// smooth value noise: large soft patches, no pixel-scale detail',
+          'float fNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);',
+          '  return mix(mix(fHash(i), fHash(i + vec2(1.0, 0.0)), f.x), mix(fHash(i + vec2(0.0, 1.0)), fHash(i + vec2(1.0, 1.0)), f.x), f.y); }',
+          '// a hex grid: x,y the cell centre, z the distance to the nearest cell edge (0.5 at the centre)',
+          'vec3 fHex(vec2 p){ vec2 s = vec2(1.0, 1.7320508); vec2 h = 0.5 * s;',
+          '  vec2 a = mod(p, s) - h, b = mod(p - h, s) - h; vec2 g = dot(a, a) < dot(b, b) ? a : b;',
+          '  vec2 q = abs(g); float e = 0.5 - max(dot(q, normalize(s)), q.x); return vec3(p - g, e); }'
+        ].join('\n'))
+        .replace('#include <emissivemap_fragment>', [
+          '#include <emissivemap_fragment>',
+          'vec3 fk = texture2D(uFoilMap, vUv).rgb;',
+          'float foilAmt = smoothstep(0.5, 0.8, fk.r);                 // border, accents, clouds',
+          'float sheenAmt = fk.r * (1.0 - foilAmt);                     // the lettering',
+          'vec2 sp = (vUv - 0.5) * vec2(6.85, 1.0);                      // sticker space, square units',
+          'vec3 fV = normalize(vViewPosition); vec3 fL = normalize(uLight); vec3 fH = normalize(fL + fV);',
+          '// the surface frame from the uv derivatives, so the grating follows the print however the plane sits',
+          'vec3 dp1 = dFdx(-vViewPosition), dp2 = dFdy(-vViewPosition); vec2 du1 = dFdx(vUv), du2 = dFdy(vUv);',
+          'vec3 fTu = normalize(dp1 * du2.y - dp2 * du1.y); vec3 fBu = normalize(cross(normal, fTu));',
+          '// hex emboss: each cell turns its grating a little, the edges are pressed darker; faded out where cells get smaller than a few pixels',
+          'vec3 hx = fHex(sp * uK.z); float hxFade = (1.0 - smoothstep(0.08, 0.2, fwidth(sp.y * uK.z))) * fk.g;',
+          'float hxTurn = (fHash(hx.xy) - 0.5) * 0.35 * hxFade;',
+          'float hxEdge = mix(1.0, smoothstep(0.02, 0.12, hx.z), hxFade * 0.6);',
+          '// the foil is pressed in large patches, each with its own grating direction and pitch (smooth noise),',
+          '// so neighbouring patches catch different colours and each one shifts as the light moves',
+          'float gA = 6.2831853 * fNoise(sp * 0.9 + 1.7) + hxTurn; vec2 gd = vec2(cos(gA), sin(gA));',
+          'float gPitch = 0.7 + 0.6 * fNoise(sp * 1.4 + 9.2);',
+          'vec3 fT = gd.x * fTu + gd.y * fBu;',
+          '// first-order grating equation: d (sin in + sin out) = wavelength; the phase picks the colour',
+          'float fU = dot(fT, fL) + dot(fT, fV);',
+          'vec3 foilCol = fPal(fU * uK.x * gPitch + 0.8 * fNoise(sp * 0.7 + 4.4));',
+          'float fLobe = 0.45 + 0.55 * pow(max(dot(normal, fH), 0.0), 4.0);',
+          '// thin film, the oil-slick sheen (what MeshPhysicalMaterial.iridescence does in later three.js): colour from the film path length',
+          'float tf = 1.2 + 0.6 * dot(normal, fV) + 0.25 * fL.x + 0.15 * sp.x;',
+          'vec3 film = 0.5 + 0.5 * cos(6.2831853 * (tf + vec3(0.0, 0.33, 0.67)));',
+          'vec3 printInk = diffuseColor.rgb;',
+          'float keepInk = (1.0 - fk.g) * 0.5 * foilAmt;                // the clouds keep half their print under the foil',
+          'totalEmissiveRadiance += printInk * (1.0 - foilAmt + keepInk) * 0.5;                    // the print, backlit',
+          'diffuseColor.rgb = mix(printInk, vec3(0.28), foilAmt * (1.0 - keepInk));               // silver stock under the foil',
+          'metalnessFactor = foilAmt; roughnessFactor = mix(0.65, 0.3, foilAmt);',
+          'totalEmissiveRadiance += foilAmt * foilCol * mix(film, vec3(1.0), 0.85) * fLobe * hxEdge * uK.y;',
+          'totalEmissiveRadiance += sheenAmt * uK.w * film * pow(max(dot(normal, fH), 0.0), 3.0) * printInk;',
+          '#ifdef CLEARCOAT',
+          '  // the laminate: a few hairline scratches that only show in the highlight',
+          '  float fSc = fHash(floor(vec2(vUv.x * 6165.0 + vUv.y * 140.0, vUv.y * 14.0)));',
+          '  clearcoatNormal = normalize(clearcoatNormal + step(0.93, fSc) * vec3(0.05, 0.02, 0.0));',
+          '#endif'
+        ].join('\n'));
+    };
+    sticker = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.6 / 6.85), mat);
+    sticker.position.set(0, 6.5, 3.08); sticker.renderOrder = 1;
+    cabinet.add(sticker);
   }
 
   /* ---------- neon falloff ----------
@@ -839,7 +938,8 @@
     var vf = THREE.MathUtils.degToRad(camera.fov);
     var hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
     // fit the rotated cabinet: its half-width on screen at this yaw, and the taller of top frame and skirt from the target
-    var dist = Math.max(3.9 / Math.tan(hf / 2), 4.75 / Math.tan(vf / 2)) * 1.02;
+    var ff = finish(); camTarget.y = ff.fitY || 2.05;   // a look with a taller or wider kit names its own frame
+    var dist = Math.max((ff.fitW || 3.9) / Math.tan(hf / 2), (ff.fitH || 4.75) / Math.tan(vf / 2)) * 1.02;
     camera.position.copy(camTarget).addScaledVector(camDir, dist);
     camera.lookAt(camTarget);
     camera.updateProjectionMatrix();
@@ -860,6 +960,10 @@
     var dt = Math.min(0.05, clock.getDelta());
     if (!visible) return;
     update(dt);
+    if (sticker) {   // the foil's light eases toward the pointer and leans with the claw; with neither moving it holds still
+      var lx = foilAim.x * 0.9 + claw.x * 0.12, ly = 0.3 + foilAim.y * 0.6, k = Math.min(1, dt * 6);
+      foilLight.x += (lx - foilLight.x) * k; foilLight.y += (ly - foilLight.y) * k;
+    }
     render();
   }
   frame();
