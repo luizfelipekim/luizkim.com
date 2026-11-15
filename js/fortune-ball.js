@@ -442,8 +442,11 @@
   var idx = 0, state = 'idle', energy = 0, flip = 0, flipT = 0, held = false, holdStart = 0, last = null, shake = { x: 0, y: 0 }, t0 = performance.now(), prevPos = { x: 0, y: 0 };
   var PHI = 0.3063;
   function setQuestion(i) { qEl.classList.add('is-out'); setTimeout(function () { qEl.textContent = QA[i][0]; qEl.classList.remove('is-out'); }, 350);
-    answer = QA[i][1]; aEl.textContent = answer; countEl.textContent = (i + 1) + ' / ' + QA.length; }
-  setQuestion(0); qEl.classList.remove('is-out'); qEl.textContent = QA[0][0];
+    countEl.textContent = (i + 1) + ' / ' + QA.length; }
+  // an answer is written (in the window and in the caption) only while both are hidden: at the start, and when the
+  // ball has turned back and refilled. Written with its question, it could be read under the one before
+  function setAnswer(i) { answer = QA[i][1]; aEl.textContent = answer; }
+  setQuestion(0); setAnswer(0); qEl.classList.remove('is-out'); qEl.textContent = QA[0][0];
 
   function reveal() {
     if (state !== 'idle') return;
@@ -486,7 +489,7 @@
   });
 
   // phone motion where the browser allows it; dragging always works too
-  var motionOn = false;
+  var motionOn = false, motionOff = false;   // off: refused or not there in this visit, so the button does not come back
   function onMotion(e) {
     if (state !== 'idle') return;
     var a = e.accelerationIncludingGravity || e.acceleration; if (!a) return;
@@ -499,7 +502,7 @@
     btnMotion.hidden = false;
     btnMotion.addEventListener('click', function () {
       var start = function () { motionOn = true; window.addEventListener('devicemotion', onMotion); btnMotion.textContent = 'Now shake it'; hint.textContent = 'Shake your phone'; };
-      var fail = function () { btnMotion.hidden = true; hint.textContent = 'Motion is off here. Drag the ball to shake it'; };
+      var fail = function () { motionOff = true; btnMotion.hidden = true; hint.textContent = 'Motion is off here. Drag the ball to shake it'; };
       if (typeof DeviceMotionEvent.requestPermission === 'function') DeviceMotionEvent.requestPermission().then(function (s) { if (s === 'granted') start(); else fail(); }).catch(fail);
       else start();
     });
@@ -571,7 +574,7 @@
     if (state === 'flip') { flipT += dt; var k = ease(Math.min(1, flipT / 0.9)); flip = k * Math.PI; swirl = 1 - k; if (flipT >= 0.9) { state = 'clear'; flipT = 0; } }
     else if (state === 'clear') { flipT += dt; cover = 1 - ease(Math.min(1, flipT / 1.3)); swirl = cover * 0.6; if (flipT >= 1.3) { state = 'shown'; cover = 0; cap.classList.add('is-shown'); btnNext.hidden = false; } }
     else if (state === 'refill') { flipT += dt; var k2 = ease(Math.min(1, flipT / 0.9)); cover = k2; flip = Math.PI * (1 + k2); swirl = k2 * 0.5;
-      if (flipT >= 0.9) { state = 'idle'; flip = 0; cover = 1; energy = 0; swirl = 0; hint.classList.remove('is-off'); btnReveal.hidden = false; if (isTouch && typeof DeviceMotionEvent !== 'undefined' && !motionOn) btnMotion.hidden = false; } }
+      if (flipT >= 0.9) { state = 'idle'; flip = 0; cover = 1; energy = 0; swirl = 0; setAnswer(idx); hint.classList.remove('is-off'); btnReveal.hidden = false; if (isTouch && typeof DeviceMotionEvent !== 'undefined' && !motionOn && !motionOff) btnMotion.hidden = false; } }
     else { swirl += ((held ? energy : 0) - swirl) * 0.1; }
     body.rotation.y = flip;
     inkPhase += dt * (0.3 + swirl * 4);
