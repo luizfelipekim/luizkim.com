@@ -42,6 +42,26 @@
     held.push({ box: box, text: text });
   }
 
+  /* ---------- the light on the foil ----------
+     A look may print on holographic stock (the esports cards). Its stylesheet reads --lx and --ly, the
+     pointer's place on the screen from -1 to 1, as where the light sits. Eased, and running only while it moves. */
+  var foilEls = null, aim = [0, 0], lit = [0, 0], moving = false;
+  function stepLight() {
+    lit[0] += (aim[0] - lit[0]) * 0.12; lit[1] += (aim[1] - lit[1]) * 0.12;
+    moving = Math.abs(aim[0] - lit[0]) + Math.abs(aim[1] - lit[1]) > 0.002;
+    foilEls.forEach(function (el) { el.style.setProperty('--lx', lit[0].toFixed(3)); el.style.setProperty('--ly', lit[1].toFixed(3)); });
+    if (moving) requestAnimationFrame(stepLight);
+  }
+  function trackLight(e) {
+    if (!foilEls || !foilEls.length) {
+      foilEls = Array.prototype.slice.call(document.querySelectorAll('.hero__bottom, .who'));
+      if (!foilEls.length) { if (document.readyState !== 'loading') removeEventListener('pointermove', trackLight); return; }   // a page with no such card stops listening
+    }
+    aim[0] = (e.clientX / (innerWidth || 1)) * 2 - 1; aim[1] = (e.clientY / (innerHeight || 1)) * 2 - 1;
+    if (!moving) { moving = true; requestAnimationFrame(stepLight); }
+  }
+  addEventListener('pointermove', trackLight, { passive: true });
+
   function wire() {
     // fonts decide the wrap, but a slow font must not hold a headline back; `ready` only waits for a font
     // that layout has already asked for, so the page is laid out first

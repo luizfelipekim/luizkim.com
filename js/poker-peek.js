@@ -518,23 +518,46 @@
   const backFlat = new THREE.MeshStandardMaterial({ map: backTex, roughness: 1, metalness: 0, alphaTest: 0.5 });   // Solitaire: no gloss
   function faceMat(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: 0.55, metalness: 0, alphaTest: 0.5 }); }
 
-  // Foil: a metal with the folds as relief and a thin-film colour laid over the diffuse term. The hue
-  // turns with the angle between the eye and the (bumped) surface and slides along the folds, so it
-  // travels when the card lifts and when the camera drifts on parallax. The dark print is masked out
-  // by its own darkness. The arena room (RIGS.foil) gives the silver something to reflect.
+  // Foil: the same pressed holographic foil as the claw's marquee sticker (js/claw-machine.js). The stock is
+  // silver with the folds as relief; over it the foil is pressed in large soft patches, each with its own
+  // grating direction and pitch, and the grating equation picks the colour from one palette (cyan, violet,
+  // magenta, gold). The colour answers the view (the card lifting, the camera's parallax) and one light that
+  // follows the pointer; it never moves by itself. The dark print is masked out by its own darkness.
   const bumpCanvas = mkCanvas(BW, BH); drawBump(bumpCanvas);
   const bumpTex = new THREE.CanvasTexture(bumpCanvas);
   const foilMat = new THREE.MeshStandardMaterial({ map: backTex, bumpMap: bumpTex, bumpScale: 0.025, roughness: 0.3, metalness: 0.55, alphaTest: 0.5 });
+  foilMat.extensions = { derivatives: true };
+  const foilLight = new THREE.Vector3(0.1, 0.45, 1), foilAim = { x: 0.1, y: 0.25 };
+  const foilK = new THREE.Vector4(0.42, 0.78, 1.9, 0);   // x: colour cycles per unit of grating phase (low: the cards lie almost edge-on to the eye, where the phase runs fast), y: foil brightness, z: patches across the card
   foilMat.onBeforeCompile = shader => {
-    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    shader.uniforms.uFoilLight = { value: foilLight }; shader.uniforms.uFoilK = { value: foilK };
+    shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+      uniform vec3 uFoilLight; uniform vec4 uFoilK;
+      float fHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+      float fNoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+        return mix(mix(fHash(i), fHash(i + vec2(1.0, 0.0)), f.x), mix(fHash(i + vec2(0.0, 1.0)), fHash(i + vec2(1.0, 1.0)), f.x), f.y); }
+      vec3 fPal(float t){ t = fract(t) * 4.0; float i = floor(t), f = smoothstep(0.0, 1.0, fract(t));
+        vec3 c0 = vec3(0.0, 0.85, 1.0), c1 = vec3(0.42, 0.18, 1.0), c2 = vec3(1.0, 0.08, 0.72), c3 = vec3(1.0, 0.72, 0.12);
+        vec3 a = i < 1.0 ? c0 : i < 2.0 ? c1 : i < 3.0 ? c2 : c3; vec3 b = i < 1.0 ? c1 : i < 2.0 ? c2 : i < 3.0 ? c3 : c0;
+        return mix(a, b, f); }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
       {
-        float facing = 1.0 - clamp(dot(normalize(vViewPosition), normal), 0.0, 1.0);
         float fold = texture2D(bumpMap, vUv).r;
-        float t = facing * 1.6 + fold * 1.1 + vUv.y * 0.35 - vUv.x * 0.2;
-        vec3 iris = 0.5 + 0.5 * cos(6.2832 * (t + vec3(0.0, 0.33, 0.67)));
-        float foil = smoothstep(0.22, 0.6, dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)));
-        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * (0.45 + 0.85 * iris), foil);
-        totalEmissiveRadiance += iris * foil * (0.07 + 0.25 * facing * facing);
+        float foil = smoothstep(0.03, 0.12, dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)));   // everything but the dark print
+        vec2 sp = (vUv - 0.5) * vec2(1.0, 1.4) * uFoilK.z;            // card space, square units
+        vec3 fV = normalize(vViewPosition); vec3 fL = normalize(uFoilLight); vec3 fH = normalize(fL + fV);
+        // the surface frame from the uv derivatives, so the grating bends with the card
+        vec3 dp1 = dFdx(-vViewPosition), dp2 = dFdy(-vViewPosition); vec2 du1 = dFdx(vUv), du2 = dFdy(vUv);
+        vec3 fTu = normalize(dp1 * du2.y - dp2 * du1.y); vec3 fBu = normalize(cross(normal, fTu));
+        // each patch has its own grating direction and pitch (smooth, so the colour comes in broad patches, never in rings)
+        float gA = 6.2831853 * fNoise(sp + 1.7); vec2 gd = vec2(cos(gA), sin(gA));
+        float gPitch = 0.7 + 0.6 * fNoise(sp * 1.5 + 9.2);
+        vec3 fT = gd.x * fTu + gd.y * fBu;
+        float fU = dot(fT, fL) + dot(fT, fV);                           // first-order grating equation: the phase picks the colour
+        vec3 foilCol = fPal(fU * uFoilK.x * gPitch + 0.8 * fNoise(sp * 0.8 + 4.4));
+        float fLobe = 0.45 + 0.55 * pow(max(dot(normal, fH), 0.0), 4.0);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.1) * (0.6 + 0.8 * fold), foil * 0.9);    // dark silver under the foil: the key light is strong here, and a pale stock would wash the colour out
+        totalEmissiveRadiance += foil * foilCol * fLobe * (0.75 + 0.5 * fold) * uFoilK.y;
       }`);
   };
   // Card geometry: two subdivided planes (back +z, face -z) whose rounded corners are
@@ -762,6 +785,11 @@
     document.addEventListener('pointerleave', () => { pxTarget = 0; });
   }
 
+  // the foil's light follows the pointer over the page (any pointer: a touch moves it too); see foilMat
+  addEventListener('pointermove', e => {
+    foilAim.x = (e.clientX / (innerWidth || 1)) * 2 - 1; foilAim.y = 1 - (e.clientY / (innerHeight || 1)) * 2;
+  }, { passive: true });
+
   // ---------- hit patches: the hand and the chip stack, projected to the screen ----------
   // Only these two patches take the touch (touch-action: none in CSS), so the page still scrolls
   // everywhere else over the table. They are placed again after every render, so parallax keeps them true.
@@ -870,6 +898,12 @@
       const worldPerPx = (2 * camDist * Math.tan(vfov / 2)) / H;
       camera.position.x = camBase.x + px * worldPerPx;
       lastPx = px; dirty = true;
+    }
+
+    // the foil's light eases toward the pointer; with the pointer still, it holds still
+    if (cardA.material[0] === foilMat) {
+      const lx = foilAim.x * 0.9, ly = 0.3 + foilAim.y * 0.6, k = REDUCED ? 1 : Math.min(1, dt * 6);
+      if (Math.abs(lx - foilLight.x) + Math.abs(ly - foilLight.y) > 2e-3) { foilLight.x += (lx - foilLight.x) * k; foilLight.y += (ly - foilLight.y) * k; dirty = true; }
     }
 
     if (dirty) { if (pixelOn) renderSolitaire(); else renderer.render(scene, camera); placeHits(); dirty = false; }
