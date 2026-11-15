@@ -328,7 +328,7 @@ html:not([data-theme]) {
   --rhythm: clamp(6rem, 11vw, 10rem);
   /* two sizes added to the scale, so the section heads and the case titles cannot drift apart */
   --step-section: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
-  --step-case: clamp(2rem, 1.2rem + 2.3vw, 3.25rem);
+  --step-case: clamp(1.75rem, 1.1rem + 2vw, 2.75rem);
 }
 /* the hero: the dark room. The clay bust stands at the right on the page's own black; the name is the
    film title across the bottom edge, in front of it, over a scrim. */
@@ -350,7 +350,7 @@ html:not([data-theme]) .hero__top.is-stuck { background: color-mix(in srgb, var(
 @keyframes bust-in { from { opacity: 0; scale: 1.04; filter: blur(10px); } }
 @keyframes bust-sink { to { translate: 0 9%; } }
 
-/* buttons: ivory lacquerware on the black; the vermilion is kept for the header's one action and the Drop */
+/* buttons: white on the black; the vermilion is kept for the header's one action and the Drop */
 html:not([data-theme]) .button { background: var(--ink); color: var(--bg); min-height: 2.875rem; padding: 0 1.35rem; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, color var(--t-hover) ease; }
 html:not([data-theme]) .hero__nav .button { min-height: 2.5rem; padding: 0 1rem; }
 @media (hover: hover) and (pointer: fine) {
@@ -386,7 +386,8 @@ html:not([data-theme]) .claw__drop { background: var(--accent); border-color: va
 html:not([data-theme]) .claw__drop:disabled { background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
 html:not([data-theme]) .claw__key { background: color-mix(in srgb, var(--bg) 70%, transparent); border-color: var(--line); border-radius: var(--radius); }
 html:not([data-theme]) .case__cluster { gap: 0; padding-left: clamp(0.5rem, 2vw, 2.5rem); }
-html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; max-width: 30rem; }
+html:not([data-theme]) .case__meta { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+html:not([data-theme]) .case__desc { max-width: 30rem; }
 html:not([data-theme]) .case__title { font-size: var(--step-case); line-height: 1; letter-spacing: -0.035em; }
 html:not([data-theme]) .case__title a { transition: color var(--t-hover) ease; }
 @media (hover: hover) and (pointer: fine) { html:not([data-theme]) .case__title a:hover { color: var(--accent); } }
@@ -395,7 +396,7 @@ html:not([data-theme]) .case__who { margin-top: 0.75rem; }
 html:not([data-theme]) .case__cta { margin-top: 1.75rem; }
 
 html:not([data-theme]) .about { padding-top: 0; padding-bottom: var(--rhythm); }
-html:not([data-theme]) .about__para { font-size: var(--step-section); line-height: 1.18; letter-spacing: -0.025em; max-width: 26ch; text-wrap: balance; }
+html:not([data-theme]) .about__para { font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.125rem); line-height: 1.25; letter-spacing: -0.02em; max-width: 36ch; text-wrap: balance; }
 @media (hover: hover) and (pointer: fine) { html:not([data-theme]) .who__link:hover { color: var(--accent); } }
 
 /* the ending: the inside of the box */

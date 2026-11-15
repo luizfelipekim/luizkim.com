@@ -97,7 +97,7 @@
   --t-dissolve-in: 700ms;
 }
 
-/* Charcoal, the default look: a black lacquer box. One polished black ground from top to bottom, ivory
+/* Charcoal, the default look: a black lacquer box. One polished black ground from top to bottom, white
    type, and the box's vermilion inside kept for two things: the action, and the field that ends every page.
    The ground is the black of the portrait render (img/portrait.webp), so the bust stands in the page with no edge.
    Scoped to the default look, so the alternate looks keep the neutral base above. */
@@ -105,22 +105,22 @@ html:not([data-theme]) {
   --bg: #070707;
   --surface: #111110;
   --surface-2: #1b1b1a;
-  --ink: #f2eee6;
-  --muted: #a39f96;
+  --ink: #f1f1ef;
+  --muted: #9f9f9b;
   --line: #2a2927;
-  --accent: #ea4a30;
+  --accent: #e8352a;
   --accent-ink: #070707;
 
-  --field: #ea4a30;
+  --field: #e8352a;
   --field-ink: #070707;
-  --field-muted: #2b0b06;
+  --field-muted: #2b0806;
   --field-accent: #070707;
 
   --hero-bg: #070707;
-  --hero-ink: #f2eee6;
+  --hero-ink: #f1f1ef;
 
   --stage-bg: #0c0c0c;
-  --stage-muted: #a39f96;
+  --stage-muted: #9f9f9b;
   --stage-line: #2a2927;
 
   --radius: 3px;

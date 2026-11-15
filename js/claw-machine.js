@@ -258,7 +258,7 @@
     // chrome trim, the lever's ball in the page's vermilion, a dark studio round it
     charcoal:   { ornament: 'artdeco', room: 'atelier', stage: 'studio', rig: [0.5, 0.2, 0.3], fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35,   // the claw rests lower, clear of the roof
                   body: 0x060606, steel: 0xeef0f4, steelRough: 0.18, steelMetal: 1, steelEnv: 1.8, floor: 0x121212, inner: 0.1,
-                  wood: 0x050505, woodRough: 0.06, woodMetal: 0, woodEnv: 1.5, woodCoat: 1, knob: 0xea4a30, prizes: [0xece7dc, 0xc8c2b5] },
+                  wood: 0x050505, woodRough: 0.06, woodMetal: 0, woodEnv: 1.5, woodCoat: 1, knob: 0xe8352a, prizes: [0xece7dc, 0xc8c2b5] },
     manual:     { body: 0x2b2a27, paper: 0xe4e1d9, ink: 0x0c0c0c, roughness: 1, env: 0.25, glass: 0.12 },              // unpainted, no sheen
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
