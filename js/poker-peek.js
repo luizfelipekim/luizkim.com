@@ -914,6 +914,7 @@
       bet.position.set(lookAt.x, 0.03, camBase.z - dir.z * camBase.y / dir.y);
     }
     aim(); camera.updateMatrixWorld(true);   // the lean is kept across a resize
+    tidyChips();
     dirty = cast = true; placeHits();
   }
   addEventListener('resize', resize, { passive: true });
@@ -924,6 +925,7 @@
   // up and down, and the camera keeps looking there: the hand holds its place while the chips, the reflections in
   // the glass and the foil's colour shift against it. Each axis is a critically damped spring stepped by its exact
   // solution, so a move starts and ends gently and takes the same time at 60 Hz, at 120 Hz or across a dropped frame.
+  const POSES = [[0, 0]];   // every lean the camera may come to: at rest, and the four corners of its reach where the mouse leans it
   const LEAN = [0.105, 0.05], LEAN_RATE = 9;   // radians to each side, radians up and down; the spring's frequency, per second
   const lean = [{ x: 0, v: 0, to: 0 }, { x: 0, v: 0, to: 0 }];
   if (!REDUCED && matchMedia('(pointer: fine)').matches) {
@@ -933,6 +935,7 @@
       lean[1].to = (1 - e.clientY / (innerHeight || 1) * 2) * LEAN[1];
     }, { passive: true });
     document.documentElement.addEventListener('pointerleave', () => { lean[0].to = lean[1].to = 0; });
+    POSES.push([LEAN[0], LEAN[1]], [LEAN[0], -LEAN[1]], [-LEAN[0], LEAN[1]], [-LEAN[0], -LEAN[1]]);
   }
   function spring(s, dt) {   // true while it moved
     const d = s.x - s.to;
@@ -942,8 +945,8 @@
     return true;
   }
   const leanV = new THREE.Vector3(), SIDE = new THREE.Vector3(1, 0, 0), UP = new THREE.Vector3(0, 1, 0);
-  function aim() {   // the camera on its arc round the look point, looking at it
-    leanV.copy(camBase).sub(lookAt).applyAxisAngle(SIDE, -lean[1].x).applyAxisAngle(UP, lean[0].x);
+  function aim(turn = lean[0].x, tip = lean[1].x) {   // the camera on its arc round the look point, looking at it
+    leanV.copy(camBase).sub(lookAt).applyAxisAngle(SIDE, -tip).applyAxisAngle(UP, turn);
     camera.position.copy(lookAt).add(leanV); camera.lookAt(lookAt);
   }
 
@@ -1002,24 +1005,18 @@
   // Cards: press and drag up to peek; let go and they settle back. Enter or Space peeks from the keyboard.
   let dragPeek = null, keyPeek = false;
   function touched() { stage.classList.add('is-touched'); }
-  function grab(el, onMove, onEnd) {
-    if (!el) return;
-    el.addEventListener('pointerdown', e => {
-      if (e.button) return;
+  let peekId = null;   // the one pointer that holds the cards: a second finger on them is ignored, and only this one lets them go
+  if (hitCards) {
+    let y0 = 0;
+    hitCards.addEventListener('pointerdown', e => {
+      if (e.button || peekId !== null) return;
       e.preventDefault(); touched();
-      const id = e.pointerId, y0 = e.clientY, ends = ['pointerup', 'pointercancel', 'lostpointercapture'];
-      try { el.setPointerCapture(id); } catch (_) {}
-      const move = ev => { if (ev.pointerId === id) onMove(y0 - ev.clientY); };
-      const end = ev => {
-        if (ev.pointerId !== id) return;
-        el.removeEventListener('pointermove', move); ends.forEach(n => el.removeEventListener(n, end));
-        onEnd();
-      };
-      el.addEventListener('pointermove', move); ends.forEach(n => el.addEventListener(n, end));
-      onMove(0);
+      peekId = e.pointerId; y0 = e.clientY; dragPeek = 0; dirty = true;
+      try { hitCards.setPointerCapture(peekId); } catch (_) {}
     });
+    hitCards.addEventListener('pointermove', e => { if (e.pointerId === peekId) { dragPeek = clamp01((y0 - e.clientY) / 140); dirty = true; } });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(n => hitCards.addEventListener(n, e => { if (e.pointerId === peekId) { peekId = null; dragPeek = null; dirty = true; } }));
   }
-  grab(hitCards, dy => { dragPeek = clamp01(dy / 140); dirty = true; }, () => { dragPeek = null; dirty = true; });
   stage.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched(); keyPeek = !keyPeek; dirty = true; } });
 
   // Chips: there to be played with, the way a player's hands never leave the stack. Press a pile and the chips from
@@ -1046,12 +1043,60 @@
     out.forEach(p => p.bits.sort((a, b) => a.lv - b.lv));
     return out;
   }
-  function pileBox(p) {   // a pile on the screen, with a margin, and never a smaller target than a fingertip
-    const x = stack.position.x + p.x, z = stack.position.z + p.z, top = p.bits.length * CHIP_H, r = CHIP_R;
+  function boxAt(px, pz, top) {   // a pile of a given height at a place on the table, as it lies on the screen: with a margin, and never a smaller target than a fingertip
+    const x = stack.position.x + px, z = stack.position.z + pz, r = CHIP_R;
     const b = bounds([project(x - r, 0, z), project(x + r, 0, z), project(x, 0, z + r), project(x - r, top, z), project(x + r, top, z), project(x, top, z - r)], 10);
     if (b.w < 48) { b.x -= (48 - b.w) / 2; b.w = 48; }
     if (b.h < 48) { b.y -= (48 - b.h) / 2; b.h = 48; }
     return b;
+  }
+  const pileBox = p => boxAt(p.x, p.z, p.bits.length * CHIP_H);
+  // A pile stands in view when its whole patch lies on the stage, above the rail where there is one, at every lean the
+  // camera may come to. over() measures how far a pile at a place is out: [sideways, up or down] in pixels, 0 when in.
+  function see(turn, tip) { aim(turn, tip); camera.updateMatrixWorld(true); camera.matrixWorldInverse.copy(camera.matrixWorld).invert(); }
+  function over(px, pz, top) {
+    let l = 0, r = 0, u = 0, d = 0;
+    for (const [turn, tip] of POSES) {
+      see(turn, tip);
+      const b = boxAt(px, pz, top), foot = rail.visible ? Math.min(H, project(lookAt.x, 4.5, rail.position.z)[1] + 10) : H;   // the rail's crest hides the table behind it
+      l = Math.max(l, -b.x); r = Math.max(r, b.x + b.w - W); u = Math.max(u, -b.y); d = Math.max(d, b.y + b.h - foot);
+    }
+    see();
+    return [l - r, u - d, Math.max(l, r, u, d)];
+  }
+  const seen = (px, pz, top) => over(px, pz, top)[2] < 0.5;
+  // the nearest place to one on the table where a pile of that height stands in view
+  function intoView(px, pz, top) {
+    for (let i = 0; i < 6; i++) {
+      const [dx, dy, out] = over(px, pz, top);
+      if (out < 0.5) break;
+      const c = project(stack.position.x + px, 0, stack.position.z + pz), at = tableAt(c[0] + dx * 1.02, c[1] + dy * 1.02, 0);
+      px = at[0] - stack.position.x; pz = at[1] - stack.position.z;
+    }
+    return [px, pz];
+  }
+  // the cards' place on the table, with room for a chip's edge, in the stack's own space: [left, right, far, near]
+  function cardsBox() {
+    const m = CHIP_R + 0.3, hx = FRAME.hand[0] - stack.position.x, hz = FRAME.hand[1] - stack.position.z;
+    return [hx - CARD_W * 0.62 - m, hx + CARD_W * 0.82 + m, hz - CARD_H * 0.54 - m, hz + CARD_H * 0.56 + m];
+  }
+  // a pile can stand at a place: in view, off the cards, clear of the other piles
+  function free(px, pz, top, others) {
+    const box = cardsBox();
+    if (px > box[0] + 1e-3 && px < box[1] - 1e-3 && pz > box[2] + 1e-3 && pz < box[3] - 1e-3) return false;
+    for (const p of others) if (Math.hypot(px - p.x, pz - p.z) < CHIP_R * 2 + 0.19) return false;
+    return seen(px, pz, top);
+  }
+  // after the frame changes (a resize, a new look): a pile left outside the view comes to the nearest free place in it, or back onto the stack's own place
+  function tidyChips() {
+    for (const p of piles()) {
+      const top = p.bits.length * CHIP_H;
+      if ((p.x === 0 && p.z === 0) || seen(p.x, p.z, top)) continue;
+      const others = piles().filter(q => q.x !== p.x || q.z !== p.z), home = others.find(q => q.x === 0 && q.z === 0);
+      let [x, z] = intoView(p.x, p.z, top), base = 0;
+      if (!free(x, z, top, others)) { x = z = 0; base = home ? home.bits.length : 0; }
+      p.bits.forEach((b, k) => { b.sx = x; b.sz = z; b.lv = base + k; b.mode = 0; b.up = b.vy = 0; b.m.position.set(x + b.jx, CHIP_H / 2 + b.lv * CHIP_H, z + b.jz); b.m.rotation.x = b.m.rotation.z = 0; });
+    }
   }
   // The pile under a place on the stage, and the cut: the level the pointer is on (that chip and all above it come
   // away); on the top face, the top chip alone. The sight line is tried against each pile as a cylinder a little
@@ -1074,7 +1119,7 @@
     near = Infinity;
     for (const p of piles()) {
       const b = pileBox(p), m = Math.hypot(sx - b.x - b.w / 2, sy - b.y - b.h / 2);
-      if (sx >= b.x && sx <= b.x + b.w && sy >= b.y && sy <= b.y + b.h && m < near) { near = m; best = { pile: p, cut: sy > b.y + b.h / 2 ? 0 : Math.ceil(p.bits.length / 2) }; }   // low in the margin: the whole pile; high: its top half
+      if (sx >= b.x && sx <= b.x + b.w && sy >= b.y && sy <= b.y + b.h && m < near) { near = m; best = { pile: p, cut: sy > b.y + b.h / 2 ? 0 : Math.min(p.bits.length - 1, Math.ceil(p.bits.length / 2)) }; }   // low in the margin: the whole pile; high: its top half, and never fewer than one chip
     }
     return best;
   }
@@ -1110,10 +1155,10 @@
     try { h.el.releasePointerCapture(h.id); } catch (_) {}
     let x = lead.x, z = lead.z, onto = null;
     for (const p of ps) if (Math.hypot(p.x - x, p.z - z) < CHIP_R * 1.3) onto = p;   // near enough to a pile: onto it
+    const tall = h.bits.length * CHIP_H;
     if (!onto) {
       // a pile of its own, stood clear of the other piles and off the cards
-      const gap = CHIP_R * 2 + 0.2, m = CHIP_R + 0.3, hx = FRAME.hand[0] - sp.x, hz = FRAME.hand[1] - sp.z;
-      const box = [hx - CARD_W * 0.62 - m, hx + CARD_W * 0.82 + m, hz - CARD_H * 0.54 - m, hz + CARD_H * 0.56 + m];
+      const gap = CHIP_R * 2 + 0.2, box = cardsBox();
       for (let n = 0; n < 4; n++) {
         for (const p of ps) {
           const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
@@ -1124,11 +1169,11 @@
           if (i === 0) x = box[0]; else if (i === 1) x = box[1]; else if (i === 2) z = box[2]; else z = box[3];
         }
       }
-      // no room there in view (a narrow frame has little table beside the cards): the chips go back where they came from
-      const [px, py] = project(sp.x + x, 0, sp.z + z), half = Math.abs(project(sp.x + x + CHIP_R, 0, sp.z + z)[0] - px);
-      if (px < half || px > W - half || py < 24 || py > (rail.visible ? project(lookAt.x, 4.5, rail.position.z)[1] : H) - half * 0.5) {
-        x = h.from.x; z = h.from.z; onto = ps.find(p => p.x === x && p.z === z) || null;
-      }
+      [x, z] = intoView(x, z, tall);
+    }
+    // no room there (a narrow frame has little table beside the cards), or the pile would stand out of view: the chips go back where they came from
+    if (onto ? !seen(onto.x, onto.z, onto.bits.length * CHIP_H + tall) : !free(x, z, tall, ps)) {
+      x = h.from.x; z = h.from.z; onto = ps.find(p => p.x === x && p.z === z) || null;
     }
     const base = onto ? onto.bits.length : 0;
     h.bits.forEach((b, k) => { b.sx = onto ? onto.x : x; b.sz = onto ? onto.z : z; b.lv = base + k; b.mode = 2; b.wait = k * 0.028; b.vy = 0; });   // bottom first: the pile lands as a riffle
@@ -1142,11 +1187,10 @@
       let floor = 0;
       for (const p of piles()) if (Math.hypot(p.x - lead.x, p.z - lead.z) < CHIP_R * 2) floor = Math.max(floor, p.bits.length * CHIP_H);
       hold.y += (floor + LIFT + CHIP_H / 2 - hold.y) * glide;
-      // the hand: the pointer's sight line down to the height the chips are held at, kept on the table and in view
-      const wide = Math.abs(project(sp.x + lead.x + CHIP_R, hold.y, sp.z + lead.z)[0] - project(sp.x + lead.x, hold.y, sp.z + lead.z)[0]);   // half a chip, on screen
-      const foot = rail.visible ? project(lookAt.x, 4.5, rail.position.z)[1] : H;                                                          // the rail's crest hides the table behind it
-      const at = tableAt(clamp(hold.sx, wide, W - wide), clamp(hold.sy, 24, foot - wide), hold.y);
-      const x = clamp(at[0] + hold.ox, FRAME.hand[0] - REACH, FRAME.hand[0] + REACH) - sp.x, z = clamp(at[1] + hold.oz, FRAME.hand[1] - REACH, nearest()) - sp.z;
+      // the hand: the pointer's sight line down to the height the chips are held at; then the chips themselves are kept
+      // on the table and in view, as they are held and as they would stand if let go here
+      const at = tableAt(clamp(hold.sx, 0, W), clamp(hold.sy, 0, H), hold.y);
+      const [x, z] = intoView(clamp(at[0] + hold.ox, FRAME.hand[0] - REACH, FRAME.hand[0] + REACH) - sp.x, clamp(at[1] + hold.oz, FRAME.hand[1] - REACH, nearest()) - sp.z, hold.y + hold.bits.length * CHIP_H);
       hold.bits.forEach((b, k) => {
         const p = b.m.position, r = b.m.rotation, under = k && !REDUCED ? hold.bits[k - 1].m.position : null;
         if (!under) { p.set(x, hold.y + k * CHIP_H, z); r.x = r.z = 0; return; }
