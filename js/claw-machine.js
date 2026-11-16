@@ -96,8 +96,9 @@
   }
   // What the arcade is to the foil look, for the looks that wear the art deco kit: the same method in each look's
   // own palette. Spots as [colour, power, from, to, angle, softness]; rims as [colour, power, from]; lamps are the
-  // kit's own lights (sconces, marquee) as [finish key, power, at, reach]; the floor is a disc that fades out with a
-  // radial alpha, either a gloss surface for a pool of light or, on paper, a flat wash of ink for a pool of shadow.
+  // kit's own lights (sconces, marquee) as [finish key, power, at, reach, and the part that carries it if a look can
+  // take that part off]; the floor is a disc that fades out with a radial alpha, either a gloss surface for a pool
+  // of light or, on paper, a flat wash of ink for a pool of shadow.
   var STAGES = {
     // a dark grey studio: neutral light, a shade warmer from the front than from behind
     studio: {
@@ -105,7 +106,7 @@
               [0xdfe8ff, 0.48, [0, 13, -8], [0, -1.4, -2.6], 0.62, 0.9]],   // behind: the floor pool, and an edge on the tops
       follow: [0xffffff, 1.3, [-1.2, 10.5, 6.5], 0.13, 0.6],
       rims: [[0xdfe8ff, 0.8, [-7, 4, -6]], [0xfff0e0, 0.55, [8, 4, -5]]],
-      lamps: [['lamp', 0.9, [-3.3, 4.0, 3.7], 4], ['lamp', 0.9, [3.3, 4.0, 3.7], 4], ['lamp', 0.5, [0, 6.2, 3.9], 5]],
+      lamps: [['lamp', 0.9, [-3.3, 4.0, 3.7], 4], ['lamp', 0.9, [3.3, 4.0, 3.7], 4], ['lamp', 0.5, [0, 6.2, 3.9], 5, 'plaque']],
       floor: { color: 0x101010, rough: 0.45, metal: 0.3, env: 0.4, at: [0, 0] }
     },
     // paper and ink: the page is the light, so the cabinet gets a pool of shadow to stand in and a hard top light
@@ -114,7 +115,7 @@
               [0xfff6e8, 0.9, [0, 13, -8], [0, 3, -2.6], 0.5, 0.9]],
       follow: [0xfffaf0, 0.9, [-1.2, 10.5, 6.5], 0.13, 0.6],
       rims: [[0xfff6e8, 0.6, [-7, 5, -6]]],
-      lamps: [['lamp', 0.45, [-3.3, 4.0, 3.9], 5], ['lamp', 0.45, [3.3, 4.0, 3.9], 5], ['lamp', 0.35, [0, 6.2, 3.9], 5]],
+      lamps: [['lamp', 0.45, [-3.3, 4.0, 3.9], 5], ['lamp', 0.45, [3.3, 4.0, 3.9], 5], ['lamp', 0.35, [0, 6.2, 3.9], 5, 'plaque']],
       floor: { color: 0x1a1715, wash: 0.55, at: [-1.0, -0.8] }
     }
   };
@@ -128,7 +129,7 @@
     var follow = new THREE.SpotLight(sp.follow[0], sp.follow[1], 30, sp.follow[3], sp.follow[4], 1);   // on the claw, as in the arcade
     follow.position.fromArray(sp.follow[2]); follow.target = clawGroup; g.add(follow);
     sp.rims.forEach(function (r) { var l = new THREE.DirectionalLight(r[0], r[1]); l.position.fromArray(r[2]); g.add(l); });
-    sp.lamps.forEach(function (p) { var l = new THREE.PointLight(0xffffff, p[1], p[3], 2); l.position.fromArray(p[2]); l.userData.key = p[0]; g.add(l); stageLamps.push(l); });
+    sp.lamps.forEach(function (p) { var l = new THREE.PointLight(0xffffff, p[1], p[3], 2); l.position.fromArray(p[2]); l.userData.key = p[0]; l.userData.power = p[1]; l.userData.part = p[4]; g.add(l); stageLamps.push(l); });
     var c = document.createElement('canvas'); c.width = c.height = 256;
     var x = c.getContext('2d'), fade = x.createRadialGradient(128, 128, 0, 128, 128, 128);
     if (sp.floor.wash) { fade.addColorStop(0, '#fff'); fade.addColorStop(0.5, '#fff'); fade.addColorStop(0.72, '#666'); fade.addColorStop(1, '#000'); }
@@ -213,7 +214,13 @@
       [5, 3, [2.6, 2.5, 2.3], [1, 10.5, 3]]          // overhead
     ]
   };
-  var ENV_DARK = { arcade: [0.012, 0.008, 0.03], atelier: [0.02, 0.02, 0.023], pressroom: [0.09, 0.087, 0.08] };   // how dark the room itself is; the studio default is a neutral 0.035
+  // what the domino tiles mirror: the pressroom, and one more window, low at the back, where a face that lies in the
+  // tray looks. Two small bright panes: each tile's crowned face shows them once, as the white of its gloss
+  ENVS.parlour = ENVS.pressroom.concat([
+    [0.7, 1.7, [40, 38.5, 34], [-2.99, 5.1, -9.27]],
+    [0.7, 1.7, [40, 38.5, 34], [-3.89, 5.1, -8.93]]
+  ]);
+  var ENV_DARK = { arcade: [0.012, 0.008, 0.03], atelier: [0.02, 0.02, 0.023], pressroom: [0.09, 0.087, 0.08], parlour: [0.09, 0.087, 0.08] };   // how dark the room itself is; the studio default is a neutral 0.035
   function bakeEnv(panels, dark) {
     var room = new THREE.Scene();
     dark = dark || [0.035, 0.035, 0.035];
@@ -226,8 +233,9 @@
     var rt = pm.fromScene(room, 0.04); pm.dispose(); return rt.texture;
   }
   var envs = {};
+  function room(name) { return envs[name] || (envs[name] = bakeEnv(ENVS[name] || ENVS.default, ENV_DARK[name])); }
   function setEnvironment(name) {
-    var e = envs[name] || (envs[name] = bakeEnv(ENVS[name] || ENVS.default, ENV_DARK[name]));
+    var e = room(name);
     if (scene.environment !== e) scene.environment = e;
   }
   setEnvironment('default');
@@ -242,6 +250,15 @@
   var FLOOR = new THREE.MeshStandardMaterial({ color: 0x262626, roughness: 0.95 });
   var BODY = new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 0.9 });
   var LINE = new THREE.LineBasicMaterial({ color: 0x4a4a46 });
+  var LEATHER = null;   // the tray's lining, for a look that asks for leather; made the first time it is asked for
+  // Work that can wait a frame. What a look draws in code (a grain, a groove, one more room) is handed over here and
+  // done one job a frame, so neither the start nor a change of look holds the page while it is made. What shows
+  // meanwhile is the finished material without that detail, never another material.
+  var chores = [], calm = 0;   // calm: frames to leave alone after a look is dressed, which are heavy already (new shaders)
+  function later(job) { chores.push(job); }
+  // a one-pixel stand-in for a map that is still to come: the material is compiled with a map in every place it
+  // will have one, and the real map takes the stand-in's place without a new shader
+  function standIn(r, g, b) { var t = new THREE.DataTexture(new Uint8Array([r, g, b, 255]), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; return t; }
   /* ---------- finishes ----------
      One neutral cabinet, dressed per look. Each look names the colours of the procedural parts (floor,
      chute, steel, prizes) and of the model's three materials (body, paper, ink), the surface (roughness,
@@ -267,13 +284,17 @@
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
     win95:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
                   roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'broadsheet', pixel: true },
-    // Broadsheet: the same kit as a 1940s cabinet. Walnut under a satin varnish (the grain is a baked image only
-    // this look fetches), nickel trim, the lever's ball in the page's one red
-    press:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
-                  roughness: 0.85, env: 0.2, glass: 0.14, ornament: 'artdeco', room: 'pressroom', stage: 'paper', rig: [0.95, 0.3, 0.5],
+    // Broadsheet: the same kit as a 1940s cabinet, in four materials. Walnut under a satin varnish (the grain is a
+    // baked image only this look fetches), nickel trim, a tray lined with dark leather, and the prizes as ivory domino
+    // tiles. The header shows its bare walnut (the plaque comes off) and the lever's ball is turned from the same wood.
+    // The leather and the ivory are named much darker than they show: this rig is bright, and they must land on
+    // brown-black and on ivory with room above it for a highlight. The pane is thinner than in the other looks: its
+    // sheen lies over all that is behind it, and at full strength it turned the leather to grey felt
+    press:      { floor: 0x030201, leather: true, domino: 0x4a4536, noPlaque: true, knobWood: true, hole: 0x020202, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
+                  roughness: 0.85, env: 0.2, glass: 0.07, ornament: 'artdeco', room: 'pressroom', stage: 'paper', rig: [0.95, 0.3, 0.5],
                   fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35, inner: 0.16,
-                  wood: 0x4f3423, woodMap: true, woodRough: 0.42, woodMetal: 0, woodEnv: 0.55, woodCoat: 0.7, trim: 0xd9d5cb, trimRough: 0.16, trimEnv: 1.0,
-                  steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7, knob: 0x8b1a1a },
+                  wood: 0x180c06, /* the grain image's own mean: what the wood wears until the image is in, so it does not jump from tan to walnut */ woodMap: true, woodRough: 0.42, woodMetal: 0, woodEnv: 0.55, woodCoat: 0.7, trim: 0xd9d5cb, trimRough: 0.16, trimEnv: 1.0,
+                  steel: 0xe9e6de, steelRough: 0.2, steelMetal: 1, steelEnv: 1.2, lamp: 0xffc98a, lampLit: 0.7 },
     // the foil pull: the sleeve's near-black indigo, glossy enough to carry the light, and the card's iris
     // (cyan, rose, violet-white) as the only light in the scene: tubes, bulbs, type, and the lights they throw
     foil:       { body: 0x160b44, paper: 0xe8e2ff, ink: 0x12083a, steel: 0xeef1f8, steelRough: 0.16, steelMetal: 1, steelEnv: 2.2,   // the claw and gantry as polished chrome: it shows the room, pushed bright so it never sinks into the dark
@@ -333,6 +354,7 @@
     var pane = new THREE.Mesh(glassBox, GLASS);
     pane.position.y = S.H / 2; pane.renderOrder = 2; scene.add(pane);
     tintGlass = function () {
+      calm = 2;
       var light = stageLuminance() > 0.35;
       plate = wantsPlate();
       var f = finish();
@@ -342,13 +364,22 @@
       STEEL.envMapIntensity = f.steelEnv; STEEL.roughness = f.steelRough; STEEL.metalness = f.steelMetal;
       pixelOn = !!f.pixel;
       FLOOR.roughness = f.floorRough; FLOOR.metalness = f.floorMetal;
+      if (items) dressPrizes();   // the pile wears the look too: the plain pieces, or the domino tiles
+      if (f.leather && !LEATHER) LEATHER = buildLeather();
+      var lining = f.leather ? LEATHER : FLOOR;
+      if (floor.material !== lining) floor.material = lining;
+      if (f.leather) LEATHER.color.setHex(f.floor);
+      // the modelled cabinet's own floor lies in this plane too and shows through in patches: the leather is laid a
+      // hair above it, and the chute moves up with it
+      var laid = f.leather ? 0.006 : 0;
+      floor.position.y = laid; hole.position.y = 0.004 + laid; holeEdge.position.y = 0.006 + laid;
       key.intensity = f.rig[0]; fill.intensity = f.rig[1]; hemi.intensity = f.rig[2];
       setEnvironment(f.room);
       if (f.spots && !arcade) buildArcade();
       if (arcade) arcade.visible = !!f.spots;
       if (f.stage && !stages[f.stage]) buildStage(f.stage);
       for (var sn in stages) stages[sn].visible = (sn === f.stage);
-      stageLamps.forEach(function (l) { l.color.setHex(f[l.userData.key]); });
+      stageLamps.forEach(function (l) { l.color.setHex(f[l.userData.key]); l.intensity = (f.noPlaque && l.userData.part === 'plaque') ? 0 : l.userData.power; });   // a plaque that is off throws no light
       if (f.bloom && !bloom) buildBloom();
       if (bloom) {
         bloom.on = !!f.bloom;
@@ -416,6 +447,13 @@
           dl.color.setHex(0x6b665c); dl.emissive.setHex(f.lamp); dl.emissiveIntensity = f.lampLit; dl.roughness = 0.6; dl.metalness = 0;
           cabMats.deco_dark.color.setHex(0x0b0b0b); cabMats.deco_dark.roughness = 0.45; cabMats.deco_dark.metalness = 0; cabMats.deco_dark.envMapIntensity = 0.6;
           var dk = cabMats.deco_knob; dk.color.setHex(f.knob); dk.roughness = 0.25; dk.metalness = 0; dk.envMapIntensity = 0.9;
+          // the lever's ball in the cabinet's own wood: the same material, so the same grain, tint and varnish
+          if (f.knobWood && !leverBall) turnBall();
+          if (leverBall) leverBall.material = f.knobWood ? dw : dk;
+          // the header without its plaque: the plate, its frame and its engraving come off, and the walnut behind shows
+          if (f.noPlaque && !plaqueParts) liftPlaque();
+          if (plaqueParts) plaqueParts.forEach(function (m) { m.visible = !f.noPlaque; });
+          if (headerFace) headerFace.geometry.attributes.uv2 = f.noPlaque ? headerFace.bare : headerFace.own;
         }
       }
       setPlate(plate);
@@ -521,6 +559,81 @@
     ph.defines = { STANDARD: '', PHYSICAL: '' };
     cabinet.traverse(function (o) { if (o.isMesh && o.material === m) o.material = ph; });
     return (cabMats[name] = ph);
+  }
+  // The header's plaque is not a part of its own in the art deco kit: its plate, frame and engraving are triangles
+  // inside the kit's lamp, trim and dark meshes. For a look that shows the bare header they are lifted out, once,
+  // into meshes of their own that can be hidden: every triangle that lies whole in the plaque's box on the header's
+  // front. The box stops a hair above the frame's top rail, under the three fins that hang down to it.
+  // The kit's occlusion map still holds the plaque's shadow on the walnut behind it. The map is read through the second
+  // set of texture coordinates, so the header's front face gets a spare set that reads a clear spot of the map: the
+  // bare header wears that one, the header with its plaque wears the kit's own, and the grain stays where it is.
+  var plaqueParts = null, headerFace = null;
+  function liftPlaque() {
+    var kit = ornaments.artdeco; if (!kit) return;
+    plaqueParts = [];
+    var box = new THREE.Box3(new THREE.Vector3(-2.2, 5.9, 3.1), new THREE.Vector3(2.2, 6.565, 3.3)), meshes = [];
+    var face = new THREE.Box3(new THREE.Vector3(-3.7, 5.9, 3.156), new THREE.Vector3(3.7, 7.1, 3.164));   // the header's front plane
+    // a box of the cabinet, in a mesh's own space: its corners are then tested as they are stored
+    function own(b, o) { return b.clone().applyMatrix4(new THREE.Matrix4().copy(o.matrixWorld).invert()); }
+    kit.updateMatrixWorld(true);
+    kit.traverse(function (o) { if (o.isMesh && (o.material === cabMats.deco_trim || o.material === cabMats.deco_lamp || o.material === cabMats.deco_dark)) meshes.push(o); });
+    meshes.forEach(function (o) {
+      var g = o.geometry, pos = g.attributes.position, index = g.index; if (!index) return;
+      var ix = index.array, inside = new Uint8Array(pos.count), b = own(box, o), i, t, k, x, y, z, p, q, r;
+      for (i = 0; i < pos.count; i++) {
+        x = pos.getX(i); y = pos.getY(i); z = pos.getZ(i);
+        if (x >= b.min.x && x <= b.max.x && y >= b.min.y && y <= b.max.y && z >= b.min.z && z <= b.max.z) inside[i] = 1;
+      }
+      // the new order: the rest from the front, the plaque from the back
+      var order = new ix.constructor(ix.length), head = 0, tail = ix.length;
+      for (t = 0; t < ix.length; t += 3) {
+        p = ix[t]; q = ix[t + 1]; r = ix[t + 2];
+        if (inside[p] && inside[q] && inside[r]) { tail -= 3; order[tail] = p; order[tail + 1] = q; order[tail + 2] = r; }
+        else { order[head] = p; order[head + 1] = q; order[head + 2] = r; head += 3; }
+      }
+      if (tail === ix.length) return;
+      // the same buffers, drawn as two ranges: the kit's own mesh keeps the rest, a second mesh draws the plaque
+      ix.set(order); index.needsUpdate = true;
+      var pg = new THREE.BufferGeometry();
+      for (k in g.attributes) pg.setAttribute(k, g.attributes[k]);
+      pg.setIndex(index); pg.boundingSphere = g.boundingSphere; pg.boundingBox = g.boundingBox;
+      g.setDrawRange(0, head); pg.setDrawRange(tail, ix.length - tail);
+      var m = new THREE.Mesh(pg, o.material);
+      m.position.copy(o.position); m.quaternion.copy(o.quaternion); m.scale.copy(o.scale);
+      m.castShadow = o.castShadow; m.receiveShadow = o.receiveShadow;
+      o.parent.add(m); plaqueParts.push(m);
+    });
+    kit.traverse(function (o) {
+      var g = o.geometry, uv2 = g && g.attributes.uv2;
+      if (!o.isMesh || o.material !== cabMats.deco_wood || !uv2 || !g.index) return;
+      var pos = g.attributes.position, ix = g.index.array, bare = null, t, k, clear = uv2.normalized ? 65535 : 1, b = own(face, o);
+      function on(n) { var x = pos.getX(n), y = pos.getY(n), z = pos.getZ(n); return z >= b.min.z && z <= b.max.z && y >= b.min.y && y <= b.max.y && x >= b.min.x && x <= b.max.x; }
+      for (t = 0; t < ix.length; t += 3) {
+        if (!on(ix[t]) || !on(ix[t + 1]) || !on(ix[t + 2])) continue;   // the face itself: every corner on the header's front plane
+        if (!bare) bare = uv2.clone();
+        for (k = 0; k < 3; k++) bare.setXY(ix[t + k], 0.66 * clear, 0.3 * clear);   // the middle of a panel that nothing shades
+      }
+      if (bare) headerFace = { geometry: g, own: uv2, bare: bare };
+    });
+  }
+  // The lever's ball as turned wood. The kit gives the ball no place of its own in the grain image, so it gets one:
+  // a plain panel of the image, projected through the ball from the front along a level line. The grain then runs
+  // up the ball, as on a ball turned along the grain, and only stretches at the two sides, which face away.
+  var leverBall = null;
+  function turnBall() {
+    var kit = ornaments.artdeco; if (!kit) return;
+    kit.traverse(function (o) { if (o.isMesh && o.material === cabMats.deco_knob) leverBall = o; });
+    if (!leverBall) return;
+    var g = leverBall.geometry, pos = g.attributes.position, uv = new Float32Array(pos.count * 2), v = new THREE.Vector3(), i;
+    kit.updateMatrixWorld(true);
+    g.computeBoundingSphere();
+    var c = g.boundingSphere.center.clone().applyMatrix4(leverBall.matrixWorld);
+    var right = new THREE.Vector3(camDir.z, 0, -camDir.x).normalize(), across = 0.4;   // how much of the image's width one unit of the ball takes
+    for (i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(leverBall.matrixWorld).sub(c);
+      uv[i * 2] = 0.13 + v.dot(right) * across; uv[i * 2 + 1] = 0.55 - v.y * across;   // the image is not flipped: v runs down
+    }
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   }
   var topYWant = S.topY;
   var ornamentState = {}, ornamentTries = {};   // per set: 'loading' or 'done'; and how often its fetch has failed
@@ -878,6 +991,188 @@
     }
   };
 
+  /* ---------- leather and dominoes ----------
+     Two surfaces a look can ask for, both drawn in code the first time they are wanted: a leather lining for the
+     tray (a pebble grain as a tiling normal map), and the prizes as domino tiles: thick gloss ivory with rounded
+     edges, each piece's glyph cut into the face as a groove with ink on its floor. */
+  // A debossed groove from one drawing. `draw(ctx, size)` paints the groove in black on white. Returns the ink map,
+  // a normal map of the groove's rounded walls, and a roughness map that keeps the groove's floor matte under the gloss.
+  function grooveMaps(size, draw, wall) {
+    var c = document.createElement('canvas'); c.width = c.height = size;
+    var x = c.getContext('2d', { willReadFrequently: true }); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size); x.fillStyle = x.strokeStyle = '#000'; draw(x, size);
+    var src = x.getImageData(0, 0, size, size).data, n = size * size, h = new Float32Array(n), t = new Float32Array(n), i, px, py, r = Math.max(1, wall | 0), last = size - 1;
+    for (i = 0; i < n; i++) h[i] = src[i * 4] / 255;                       // 1 = surface, 0 = groove floor
+    // two box-blur passes each way round the walls (canvas `filter` is not available in every Safari); each is a
+    // running sum along the line, taken over the part of the window that lies on the map
+    function blur(from, to, step, line) {                                  // step 1 along rows, `size` down columns
+      for (var a = 0; a < size; a++) {
+        var at = a * line, s = 0, k = 0, b;
+        for (b = 0; b <= r && b < size; b++) { s += from[at + b * step]; k++; }
+        for (b = 0; b < size; b++) {
+          to[at + b * step] = s / k;
+          if (b + r + 1 < size) { s += from[at + (b + r + 1) * step]; k++; }
+          if (b - r >= 0) { s -= from[at + (b - r) * step]; k--; }
+        }
+      }
+    }
+    for (var pass = 0; pass < 2; pass++) { blur(h, t, 1, size); blur(t, h, size, 1); }
+    function sheet() { var cc = document.createElement('canvas'); cc.width = cc.height = size; var cx = cc.getContext('2d'); return { canvas: cc, ctx: cx, image: cx.createImageData(size, size) }; }
+    var inkS = sheet(), norS = sheet(), rouS = sheet(), ink = inkS.image.data, nor = norS.image.data, rou = rouS.image.data, q = 0;
+    for (py = 0; py < size; py++) for (px = 0; px < size; px++, q += 4) {
+      var a = 1 - src[q] / 255, v = 1 - a * 0.9;
+      ink[q] = 255 * v; ink[q + 1] = 252 * v; ink[q + 2] = 247 * v; ink[q + 3] = 255;                                  // multiplies the body colour: ink on the floor
+      // canvas y runs down and the texture is flipped, hence +dy
+      var dx = (h[py * size + Math.min(last, px + 1)] - h[py * size + Math.max(0, px - 1)]) * 6, dy = (h[Math.min(last, py + 1) * size + px] - h[Math.max(0, py - 1) * size + px]) * 6, l = Math.sqrt(dx * dx + dy * dy + 1);
+      nor[q] = (-dx / l * 0.5 + 0.5) * 255; nor[q + 1] = (dy / l * 0.5 + 0.5) * 255; nor[q + 2] = (1 / l * 0.5 + 0.5) * 255; nor[q + 3] = 255;
+      // three reads roughness from green (the material's own roughness is 1 with this map), and the clear coat from red: none on the groove's floor
+      rou[q] = 255 * (1 - a); rou[q + 1] = 255 * (0.22 + a * 0.78); rou[q + 2] = 0; rou[q + 3] = 255;
+    }
+    function tex(s) { s.ctx.putImageData(s.image, 0, 0); var tx = new THREE.CanvasTexture(s.canvas); tx.anisotropy = 4; return tx; }
+    var map = tex(inkS); map.encoding = THREE.sRGBEncoding;
+    return { map: map, normalMap: tex(norS), roughnessMap: tex(rouS) };
+  }
+  // the tiles, by piece: the outline (and how finely its curves are cut), how wide the face's drawing runs (in the
+  // piece's own units), the groove's width, and the glyph, drawn with the origin at the middle of the face and y
+  // running away from the player
+  function ring(x, cx, cy, r) { x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke(); }
+  function pip(x, cx, cy, r) { x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); }
+  function cut(x, pts) { x.beginPath(); pts.forEach(function (p, i) { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); }); x.stroke(); }
+  function disc(r) { var s = new THREE.Shape(); s.absarc(0, 0, r, 0, Math.PI * 2, false); return s; }
+  var GROOVE = 192;   // a groove map's side, in pixels
+  var TILES = {
+    toggle:   { shape: function () { return stadium(1.3, 0.62); }, span: 1.4, groove: 0.08, draw: function (x) { ring(x, 0.33, 0, 0.16); } },
+    pill:     { shape: function () { return stadium(1.2, 0.5); }, span: 1.3, groove: 0.07, draw: function (x) { cut(x, [[-0.36, 0], [0.1, 0]]); pip(x, 0.37, 0, 0.08); } },
+    checkbox: { shape: function () { return roundedRect(0.92, 0.92, 0.16); }, span: 1.02, groove: 0.1, draw: function (x) { cut(x, [[-0.26, 0.0], [-0.08, -0.19], [0.27, 0.21]]); } },
+    radio:    { shape: function () { return disc(0.475); }, cuts: 44, round: true, span: 1.05, groove: 0.085, draw: function (x) { ring(x, 0, 0, 0.27); pip(x, 0, 0, 0.11); } },
+    button:   { shape: function () { return roundedRect(1.25, 0.56, 0.14); }, span: 1.35, groove: 0.08, draw: function (x) { cut(x, [[-0.3, 0], [0.3, 0]]); } },
+    input:    { shape: function () { return roundedRect(1.45, 0.52, 0.1); }, span: 1.55, groove: 0.07, draw: function (x) { cut(x, [[-0.5, -0.12], [-0.5, 0.12]]); cut(x, [[-0.32, 0], [0.2, 0]]); } }
+  };
+  // A slab on an outline, as rings from the underside up: a small round at the foot, a straight wall, a quarter-round
+  // edge for the highlight to run along, then the face, which is crowned a little (as cast resin is) so that light
+  // travels across it instead of switching the whole face on or off. The plain piece's footprint is kept.
+  function slab(shape, cuts, round) {
+    var line = shape.getPoints(cuts || 12), ox = [], oy = [], nx = [], ny = [], pos = [], idx = [], n, i, j, k, rings = 0, wide = 0, deep = 0;
+    if (line[0].distanceTo(line[line.length - 1]) < 1e-6) line.pop();
+    if (THREE.ShapeUtils.isClockWise(line)) line.reverse();
+    // a straight side comes as its two ends only: cut it into short steps too, or the face is a few flat panels
+    for (j = 0; j < line.length; j++) {
+      var p = line[j], q = line[(j + 1) % line.length], steps = Math.max(1, Math.ceil(p.distanceTo(q) / 0.1));
+      for (k = 0; k < steps; k++) { ox.push(p.x + (q.x - p.x) * k / steps); oy.push(p.y + (q.y - p.y) * k / steps); }
+    }
+    n = ox.length;
+    for (j = 0; j < n; j++) {   // outward, from the two neighbours
+      var tx = ox[(j + 1) % n] - ox[(j + n - 1) % n], ty = oy[(j + 1) % n] - oy[(j + n - 1) % n], tl = Math.sqrt(tx * tx + ty * ty) || 1;
+      nx.push(ty / tl); ny.push(-tx / tl);
+    }
+    var grow = 0.035, foot = 0.03, edge = 0.07, high = 0.22, crown = 0.026;
+    // one ring of the outline, moved in by `inset` and drawn toward the middle by `scale`; on the face (scale under 1)
+    // it takes the crown: one smooth rise over the whole face (a round one on a round tile), so the highlight has no folds
+    function ring(inset, y, scale, rim) {   // rim: the face's own outline, which gives the crown its width and depth
+      for (var m = 0; m < n; m++) {
+        var x = (ox[m] + nx[m] * (grow - inset)) * scale, z = -(oy[m] + ny[m] * (grow - inset)) * scale, u = x / wide, w = z / deep;
+        if (rim) { wide = Math.max(wide, Math.abs(x)); deep = Math.max(deep, Math.abs(z)); }
+        pos.push(x, scale < 1 ? y + crown * (round ? 1 - u * u - w * w : (1 - u * u) * (1 - w * w)) : y, z);
+      }
+      rings++;
+    }
+    for (k = 0; k <= 2; k++) ring(foot * (1 - Math.sin(k / 2 * Math.PI / 2)), foot * (1 - Math.cos(k / 2 * Math.PI / 2)), 1);
+    for (k = 0; k <= 5; k++) ring(edge * (1 - Math.cos(k / 5 * Math.PI / 2)), high - edge + edge * Math.sin(k / 5 * Math.PI / 2), 1, k === 5);
+    for (k = 1; k <= 4; k++) ring(edge, high, 1 - k / 5);
+    for (k = 0; k < rings - 1; k++) for (i = 0; i < n; i++) {
+      var a0 = k * n + i, a1 = k * n + (i + 1) % n, b0 = a0 + n, b1 = a1 + n;
+      idx.push(a0, a1, b0, a1, b1, b0);
+    }
+    var under = pos.length / 3, top = under + 1, last = (rings - 1) * n;
+    pos.push(0, 0, 0, 0, high + crown, 0);
+    for (i = 0; i < n; i++) idx.push(under, (i + 1) % n, i, top, last + i, last + (i + 1) % n);
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    return g;
+  }
+  var tileParts = {}, tileBlank = null;   // per piece: one geometry and one material, shared by every tile of that piece
+  function tile(type, ivory) {
+    var part = tileParts[type], spec = TILES[type];
+    if (!part) {
+      var g = slab(spec.shape(), spec.cuts, spec.round), pos = g.attributes.position, uv = new Float32Array(pos.count * 2), i;
+      // the drawing lies flat on the face, seen from above
+      for (i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i) / spec.span + 0.5; uv[i * 2 + 1] = 0.5 - pos.getZ(i) / spec.span; }
+      g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+      // the tile is there at once, as plain gloss ivory; its groove is cut a frame or two later, and the room with
+      // the window it mirrors is baked after the last groove (see dressPrizes)
+      if (!tileBlank) {
+        tileBlank = { map: standIn(255, 255, 255), normalMap: standIn(128, 128, 255), roughnessMap: standIn(255, 56, 0) };
+        tileBlank.map.encoding = THREE.sRGBEncoding;
+      }
+      var m = new THREE.MeshPhysicalMaterial({ color: ivory, roughness: 1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.1, envMap: envs.parlour || null, envMapIntensity: 0.9,
+        map: tileBlank.map, normalMap: tileBlank.normalMap, clearcoatNormalMap: tileBlank.normalMap, roughnessMap: tileBlank.roughnessMap, clearcoatMap: tileBlank.roughnessMap });
+      part = tileParts[type] = { geometry: g, material: m };
+      later(function () {
+        var maps = grooveMaps(GROOVE, function (x, size) {
+          x.translate(size / 2, size / 2); x.scale(size / spec.span, -size / spec.span);
+          x.lineWidth = spec.groove; x.lineCap = x.lineJoin = 'round'; spec.draw(x);
+        }, Math.round(GROOVE / 85));
+        m.map = maps.map; m.normalMap = m.clearcoatNormalMap = maps.normalMap; m.roughnessMap = m.clearcoatMap = maps.roughnessMap;
+      });
+    }
+    part.material.color.setHex(ivory);
+    var mesh = new THREE.Mesh(part.geometry, part.material);
+    mesh.castShadow = mesh.receiveShadow = true;
+    return mesh;
+  }
+  // Each piece shows its plain parts or its tile, by look. A tile is made the first time its piece needs one: at once
+  // when the look changes under the eye. A pile dealt at the start (`soon`) gets its first tiles a frame later, and
+  // stays out of the picture till then: the start is the heaviest moment, and the machine is still a scroll away.
+  var pileDue = false;
+  function dressPrizes(soon) {
+    var ivory = finish().domino;
+    if (soon && ivory && !tileBlank && !pileDue) { pileDue = true; later(function () { pileDue = false; dressPrizes(); }); }
+    items.forEach(function (it) {
+      if (ivory && !it.tile && !pileDue) { it.tile = tile(it.type, ivory); it.group.add(it.tile); }
+      it.group.children.forEach(function (o) { o.visible = ivory ? o === it.tile : o !== it.tile; });
+    });
+    if (ivory && tileBlank && !tileBlank.room) {
+      tileBlank.room = true;
+      later(function () { var e = room('parlour'); for (var k in tileParts) tileParts[k].material.envMap = e; });
+    }
+  }
+  // leather: a brown-black hide with a faint sheen at grazing angles; the look names the colour. The hide is there at
+  // once, smooth; its grain comes a frame later
+  function buildLeather() {
+    var smooth = standIn(128, 128, 255);
+    var m = new THREE.MeshPhysicalMaterial({ color: 0x030201, roughness: 0.8, reflectivity: 0.1, metalness: 0, envMapIntensity: 0.12, clearcoat: 0.1, clearcoatRoughness: 0.5,
+      normalMap: smooth, normalScale: new THREE.Vector2(1, 1) });
+    later(function () { m.normalMap = leatherGrain(); smooth.dispose(); });
+    return m;
+  }
+  // the grain: pebbles as cells round scattered points (one per square of a grid, so it tiles), domed, with creases
+  // between. The scatter comes from its own small generator, so the hide is the same on every visit
+  function leatherGrain() {
+    var size = 256, cells = 24, step = size / cells, pts = [], h = new Float32Array(size * size), i, j, px, py, seed = 20240;
+    function scatter() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    for (j = 0; j < cells; j++) for (i = 0; i < cells; i++) pts.push([(i + 0.15 + scatter() * 0.7) * step, (j + 0.15 + scatter() * 0.7) * step]);
+    for (py = 0; py < size; py++) for (px = 0; px < size; px++) {
+      var gx = Math.floor(px / step), gy = Math.floor(py / step), d1 = 1e9, d2 = 1e9;
+      for (j = -1; j <= 1; j++) for (i = -1; i <= 1; i++) {
+        var cx = gx + i, cy = gy + j, p = pts[((cy + cells) % cells) * cells + (cx + cells) % cells];
+        var dx = p[0] + (cx < 0 ? -size : cx >= cells ? size : 0) - px, dy = p[1] + (cy < 0 ? -size : cy >= cells ? size : 0) - py, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+      }
+      var e = Math.min(1, (d2 - d1) / (step * 0.45));   // 0 on a crease, 1 inside a pebble
+      h[py * size + px] = Math.sqrt(e) * (1 - 0.25 * d1 / step);
+    }
+    var c = document.createElement('canvas'); c.width = c.height = size;
+    var x = c.getContext('2d'), im = x.createImageData(size, size), o = im.data;
+    function at(ax, ay) { return h[((ay + size) % size) * size + (ax + size) % size]; }
+    for (py = 0; py < size; py++) for (px = 0; px < size; px++) {
+      var sx = (at(px + 1, py) - at(px - 1, py)) * 2.5, sy = (at(px, py + 1) - at(px, py - 1)) * 2.5, l = Math.sqrt(sx * sx + sy * sy + 1), q = (py * size + px) * 4;
+      o[q] = (-sx / l * 0.5 + 0.5) * 255; o[q + 1] = (sy / l * 0.5 + 0.5) * 255; o[q + 2] = (1 / l * 0.5 + 0.5) * 255; o[q + 3] = 255;
+    }
+    x.putImageData(im, 0, 0);
+    var grain = new THREE.CanvasTexture(c);
+    grain.wrapS = grain.wrapT = THREE.RepeatWrapping; grain.repeat.set(3, 2.5); grain.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return grain;
+  }
+
   var items = [], falling = [];
   function spawnItems() {
     items.forEach(function (it) { if (it.group.parent) it.group.parent.remove(it.group); });
@@ -906,6 +1201,7 @@
     });
     left = items.length;
     if (refillBtn) refillBtn.hidden = true;
+    dressPrizes(true);
     centrePiece(true);
   }
   // The claw's home is the middle, so the middle always holds a prize: an easy first catch. If it is empty, the
@@ -1206,6 +1502,7 @@
     if (lost) return;
     requestAnimationFrame(frame);
     var dt = Math.min(0.05, clock.getDelta());
+    if (calm > 0) calm--; else if (chores.length) chores.shift()();   // also while off screen: the scene starts a scroll ahead, to be ready
     if (!visible) return;
     update(dt);
     if (sticker) {   // the foil's light eases toward the pointer and leans with the claw; with neither moving it holds still
