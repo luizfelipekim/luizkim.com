@@ -6,7 +6,8 @@
    default (charcoal) is a gloss black ball in a dark grey studio, which it mirrors; foil (esports) a lacquer
    ball in a dark arcade, with the eye and the window redrawn as lit displays under the lacquer;
    manual (brutalist) a matte black ball under one hard shadow;
-   press (broadsheet) an ink ball with newsprint decals, lit by the page it stands on; win95 a flat ball drawn
+   press (broadsheet) a ball turned from the claw cabinet's kit: varnished walnut, with an ivory domino let into
+   each side inside a nickel bezel, the eye and the answer cut into the ivory and inked; win95 a flat ball drawn
    through a 32-colour palette with an ordered dither, at half the resolution. One fixed light rig, driven per
    look; the studio, the arcade and the page each add a set of their own: a floor with a pool of light or of
    shadow on it, and in the two dark rooms a second rim. */
@@ -75,16 +76,21 @@
       [1.4, 10, [1.5, 1.44, 1.3], [7.5, 0, -9]],           // behind right: the warm rim, dimmer
       [9, 9, [0.9, 0.9, 0.95], [0, -6.5, -1], 'soft']      // the pool of light on the floor, seen from above it
     ],
-    // Broadsheet's room: the page is the light. Paper lies under the ball and bounces up into it, a window stands
-    // in front and a skylight behind, one lamp hangs over it (the hard top light) and a pale wall stands behind
-    // (the soft edge). The ink ball is matte, so it keeps only the broad shapes of these. Only the ball takes
-    // this room; the lamp and the wall are here, not in the rig, so the printed decals are not lit by them.
+    // Broadsheet's room: the page is the light, and the ball is varnish, ivory and nickel, so it mirrors all of it.
+    // Paper lies under the ball and bounces up into it. Two sash windows (dealt below) stand on the side the
+    // shadow falls away from: one behind the viewer's shoulder, which the ivory mirrors across its drawing, and one
+    // along the right wall, which the walnut carries as its soft highlight. A lamp hangs over the ball; the skylight
+    // and the pale wall behind it are kept dim, so its far edge stays dark against the page; and the wall behind
+    // the viewer is paper in shade, with one black card stood against it and a wash of daylight high on its other
+    // side: nickel only reads on a light page when it has ink to mirror.
     pressroom: [
       [26, 26, [1.5, 1.45, 1.32], [0, -7, 0], 'soft'],     // the page under the ball
-      [6, 8, [5.2, 5.0, 4.5], [7, 4, 8]],                  // window, front right
-      [9, 2, [4.2, 4.0, 3.6], [-4.5, 8.5, -8.5]],          // skylight, back left, high
+      [24, 18, [0.16, 0.155, 0.14], [0, 0.5, 11.5], 'soft'], // the wall behind the viewer, in shade
+      [1.5, 9, [0.005, 0.005, 0.005], [-4.2, 0, 10.6]],    // a black card against it
+      [8, 6, [11, 10.6, 9.6], [-5.5, 5.5, 8.5], 'soft'],   // daylight on the wall over the viewer's other shoulder: a sheen with no edge across the ivory
+      [9, 2, [0.6, 0.58, 0.52], [-4.5, 8.5, -8.5]],        // skylight, back left, high
       [3, 3, [16, 15.4, 14], [2.2, 8.7, 4.4], 1],          // the lamp, above and a little right
-      [4, 10, [2.4, 2.3, 2.1], [-8, 1, -7]]                // the pale wall, behind left
+      [4, 10, [0.5, 0.48, 0.44], [-8, 1, -7]]              // the pale wall, behind left
     ],
     // the arcade the foil ball stands in (the claw's hall, js/claw-machine.js, laid out for a sphere). A sphere
     // mirrors every direction: the middle of its face shows what is behind the viewer, a ring halfway out shows
@@ -113,8 +119,16 @@
       [9, 9, [0.75, 0.55, 1.5], [0, -6.5, -1], 'soft']     // the pool of light on the floor, seen from above it
     ]
   };
+  // a sash window is four panes round a cross of glazing bars: [where its middle is, width, height, bar, light]
+  [[[2.63, 3.52, 10.3], 5.0, 6.6, 0.9, [80, 77, 70]], [[9.2, 6.4, 2.4], 5.2, 6.6, 1.0, [30, 29, 26]]].forEach(function (sash) {
+    var mid = new THREE.Vector3().fromArray(sash[0]), across = new THREE.Vector3(0, 1, 0).cross(mid).normalize(), up = mid.clone().cross(across).normalize();
+    for (var pane = 0; pane < 4; pane++) {
+      var at = mid.clone().addScaledVector(across, (pane % 2 ? 1 : -1) * (sash[1] + sash[3]) / 4).addScaledVector(up, (pane < 2 ? 1 : -1) * (sash[2] + sash[3]) / 4);
+      ENVS.pressroom.push([(sash[1] - sash[3]) / 2, (sash[2] - sash[3]) / 2, sash[4], at.toArray()]);
+    }
+  });
   for (var bulb = 0; bulb < 9; bulb++) ENVS.arcade.push([0.5, 0.5, [12, 8.5, 2.5], [10, 5, -4.4 + bulb * 1.1], 1]);   // a marquee's row of bulbs, gold
-  var ENV_ROOM = { arcade: { dark: [0.012, 0.008, 0.03], blur: 0.02 }, studio: { dark: [0.02, 0.02, 0.023], blur: 0.03 }, pressroom: { dark: [0.09, 0.087, 0.08] } };   // how dark the room itself is, and how sharp its sources stay
+  var ENV_ROOM = { arcade: { dark: [0.012, 0.008, 0.03], blur: 0.02 }, studio: { dark: [0.02, 0.02, 0.023], blur: 0.03 }, pressroom: { dark: [0.09, 0.087, 0.08], blur: 0.012 } };   // how dark the room itself is, and how sharp its sources stay
   // white in the middle, black at the edge: the alpha of anything that fades out round, from `hold` of the way
   // out; `knee` puts a grey stop on the way, for a wash of ink that thins slowly
   function radialFade(hold, knee) {
@@ -147,33 +161,13 @@
   var R = 1.3;
   var ball = new THREE.Group(); scene.add(ball);   // position = drift + shake
   var body = new THREE.Group(); ball.add(body);    // rotation = roll tilt + flip
-  // the finishes, one mesh: gloss (the clearcoat black), matte (the manual), ink (the newspaper), flat (the 32-colour desktop), lacquer (the arcade)
+  // the finishes, one mesh: gloss (the clearcoat black), matte (the manual), walnut (the newspaper, built with its
+  // inlays further down), flat (the 32-colour desktop), lacquer (the arcade)
   var gloss = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.0275, 0.0275, 0.0275), roughness: 0.12, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9 });
   var matte = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.95, metalness: 0 });
-  var ink = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.78, metalness: 0, envMapIntensity: 0.22 });   // still matte, with just enough sheen to take the page's bounce and a top light
   var flat = new THREE.MeshLambertMaterial({ color: 0x040404 });   // reads as black through the palette; only the very top of the key catches a few grey blocks
   // the arcade's finish: black lacquer under a hard clear coat, sharp enough to mirror the room's screens and tubes
   var lacquer = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(0.02, 0.016, 0.035), roughness: 0.05, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.6 });
-  // Broadsheet's finish: the crane cabinet's walnut under the same satin varnish. The grain is drawn on first use:
-  // growth rings round the ball's axis, bent a little, with fine fibres along them
-  var walnut = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.42, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.2, envMapIntensity: 0.55 });
-  function walnutGrain() {
-    var W = 1024, H = 512, c = document.createElement('canvas'); c.width = W; c.height = H;
-    var ctx = c.getContext('2d'), im = ctx.createImageData(W, H), d = im.data, TAU = Math.PI * 2;
-    function hash(x, y) { var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); }
-    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
-      var u = x / W, v = y / H;
-      var t = v * 44 + 1.0 * Math.sin(u * TAU * 2 + v * 6) + 0.45 * Math.sin(u * TAU * 5 - v * 17) + 0.18 * Math.sin(u * TAU * 11 + v * 41);
-      var ring = t - Math.floor(t); ring = ring < 0.82 ? ring / 0.82 : (1 - ring) / 0.18;   // a slow rise, then the dark late wood
-      var fibre = hash(x, Math.floor(t * 9)) * 0.5 + hash(x * 0.37, y) * 0.5;
-      var k = Math.min(1, Math.max(0, 0.18 + ring * 0.62 + (fibre - 0.5) * 0.3));
-      var i = (y * W + x) * 4;
-      d[i] = 70 + k * 70; d[i + 1] = 43 + k * 48; d[i + 2] = 25 + k * 32; d[i + 3] = 255;   // #462b19 to #8c5b39, the cabinet's walnut
-    }
-    ctx.putImageData(im, 0, 0);
-    var tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.wrapS = THREE.RepeatWrapping; tex.anisotropy = 8;
-    return tex;
-  }
   // the mirrored room turns a few degrees with the visitor's pointer (three r128 has no rotation for an
   // environment, so the reflection vector is turned in the shader), and the reflections slide over the ball
   var roomTurn = { value: new THREE.Matrix3() }, roomTurn4 = new THREE.Matrix4(), roomEuler = new THREE.Euler();
@@ -206,6 +200,280 @@
   // ball, so the room's reflections run across them unbroken, and kept off the tone curve so the neon stays pure
   function display(tex) { return new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, premultipliedAlpha: true, depthWrite: false, toneMapped: false }); }
   var eyeLit = display(eye.t), winLit = display(win.t);
+
+  /* ---------- the parlour ball ----------
+     Broadsheet's ball is turned from the claw cabinet's kit (js/claw-machine.js, the press finish): varnished
+     walnut, with a round domino of ivory let into each side inside a thin nickel bezel. The eye and the answer
+     are cut into the ivory and filled with ink. Nothing here is redrawn by the frame: the lids are cut once for
+     each of five openings, the iris is a small piece of its own that slides under them, and the answer is cut
+     once when it changes. And no frame waits for a cut: the look is dealt with bare ivory, and the cutting is
+     done in short turns between the frames that follow. Built the first time the look is dealt. */
+  // Work that may not hold a frame up. A job is a function that does a little of its work each time it is
+  // called with a deadline, and returns true when it has finished; a turn works for about six milliseconds.
+  // Jobs wait in line; one that the viewer is looking at (`soon`) goes before those that are turned away, but
+  // never before the job in hand.
+  var chores = [], soonest = 0, choring = false;
+  function chore(job, soon) {
+    if (soon) chores.splice(Math.min(chores.length, Math.max(soonest++, 1)), 0, job); else chores.push(job);
+    if (!choring) { choring = true; setTimeout(turn, 0); }
+  }
+  function turn() {
+    if (lost) { chores.length = 0; choring = false; return; }
+    var until = performance.now() + 6;
+    while (chores.length && performance.now() < until) if (chores[0](until)) { chores.shift(); if (soonest) soonest--; }
+    if (chores.length) setTimeout(turn, 0); else choring = false;
+  }
+  // A debossed groove from one drawing: the tile the claw's pieces and the poker chips are cut as, packed for a
+  // ball that cuts often. They keep three maps of a groove; here it is one. Red and green hold the slope of the
+  // groove's rounded walls, blue holds the ink, and the shader (kit, below) reads the rest from the ink: its
+  // colour on the floor, the floor's matte, and the coat that stops at the groove.
+  var benches = {};
+  function cutMap(size) {
+    var d = new Uint8Array(size * size * 4), t = new THREE.DataTexture(d, size, size, THREE.RGBAFormat);
+    new Uint32Array(d.buffer).fill(new Uint32Array(new Uint8Array([128, 128, 0, 255]).buffer)[0]);   // level, and no ink
+    if (size > 1) { t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.anisotropy = 4; }
+    t.magFilter = THREE.LinearFilter; t.needsUpdate = true; return t;
+  }
+  function blurLine(a, b, base, len, r, step) {   // one box pass along one line; the ends average what there is
+    var sum = 0, n = 0, k;
+    for (k = 0; k <= r && k < len; k++) { sum += a[base + k * step]; n++; }
+    for (k = 0; k < len; k++) {
+      b[base + k * step] = sum / n;
+      if (k + r + 1 < len) { sum += a[base + (k + r + 1) * step]; n++; }
+      if (k - r >= 0) { sum -= a[base + (k - r) * step]; n--; }
+    }
+  }
+  // The job that cuts `draw(ctx, size)` (the groove, black on white) into a cut map: a new one of `size`, or an
+  // earlier one (`tex`, asked for when the job starts), and then only `box` [x, y, w, h] of it, which must hold
+  // the whole of what it draws with a margin of plain surface. `wall` is how far the walls round off, `steep`
+  // how hard they turn the light for one texel of rise. `done(map)` is called once the map holds the cut.
+  function cutting(size, draw, wall, steep, done, tex, box) {
+    var bx = box ? box[0] : 0, by = box ? box[1] : 0, w = box ? box[2] : size, hh = box ? box[3] : size;
+    var stage = 0, line = 0, pass = 0, r = Math.max(1, wall | 0), key = w + 'x' + hh, src, h, t, d;
+    return function (until) {
+      var px, j, o;
+      if (stage === 0) {   // the drawing, read back once
+        tex = typeof tex === 'function' ? tex() : tex || cutMap(size);
+        d = tex.image.data;
+        var bench = benches[key];
+        if (!bench) { var bc = document.createElement('canvas'); bc.width = w; bc.height = hh; bench = benches[key] = { x: bc.getContext('2d', { willReadFrequently: true }), h: new Float32Array(w * hh), t: new Float32Array(w * hh) }; }
+        var x = bench.x; h = bench.h; t = bench.t;
+        x.fillStyle = '#fff'; x.fillRect(0, 0, w, hh); x.fillStyle = x.strokeStyle = '#000'; x.save(); x.translate(-bx, -by); draw(x, size); x.restore();
+        src = x.getImageData(0, 0, w, hh).data; stage = 1; return false;
+      }
+      if (stage === 1) {   // its height: 1 = surface, 0 = groove floor
+        for (; line < hh; line++) { if (!(line & 15) && performance.now() > until) return false; for (px = 0, j = line * w; px < w; px++, j++) h[j] = src[j * 4] / 255; }
+        stage = 2; line = 0; return false;
+      }
+      if (stage === 2) {   // two box-blur passes each way round the walls (canvas `filter` is not available in every Safari)
+        for (; pass < 4; pass++, line = 0) {
+          var across = !(pass & 1), lines = across ? hh : w;
+          for (; line < lines; line++) { if (!(line & 15) && performance.now() > until) return false; if (across) blurLine(h, t, line * w, w, r, 1); else blurLine(t, h, line, hh, r, w); }
+        }
+        stage = 3; line = 0; return false;
+      }
+      if (stage === 3) {   // the map: rows go in from the bottom up, as the uploaded canvas of a decal lies
+        for (; line < hh; line++) {
+          if (!(line & 7) && performance.now() > until) return false;
+          for (px = 0, j = line * w, o = ((size - 1 - by - line) * size + bx) * 4; px < w; px++, j++, o += 4) {
+            var dx = (h[j + (px < w - 1 ? 1 : 0)] - h[j - (px > 0 ? 1 : 0)]) * steep, dy = (h[j + (line < hh - 1 ? w : 0)] - h[j - (line > 0 ? w : 0)]) * steep, l = Math.sqrt(dx * dx + dy * dy + 1);
+            d[o] = (-dx / l * 0.5 + 0.5) * 255; d[o + 1] = (dy / l * 0.5 + 0.5) * 255; d[o + 2] = 255 - src[j * 4];
+          }
+        }
+        stage = 4;
+      }
+      if (w * hh > 250000) delete benches[key];   // a large bench is for one cut; the small ones are kept
+      tex.needsUpdate = true; done(tex); return true;
+    };
+  }
+  var SPAN = 1.05, PX = 512 / SPAN;   // the drawings keep the paper decals' layout: 512 px across 1.05 radians of the ball
+  var LID = { w: 150, h: 78, line: 16, levels: 4 };
+  // the eye, cut: lids and lashes here, at one of five openings; the iris is its own piece (cutIris)
+  function cutLids(open) {
+    return function (ctx, size) {
+      var cx = 256, cy = 256, w = LID.w, h = LID.h * open;
+      ctx.scale(size / 512, size / 512);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.lineWidth = LID.line; ctx.beginPath(); ctx.moveTo(cx - w, cy); ctx.quadraticCurveTo(cx, cy - h * 2, cx + w, cy); ctx.quadraticCurveTo(cx, cy + h * 2, cx - w, cy); ctx.closePath(); ctx.stroke();
+      ctx.lineWidth = 12;
+      for (var j = 0; j < 5; j++) { var t = (j + 1) / 6, px = cx - w + t * 2 * w, py = cy - 2 * h * t * (1 - t) * 2, dx = (t - 0.5) * 0.9;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + dx * 34, py - 34 * open); ctx.stroke(); }
+      for (var k = 0; k < 3; k++) { var a2 = Math.PI / 2 + (k - 1) * 0.3; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a2) * (h * 2 + 2), cy + Math.sin(a2) * (h * 2 + 2)); ctx.lineTo(cx + Math.cos(a2) * (h * 2 + 22), cy + Math.sin(a2) * (h * 2 + 22)); ctx.stroke(); }
+    };
+  }
+  var IRIS = 0.14;   // the iris piece reaches this many radians from its middle
+  function cutIris(ctx, size) {
+    var s = size / (2 * IRIS * PX);   // drawn in the lids' pixels, about its own middle
+    ctx.translate(size / 2, size / 2); ctx.scale(s, s);
+    ctx.lineWidth = 13; ctx.beginPath(); ctx.arc(0, 0, 47, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-8, -8, 7, 0, Math.PI * 2); ctx.fill();   // the glint is an island left standing in the pit
+  }
+  // the answer, cut: the same lines, in the same place and size, as the printed window of the other looks, inside
+  // a ring. The ring is cut once; a new answer is cut into the box the lines lie in, which is a fifth of the map
+  var ANSWER = { size: 1024, ring: 182, box: [150, 84], lines: 4 };   // the box's half width and height, in the decals' pixels: room for four lines, clear of the ring
+  function cutAnswer(text, font, ring) {
+    return function (ctx, size) {
+      ctx.scale(size / 512, size / 512); ctx.translate(256, 256);
+      if (ring) { ctx.lineWidth = 5.5; ctx.beginPath(); ctx.arc(0, 0, ANSWER.ring, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = font; ctx.lineWidth = 0.7; ctx.lineJoin = 'round';
+      var lines = wrapText(ctx, text, 280), lh = 36, y0 = -(lines.length - 1) * lh / 2;
+      lines.forEach(function (l, i) { ctx.fillText(l, 0, y0 + i * lh); ctx.strokeText(l, 0, y0 + i * lh); });   // a hair wider than print: a cut has walls
+    };
+  }
+  // a round piece let into the ball: a cap of the sphere standing `lift` proud of it, out to `reach` radians from
+  // its middle, then a shoulder of radius `round` that turns down under the bezel. Its drawing is laid across it
+  // as the paper decals lie (`span` radians across the canvas), and its middle looks down +z
+  function inlay(lift, reach, round, span, rings) {
+    var rad = R + lift, prof = [], i, j, turns = 72, f;
+    for (i = 0; i <= rings; i++) { f = reach * i / rings; prof.push([rad * Math.sin(f), rad * Math.cos(f), Math.sin(f), Math.cos(f)]); }
+    if (round) for (i = 1; i <= 6; i++) { f = reach + 1.35 * i / 6; prof.push([(rad - round) * Math.sin(reach) + round * Math.sin(f), (rad - round) * Math.cos(reach) + round * Math.cos(f), Math.sin(f), Math.cos(f)]); }
+    var row = turns + 1, count = prof.length * row, pos = new Float32Array(count * 3), nor = new Float32Array(count * 3), uv = new Float32Array(count * 2), idx = new Uint16Array((prof.length - 1) * turns * 6), v = 0, q = 0;
+    for (i = 0; i < prof.length; i++) for (j = 0; j <= turns; j++, v++) {
+      f = j / turns * Math.PI * 2; var p = prof[i], cf = Math.cos(f), sf = Math.sin(f), x = p[0] * cf, y = p[0] * sf, z = p[1];
+      pos[v * 3] = x; pos[v * 3 + 1] = y; pos[v * 3 + 2] = z; nor[v * 3] = p[2] * cf; nor[v * 3 + 1] = p[2] * sf; nor[v * 3 + 2] = p[3];
+      uv[v * 2] = 0.5 + Math.atan2(x, z) / span; uv[v * 2 + 1] = 0.5 + Math.asin(y / Math.sqrt(x * x + y * y + z * z)) / span;
+    }
+    for (i = 0; i < prof.length - 1; i++) for (j = 0; j < turns; j++) { var a0 = i * row + j, b0 = a0 + row; idx[q++] = a0; idx[q++] = b0; idx[q++] = a0 + 1; idx[q++] = b0; idx[q++] = b0 + 1; idx[q++] = a0 + 1; }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    g.setIndex(new THREE.BufferAttribute(idx, 1)); return g;
+  }
+  // The parlour's three finishes are one program, so the look costs one shader to deal, as the ink ball did.
+  // Each material brings its own numbers (userData.kit):
+  //   share    The room is drawn brighter than it lights. A window pane has to outshine ivory to show on it, and
+  //            at that strength its diffuse light would bleach the ivory to the white of the page. So the finishes
+  //            mirror the room in full and take only this share of its diffuse light; the rig lights their bodies.
+  //   wood     1 for the walnut: the body's colour is the board (`grain`), which is not wrapped round the ball (a
+  //            wrap pinches at two poles): the ball is cut out of it. The growth rings are cylinders round a pith
+  //            that lies across the view, three radii under the ball, so the grain runs level across both faces,
+  //            bows a little, and closes into rings only at the top and the bottom, which the viewer never faces.
+  //   the cut  Every material carries a cut map in the normal map's place (a blank one for wood and nickel), and
+  //            the shader reads the whole groove from it: the walls, ink on the floor, the floor's matte, and
+  //            the coat gone where the ink lies (a tenth of that window would still grey the ink it crosses).
+  //   lid      For the iris, how far the lids stand open, in the decals' pixels: it shows only between them, so a
+  //            blink closes over it. Below zero for every other piece. `pose` puts the iris where it has turned to.
+  function kit(sh) {
+    var k = this.userData.kit;
+    sh.uniforms.kitPose = k.pose; sh.uniforms.kitLid = k.lid; sh.uniforms.kitShare = k.share; sh.uniforms.kitWood = k.wood; sh.uniforms.grain = k.grain;
+    sh.vertexShader = 'uniform mat4 kitPose;\nvarying vec3 vOnBall;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvOnBall = ( kitPose * vec4( position, 1.0 ) ).xyz;');
+    sh.fragmentShader = 'uniform float kitLid;\nuniform float kitShare;\nuniform float kitWood;\nuniform sampler2D grain;\nvarying vec3 vOnBall;\n' + sh.fragmentShader
+      .replace('#include <clipping_planes_fragment>', [
+        '#include <clipping_planes_fragment>',
+        '\tvec3 onBall = normalize( vOnBall );',
+        '\tvec2 lidPx = vec2( atan( onBall.x, onBall.z ), asin( onBall.y ) ) * ' + PX.toFixed(1) + ';',
+        '\tif ( kitLid >= 0.0 && abs( lidPx.y ) > kitLid * ( 1.0 - lidPx.x * lidPx.x / ' + (LID.w * LID.w).toFixed(1) + ' ) - ' + (LID.line / 2 + 4).toFixed(1) + ' ) discard;'].join('\n'))
+      .replace('#include <map_fragment>', [
+        '\tvec4 cutTexel = texture2D( normalMap, vUv );',
+        '\tfloat cutInk = cutTexel.b;',
+        '\tvec3 cutN = vec3( cutTexel.xy * 2.0 - 1.0, 0.0 );',
+        '\tcutN.z = sqrt( max( 1.0 - dot( cutN.xy, cutN.xy ), 0.0 ) );',
+        '\tvec3 blk = vOnBall / ' + R.toFixed(2) + ';',
+        '\tblk.xy = vec2( blk.x * 0.990 - blk.y * 0.139, blk.x * 0.139 + blk.y * 0.990 );',   // the block lies a few degrees off level
+        '\tfloat ring = length( vec2( blk.y + 3.0, blk.z ) ) - 3.0;',
+        '\tring += 0.008 * sin( blk.x * 4.1 + blk.z * 5.3 ) + 0.005 * sin( blk.z * 9.7 - blk.x * 2.3 );',   // no tree grows ruler-straight: the rings wander a little, also where the ball shows its side
+        '\tvec3 board = texture2D( grain, vec2( ring * 0.7 + 0.7, blk.x * 0.5 + 0.5 ) ).rgb;',
+        '\tdiffuseColor.rgb *= sRGBToLinear( vec4( mix( vec3( 1.0, 0.988, 0.969 ) * ( 1.0 - 0.9 * cutInk ), board, kitWood ), 1.0 ) ).rgb;'].join('\n'))
+      .replace('#include <roughnessmap_fragment>', '\tfloat roughnessFactor = roughness + 0.5 * cutInk;')
+      .replace('#include <normal_fragment_maps>', THREE.ShaderChunk.normal_fragment_maps.replace('vec3 mapN = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;', 'vec3 mapN = cutN;'))
+      .replace('#include <clearcoat_normal_fragment_maps>', '\tclearcoatNormal = perturbNormal2Arb( - vViewPosition, clearcoatNormal, cutN, faceDirection );')
+      .replace('#include <lights_physical_fragment>', THREE.ShaderChunk.lights_physical_fragment.replace('material.clearcoat = clearcoat;', 'material.clearcoat = clearcoat * smoothstep( 0.15, 0.9, 1.0 - 0.9 * cutInk );'))
+      .replace('#include <lights_fragment_maps>', THREE.ShaderChunk.lights_fragment_maps.replace('getLightProbeIndirectIrradiance( geometry, maxMipLevel )', 'getLightProbeIndirectIrradiance( geometry, maxMipLevel ) * kitShare'));
+  }
+  var parlour = null;
+  function buildParlour() {
+    var p = parlour = { group: new THREE.Group(), lids: [], lidAt: -1, cutText: null }, still = new THREE.Matrix4(), blank = cutMap(1);
+    // Until the board's image is here, and if it never comes, the board is one colour: the colour the lit ball
+    // averages to with its grain, so the grain arrives without a change of tone.
+    p.grain = { value: new THREE.DataTexture(new Uint8Array([88, 60, 38, 255]), 1, 1, THREE.RGBAFormat) }; p.grain.value.needsUpdate = true;
+    function finish(set, share, wood, pose, lid) {
+      var m = new THREE.MeshPhysicalMaterial(set); m.normalMap = blank;
+      m.userData.kit = { share: { value: share }, wood: { value: wood }, pose: { value: pose || still }, lid: { value: lid || -1 }, grain: p.grain };
+      m.onBeforeCompile = kit; return m;
+    }
+    // walnut: the claw cabinet's wood, to its numbers
+    p.walnut = finish({ color: 0xffffff, roughness: 0.42, metalness: 0, envMapIntensity: 0.55, clearcoat: 0.7, clearcoatRoughness: 0.2 }, 0.25, 1);
+    // ivory, a domino: thick gloss resin, never pure white, so its highlight stays brighter than its body. The
+    // resin's own sheen is turned down: under the coat it would only fog the window's edge
+    function ivory(pose, lid) { return finish({ color: 0xefeade, roughness: 0.22, metalness: 0, reflectivity: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.9 }, 0.08, 0, pose, lid); }
+    // nickel: it mirrors all of a window the ivory mirrors a twenty-fifth of, so it takes the room at a third: dark metal, white glints
+    p.nickel = finish({ color: 0xd9d5cb, roughness: 0.16, metalness: 1, clearcoat: 0, envMapIntensity: 0.35 }, 1, 0);
+    // the iris: a piece of the same ivory a hair above the disc, turned about the ball's middle to follow the pointer
+    p.pupil = new THREE.Mesh(inlay(0.0135, IRIS, 0, 2 * IRIS, 6)); p.pupil.visible = false;
+    p.eye = ivory(); p.answer = ivory(); p.iris = p.pupil.material = ivory(p.pupil.matrix, LID.h);
+    p.mats = [p.walnut, p.nickel, p.eye, p.iris, p.answer];
+    var board = new Image();
+    function lay() {
+      // the board is drawn and its pores are added in turns, like the cuts, and only then does it take the place of the flat colour
+      var c = document.createElement('canvas'), x, seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }, step = -1;
+      chore(function () {
+        if (step < 0) { c.width = c.height = 512; x = c.getContext('2d'); x.drawImage(board, 8, 430, 240, 270, 0, 0, 512, 512); step = 0; return false; }   // one board of the cabinet's left side, grain upright
+        // the ball stands twice as near as the cabinet, and at that range the image runs out. Pores are drawn over
+        // it, short strokes along the grain, as walnut has: dark ones, then a few light. The board keeps its colour and figure
+        if (step < 12) {
+          var dark = step < 8, n = dark ? 425 : 225;
+          x.fillStyle = dark ? 'rgba(28,14,6,' + (0.1 + step * 0.03).toFixed(2) + ')' : 'rgba(255,214,160,' + (0.05 + (step - 8) * 0.025).toFixed(3) + ')';
+          for (var i = 0; i < n; i++) x.fillRect(rnd() * 512, rnd() * 512, 1, dark ? 10 + rnd() * 60 : 20 + rnd() * 80);
+          step++; return false;
+        }
+        var grain = new THREE.CanvasTexture(c), flat = p.grain.value; grain.wrapS = grain.wrapT = THREE.MirroredRepeatWrapping; grain.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        p.grain.value = grain; flat.dispose(); return true;
+      }, true);
+    }
+    board.src = (document.documentElement.getAttribute('data-root') || '') + 'img/claw/deco-walnut.webp';
+    if (board.decode) board.decode().then(lay, function () {}); else board.onload = lay;   // decoded off the frame's thread where the browser can
+    var disc = inlay(0.012, 0.43, 0.028, SPAN, 18);
+    p.group.add(new THREE.Mesh(disc, p.eye), p.pupil);
+    var winDisc = new THREE.Mesh(disc, p.answer); winDisc.rotation.y = Math.PI; p.group.add(winDisc);
+    // the window's ink lies on the ivory: the same canvas the other looks print on, drawn here as a film that thins
+    p.film = new THREE.Mesh(disc, winMat); p.film.rotation.y = Math.PI; p.film.scale.setScalar(1.0025); p.film.visible = false; p.group.add(p.film);
+    var hoop = new THREE.TorusGeometry((R + 0.002) * Math.sin(0.461), 0.02, 12, 96);   // it sits on the ivory's shoulder, so no wood shows between them
+    [1, -1].forEach(function (side) { var bezel = new THREE.Mesh(hoop, p.nickel); bezel.position.z = side * (R + 0.002) * Math.cos(0.461); p.group.add(bezel); });
+    body.add(p.group);
+    // the cuts, in the order they are wanted: the open eye and its iris (and the board, when its image is in),
+    // then the openings a blink passes through, small and ready long before the first blink; the first frame
+    // adds the answer, which is turned away
+    lids(LID.levels);
+    chore(cutting(256, cutIris, 5, 11, function (map) { p.iris.normalMap = map; p.irisCut = true; }), true);
+    for (var level = LID.levels - 1; level >= 0; level--) lids(level);
+  }
+  // open, the lids are cut at the decals' full size; the openings a blink passes through are on screen for a few
+  // frames, so they are cut at half of it, with the walls' numbers scaled to match
+  function lids(level) {
+    var full = level === LID.levels;
+    chore(cutting(full ? 512 : 256, cutLids(level / LID.levels), full ? 3 : 2, full ? 6 : 3, function (map) { parlour.lids[level] = map; }), full);
+  }
+  // the eye this frame: the lids of the nearest opening that is cut, the iris turned to where the pupil looks
+  function setEye(open) {
+    var p = parlour, level = Math.round(Math.max(0, Math.min(1, open)) * LID.levels);
+    if (!p.lids[level]) level = p.lidAt;
+    if (level !== p.lidAt) { p.lidAt = level; p.eye.normalMap = p.lids[level]; p.iris.userData.kit.lid.value = LID.h * level / LID.levels; }
+    p.pupil.visible = p.lidAt >= 0 && !!p.irisCut;
+    p.pupil.rotation.set(pupil.y * 12 / PX, pupil.x * 28 / PX, 0);
+  }
+  // the window this frame: the answer is cut again only when it changes (or its typeface arrives), and that
+  // happens while the window is turned away; the film of ink is drawn only while it is thinning or closing over,
+  // in front of the viewer
+  function setWindow() {
+    var p = parlour;
+    if (answer !== p.cutText) {
+      p.cutText = answer;
+      var S = ANSWER.size, k = S / 512, bw = ANSWER.box[0], bh = ANSWER.box[1], whole = !p.ringCut;
+      // more lines than the box holds: the whole map again, ring and all
+      if (!whole) { win.ctx.font = pal.font; whole = wrapText(win.ctx, answer, 280).length > ANSWER.lines; }
+      p.ringCut = true;
+      chore(cutting(S, cutAnswer(answer, pal.font, whole), 3, 10, function (map) { if (p.answerMap && p.answerMap !== map) p.answerMap.dispose(); p.answerMap = p.answer.normalMap = map; }, whole ? null : function () { return p.answerMap; }, whole ? null : [(256 - bw) * k, (256 - bh) * k, 2 * bw * k, 2 * bh * k]));
+      // cut before its typeface is here, it is cut once more when the face lands
+      if (!p.faceAsked && document.fonts && document.fonts.check && !document.fonts.check(pal.font)) { p.faceAsked = true; document.fonts.load(pal.font).then(function () { p.cutText = null; }, function () {}); }
+    }
+    var wet = state !== 'idle' && cover > 0.004;
+    p.film.visible = wet; if (!wet) return;
+    var ctx = win.ctx;
+    ctx.clearRect(0, 0, 512, 512);
+    ctx.fillStyle = pal.cover + cover.toFixed(3) + ')'; ctx.fillRect(0, 0, 512, 512);
+    inkSwirls(ctx, 256, 256);
+    win.t.needsUpdate = true;
+  }
 
   // ground shadow: soft (a blob), pool (a blob of the look's ink), hard (one cast edge), or hatched (cut in ink)
   var shadowC = document.createElement('canvas'); shadowC.width = shadowC.height = 256;
@@ -251,7 +519,7 @@
   function buildSet(name) {
     var sp = SETS[name], f = sp.floor, g = new THREE.Group();
     var fm = f.wash
-      ? new THREE.MeshBasicMaterial({ color: f.color, transparent: true, opacity: f.wash, alphaMap: radialFade(0.5, 0.72), depthWrite: false })
+      ? new THREE.MeshBasicMaterial({ color: f.color, transparent: true, opacity: f.wash, alphaMap: radialFade(0.5, 0.72), depthWrite: false, toneMapped: false })   // ink on the page, not a lit thing
       : new THREE.MeshStandardMaterial({ color: f.color, roughness: f.rough, metalness: f.metal, envMapIntensity: f.env, transparent: true, alphaMap: radialFade(f.hold), depthWrite: false });
     var floor = new THREE.Mesh(new THREE.CircleGeometry(1, 64), fm);
     floor.rotation.x = -Math.PI / 2; floor.position.y = -R - 0.352; floor.renderOrder = -1;
@@ -266,7 +534,8 @@
      flat print; print: the decals take this room instead), the set it stands in, the rig's colours and
      intensities, the shadow's kind, and the colours and type of the two decals: paper and ink for the eye;
      face, text, ink, ring, cover and swirl for the window. tone: a filmic curve on the ball and floor;
-     turns: the mirrored room follows the pointer. */
+     turns: the mirrored room follows the pointer. inlay: the ball is the parlour's (walnut, ivory, nickel), and the
+     paper decals step out for its cut ones. */
   var LOOKS = {
     default: { mat: 'gloss', env: 'studio', print: 'softbox', set: 'studio', tone: true, turns: true, ambient: [0xffffff, 0.08], key: [0xffffff, 0.5], rim: [0xfff0e0, 0.4], rimTop: [0xdfe8ff, 0.5], shadow: 'soft',
       paper: '#f1f1ef', ink: '#1c1c1c', face: '#1f2420', text: '#f1f1ef', ink2: '#111412', ring: 'rgba(143,166,142,0.35)', cover: 'rgba(14,18,16,', swirl: 'rgba(96,118,96,',
@@ -280,8 +549,8 @@
     manual: { mat: 'matte', body: 0x141414, env: null, ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'hard',
       paper: '#efede7', ink: '#0c0c0c', face: '#efede7', text: '#0c0c0c', ink2: '#0c0c0c', ring: 'rgba(12,12,12,0.6)', cover: 'rgba(12,12,12,', swirl: 'rgba(196,22,28,',
       font: '500 26px "IBM Plex Mono",ui-monospace,Menlo,monospace' },
-    press: { mat: 'walnut', domino: true, env: 'pressroom', own: true, set: 'paper', ambient: [0xffffff, 0.3], key: [0xffffff, 0.95], rim: [0xffffff, 0], rimTop: [0xffffff, 0.25], shadow: 'pool',
-      paper: '#faf8f4', ink: '#1a1715', face: '#faf8f4', text: '#1a1715', ink2: '#1a1715', ring: 'rgba(26,23,21,0.6)', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
+    press: { mat: 'walnut', env: 'pressroom', own: true, inlay: true, set: 'paper', tone: true, ambient: [0xfff3e0, 0.27], key: [0xffe6c2, 0.75], rim: [0xffffff, 0], rimTop: [0xffffff, 0], shadow: 'pool',
+      ink: '#1a1715', cover: 'rgba(26,23,21,', swirl: 'rgba(26,23,21,',
       font: '400 30px "Source Serif 4",Georgia,"Times New Roman",serif' }
   };
   LOOKS.manual = LOOKS.default;   // Brutalist shows the default look's ball
@@ -294,16 +563,18 @@
     var room = ENV_ROOM[pal.env] || {};
     var e = pal.env ? (envs[pal.env] || (envs[pal.env] = bakeEnv(ENVS[pal.env], room.dark, room.blur))) : null;
     scene.environment = pal.own ? null : e; gloss.envMap = e; gloss.needsUpdate = true;
-    ink.envMap = pal.own ? e : null; ink.needsUpdate = true;
-    if (pal.mat === 'walnut' && !walnut.map) walnut.map = walnutGrain();
-    walnut.envMap = pal.mat === 'walnut' ? e : null; walnut.needsUpdate = true;
+    var inlaid = !!pal.inlay;
+    if (inlaid && !parlour) buildParlour();
+    if (parlour) { parlour.group.visible = inlaid; if (inlaid) parlour.mats.forEach(function (m) { if (m.envMap !== e) { m.envMap = e; m.needsUpdate = true; } }); }
+    eyeCap.visible = winCap.visible = !inlaid;
     eyeMat.envMap = winMat.envMap = pal.print ? (envs[pal.print] || (envs[pal.print] = bakeEnv(ENVS[pal.print]))) : null;
     if (pal.body) matte.color.setHex(pal.body);
-    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'lacquer' ? lacquer : pal.mat === 'ink' ? ink : pal.mat === 'walnut' ? walnut : pal.mat === 'flat' ? flat : matte;
+    sphere.material = pal.mat === 'gloss' ? gloss : pal.mat === 'lacquer' ? lacquer : pal.mat === 'walnut' ? parlour.walnut : pal.mat === 'flat' ? flat : matte;
     // a filmic curve where the ball mirrors a room, so the sources roll off instead of clipping. In the arcade
     // also the stage's own colour behind the ball (the glow is added over it, which a see-through canvas cannot carry)
     var tone = pal.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-    if (renderer.toneMapping !== tone) { renderer.toneMapping = tone; shadow.material.needsUpdate = true; }
+    var lit = !inlaid;   // the parlour's pool of shadow is ink on the page: print, so the curve leaves it be
+    if (renderer.toneMapping !== tone || shadow.material.toneMapped !== lit) { renderer.toneMapping = tone; shadow.material.toneMapped = lit; shadow.material.needsUpdate = true; }
     var hall = getComputedStyle(stage).backgroundColor;
     if (pal.neon) renderer.setClearColor(new THREE.Color().setStyle(hall && hall.indexOf('rgba(0, 0, 0, 0)') < 0 ? hall : '#0a0619'), 1); else renderer.setClearColor(0x000000, 0);
     if (pal.set && !sets[pal.set]) buildSet(pal.set);
@@ -315,12 +586,6 @@
     var wm = winMat, em = eyeMat;
     if (pal.pixel) { wm.color.setHex(0x000000); wm.emissive.setHex(0xffffff); wm.emissiveMap = win.t; wm.emissiveIntensity = 1; em.color.setHex(0x000000); em.emissiveIntensity = 1; }
     else { wm.color.setHex(0xffffff); wm.emissive.setHex(0x000000); wm.emissiveMap = null; wm.emissiveIntensity = 1; em.color.setHex(0xffffff); em.emissiveIntensity = 0.6; }
-    // a domino's face: gloss ivory that takes the room, the drawn lines cut in as grooves (the artwork is its own height map)
-    var dom = !!pal.domino;
-    em.roughness = wm.roughness = dom ? 0.1 : 0.55; em.bumpScale = wm.bumpScale = 0.02;
-    em.bumpMap = dom ? eye.t : null; wm.bumpMap = dom ? win.t : null;
-    if (dom) { em.envMap = wm.envMap = e; em.envMapIntensity = wm.envMapIntensity = 0.7; em.emissiveIntensity = 0.15; }
-    else { em.envMapIntensity = wm.envMapIntensity = 1; }
     wm.needsUpdate = em.needsUpdate = true;
     setL(ambient, pal.ambient); setL(key, pal.key); setL(rim, pal.rim); setL(rimTop, pal.rimTop);
     drawShadow(pal.shadow, pal.ink);
@@ -437,6 +702,7 @@
     eye.t.needsUpdate = true;
   }
   function drawEye(open) {
+    if (pal.inlay) return setEye(open);
     if (pal.pixel) return drawEyeBold(open);
     if (pal.neon) return drawEyeNeon(open);
     var ctx = eye.ctx, S = 512, cx = 256, cy = 256;
@@ -497,7 +763,16 @@
     ctx.restore();
     win.t.needsUpdate = true;
   }
+  // the ink over the answer turns in broad arcs, faster and fuller with the shake
+  function inkSwirls(ctx, cx, cy) {
+    for (var i = 0; i < 9; i++) {
+      var a = inkPhase * (0.6 + i * 0.07) + i * 0.7, r = 60 + i * 17, alpha = (0.12 + 0.25 * swirl) * cover;
+      ctx.strokeStyle = pal.swirl + alpha.toFixed(3) + ')'; ctx.lineWidth = 14 + (i % 3) * 6;
+      ctx.beginPath(); ctx.arc(cx + Math.sin(a * 0.5) * 20, cy + Math.cos(a * 0.4) * 20, r, a, a + 1.6 + swirl); ctx.stroke();
+    }
+  }
   function drawWindow() {
+    if (pal.inlay) return setWindow();
     if (pal.neon) return drawWindowNeon();
     var ctx = win.ctx, S = 512, cx = 256, cy = 256;
     var faceCol = pal.face, textCol = pal.text, inkCol = pal.ink2;
@@ -513,11 +788,7 @@
     lines.forEach(function (l, i) { ctx.fillText(l, 0, y0 + i * lh); });
     ctx.restore();
     ctx.fillStyle = pal.cover + (cover * 0.97).toFixed(3) + ')'; ctx.fillRect(0, 0, S, S);
-    for (var i = 0; i < 9; i++) {
-      var a = inkPhase * (0.6 + i * 0.07) + i * 0.7, r = 60 + i * 17, alpha = (0.12 + 0.25 * swirl) * cover;
-      ctx.strokeStyle = pal.swirl + alpha.toFixed(3) + ')'; ctx.lineWidth = 14 + (i % 3) * 6;
-      ctx.beginPath(); ctx.arc(cx + Math.sin(a * 0.5) * 20, cy + Math.cos(a * 0.4) * 20, r, a, a + 1.6 + swirl); ctx.stroke();
-    }
+    inkSwirls(ctx, cx, cy);
     ctx.restore();
     ctx.strokeStyle = 'rgba(241,241,239,0.14)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx, cy, 214, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, 200, -2.4, -1.3); ctx.stroke();
