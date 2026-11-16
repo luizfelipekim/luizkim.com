@@ -44,7 +44,7 @@
   };
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   const look = () => getComputedStyle(document.documentElement).getPropertyValue('--look').trim() || 'default';
-  const ART = { win95: 'img/poker/back-beach.png', foil: 'img/poker/back-foil.jpg', foilBump: 'img/poker/back-foil-bump.jpg' };
+  const ART = { win95: 'img/poker/back-beach.png', foil: 'img/poker/back-foil.jpg', foilBump: 'img/poker/back-foil-bump.jpg', walnut: 'img/claw/deco-walnut.webp' };
   const images = {};
   function image(key) {
     const im = images[key];
@@ -103,14 +103,43 @@
     ctx.font = '500 20px ' + MONO; ctx.fillText('\u00ae', CW - m - 52, bot + 36);
   }
 
-  // Broadsheet: an engraved card. Cream newsprint, a hatched border band between rules, the
+  // Broadsheet: an engraved card. Cream newsprint, a border band of walnut veneer between rules, the
   // nameplate LK in the Playfair black, a line of small capitals with hairlines, as a masthead.
   const CREAM = '#faf8f4', INK = '#1a1715';
-  function hatch(ctx, x, y, w, h, step, alpha, both) {
-    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-    ctx.strokeStyle = INK; ctx.globalAlpha = alpha; ctx.lineWidth = 1.2;
-    for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke(); }
-    if (both) for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d + h, y); ctx.lineTo(x + d, y + h); ctx.stroke(); }
+  // The border is the walnut of the claw machine's cabinet (js/claw-machine.js), so the deck belongs to that cabinet:
+  // the cabinet's own grain image, inlaid as four strips of veneer with the grain running along each side and a mitre
+  // at each corner. One clean panel of the image is used ([x, y, width, length], the grain running down it); each
+  // side takes its own strip of it, laid end to end and turned over at each join so the grain runs on unbroken.
+  // WALNUT is the wood as the cabinet shows it under its varnish: the band's colour until the image is in (and if
+  // it never comes), and the lift that brings the bare grain up to it.
+  const WALNUT = '#6b4a33', PANEL = [14, 96, 232, 214], GRAIN = 2.4;   // GRAIN: how much larger than in the image the grain is laid
+  function veneer(ctx, x, y, w, h, band) {
+    const im = image('walnut');
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.rect(x + band, y + band, w - 2 * band, h - 2 * band); ctx.clip('evenodd');
+    ctx.fillStyle = WALNUT; ctx.fillRect(x, y, w, h);
+    if (im) {
+      const cut = band / GRAIN;   // the width of image a strip takes
+      const lay = () => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].forEach(([ox, oy], i) => {
+        const L = i % 2 ? h : w, tiles = i % 2 ? 3 : 2, len = L / tiles, sx = PANEL[0] + 8 + i * ((PANEL[2] - cut - 16) / 3);
+        ctx.save(); ctx.translate(ox, oy); ctx.rotate(i * Math.PI / 2);   // the side runs along x from its corner, the card's middle is down
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(L, 0); ctx.lineTo(L - band, band); ctx.lineTo(band, band); ctx.closePath(); ctx.clip();
+        for (let k = 0; k < tiles; k++) {
+          ctx.save(); ctx.translate((k + (k % 2)) * len, band); ctx.rotate(-Math.PI / 2); if (k % 2) ctx.scale(1, -1);
+          ctx.drawImage(im, sx, PANEL[1], cut, PANEL[3], 0, 0, band, len + 1); ctx.restore();
+        }
+        ctx.restore();
+      });
+      lay();
+      // at the band's size on the table the grain would thin to a flat brown: laid over itself it keeps its dark lines
+      ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.45; lay();
+      ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.36; ctx.fillStyle = WALNUT; ctx.fillRect(x, y, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // the mitres: a hairline where two strips meet
+    ctx.globalAlpha = 0.5; ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath();
+    [[x, y, 1, 1], [x + w, y, -1, 1], [x + w, y + h, -1, -1], [x, y + h, 1, -1]].forEach(([cx, cy, dx, dy]) => { ctx.moveTo(cx, cy); ctx.lineTo(cx + dx * band, cy + dy * band); });
+    ctx.stroke();
     ctx.restore();
   }
   function drawBackPress(c) {
@@ -118,11 +147,9 @@
     ctx.clearRect(0, 0, CW, CH);
     roundRect(ctx, 0, 0, CW, CH, R); ctx.fillStyle = CREAM; ctx.fill();
     const m = 40, w = CW - 2 * m, h = CH - 2 * m, band = 54;
-    // the border: rule, hatched band, rule; cross-hatched in the corners
+    // the border: rule, walnut band, rule
+    veneer(ctx, m, m, w, h, band);
     ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(m, m, w, h);
-    hatch(ctx, m, m, w, band, 7, 0.55, false); hatch(ctx, m, CH - m - band, w, band, 7, 0.55, false);
-    hatch(ctx, m, m + band, band, h - 2 * band, 7, 0.55, false); hatch(ctx, CW - m - band, m + band, band, h - 2 * band, 7, 0.55, false);
-    [[m, m], [CW - m - band, m], [m, CH - m - band], [CW - m - band, CH - m - band]].forEach(([x, y]) => hatch(ctx, x, y, band, band, 7, 0.5, true));
     ctx.lineWidth = 1.5; ctx.strokeRect(m + band, m + band, w - 2 * band, h - 2 * band);
     // the masthead: nameplate over a double rule, small capitals under
     const cx = CW / 2, cy = CH / 2;
@@ -296,12 +323,12 @@
   }
   // The chips match the deck. Each look names a base, a stripe and a mark colour, the face the mark
   // is set in, and the finish; the capping chip may differ (the hazard red one, the gold one), and so
-  // may the two at the foot of the stack (low) and the two under the cap (high).
+  // may the two at the foot of the stack (low) and the two under the cap (high). Broadsheet has none here: it deals
+  // its own tile (see dominoChips).
   const CHIPS = {
     default: { base: '#0d0d0d', stripe: '#f4f4f4', mark: '#f4f4f4', font: '900 50px ' + DISPLAY, rough: 0.45, metal: 0.05 },
     manual: { base: PAPER, stripe: CARBON, mark: CARBON, font: ARCHIVO + '58px ' + ARCHIVO_F, rough: 0.92, metal: 0,
       cap: { base: HAZARD, stripe: PAPER, mark: PAPER } },
-    press: { base: CREAM, stripe: INK, mark: INK, font: '900 54px ' + PLAYFAIR, rough: 0.88, metal: 0, hatched: true },
     win95: { base: '#ff0000', stripe: '#ffffff', mark: '#ffffff', font: '900 50px ' + DISPLAY, rough: 1, metal: 0, pixel: 8 },
     foil: { base: '#140b3a', stripe: '#9a6bff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.28, metal: 0.35,
       low: { stripe: '#00b4ff' }, high: { stripe: '#ff1fb4' }, cap: { base: '#140b3a', stripe: '#ffcf3a', mark: '#ffcf3a' } }   // dark lacquer, the inlays running cyan, violet, magenta up the stack to the one gold chip
@@ -315,12 +342,11 @@
     const t = top.getContext('2d');
     t.clearRect(0, 0, 256, 256);
     t.fillStyle = pal.base; t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.fill();
-    if (pal.hatched) { t.save(); t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.clip(); hatch(t, 0, 0, 256, 256, 5, 0.3, false); t.restore(); }
     t.fillStyle = pal.stripe;
     for (let i = 0; i < 8; i++) {
       t.beginPath(); t.arc(128, 128, 128, i * Math.PI / 4 - 0.19, i * Math.PI / 4 + 0.19); t.arc(128, 128, 96, i * Math.PI / 4 + 0.19, i * Math.PI / 4 - 0.19, true); t.closePath(); t.fill();
     }
-    t.strokeStyle = pal.stripe; t.globalAlpha = pal.hatched ? 0.9 : 0.35; t.lineWidth = 2; t.beginPath(); t.arc(128, 128, 84, 0, Math.PI * 2); t.stroke();
+    t.strokeStyle = pal.stripe; t.globalAlpha = 0.35; t.lineWidth = 2; t.beginPath(); t.arc(128, 128, 84, 0, Math.PI * 2); t.stroke();
     t.globalAlpha = 1; t.fillStyle = pal.mark; t.font = pal.font; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillText('LK', 128, 132);
     if (pal.pixel) { pixelate(side, pal.pixel / 2); pixelate(top, pal.pixel / 2); }
   }
@@ -398,14 +424,14 @@
   // mirror's shader; sheen: the key's streak on the glass, where a look changes it; rail: false takes the padded rail away; fog: [near, far];
   // pool: what lies on the table round the hand, [colour, strength, width, depth, right of the hand, in front of it, ink]:
   // a pool of light added to dark glass or, with ink, a wash of shadow laid on paper; neon: the hall's lights, and
-  // softs: the studio's, which the glass reflects; bevel: the chips' edges cut back; frame: the look's own framing, see FRAMES;
+  // softs: the studio's, which the glass reflects; bevel: the chips' edges cut back; domino: the chips as ivory tiles, see dominoChips; frame: the look's own framing, see FRAMES;
   // room: the image-based environment (built once per look, see roomEnv); env: how much of it the materials take.
   const RIGS = {
     default: { hemi: [0xc8ccd4, 0x0c0c0c, 0.14], key: [0xfff4e6, 1.5, 1, 0.3, [-7, 44, 16]], keyTo: [2, 0, 1.2], fill: [0xfff0e0, 1.0, [40, 8, -12]], under: [0xffffff, 0.2], rim: [0xdfe8ff, 1.3], rimAt: [-40, 10, -14],
       table: 'glass', mirror: 0xffffff, gloss: [0.22, 0.9, 14, 64], glassBase: 0.62, sheen: [0x000000, 0.5, 0.22, 0], pool: [0x5c5c5c, 1, 36, 25, 2.6, 0.8], softs: true, bevel: true, fog: [90, 220], tone: true, exposure: 1.05, shadow: 0.5, room: 'studio', env: 0.8, frame: 'studio' },
     manual: { hemi: [0xffffff, 0xd8d3c8, 1.0], key: [0xffffff, 0.85, 0.3, 0.95, [2, 72, 8]], fill: [0xffffff, 0.06], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'flat', fog: [60, 160], tone: false, exposure: 1, shadow: 0.4, room: 'overcast', env: 0.35 },
     press: { hemi: [0xfff6e8, 0xe9e2d4, 0.62], key: [0xfff6e8, 0.4, 0.3, 0.3, [-10, 58, -12]], keyTo: [2, 0, 1], fill: [0xfff6e8, 0], under: [0xfff6e8, 0.1], rim: [0xfff6e8, 0.2], rimAt: [-30, 22, -24],
-      table: 'flat', pool: [0x1a1715, 0.32, 21, 13.5, 3.4, 0.6, true], bevel: true, fog: [60, 160], tone: false, exposure: 1, shadow: 0.42, room: 'pressroom', env: 0.5, frame: 'paper' },
+      table: 'flat', pool: [0x1a1715, 0.32, 21, 13.5, 3.4, 0.6, true], bevel: true, domino: true, fog: [60, 160], tone: false, exposure: 1, shadow: 0.42, room: 'pressroom', env: 0.5, frame: 'paper' },
     win95: { hemi: [0xffffff, 0xffffff, 1.0], key: [0xffffff, 0.55, 0.65, 0.55, [-18, 56, 22]], fill: [0xffffff, 0], under: [0xffffff, 0], rim: [0xffffff, 0], table: 'felt', fog: [60, 160], tone: false, exposure: 1, shadow: 0.3, room: null, env: 0 },
     foil: { hemi: [0x6a5cff, 0x0a0619, 0.07], key: [0xf3ecff, 1.5, 1, 0.21, [-7, 44, 15]], keyTo: [0.4, 0, -0.4], fill: [0xff00c0, 2.8, [40, 7, -10]], under: [0xcfc4ff, 0.26], rim: [0x00c8ff, 2.4], rimAt: [-40, 9, -12],
       table: 'glass', mirror: 0xffffff, gloss: [0.16, 0.95, 62, 112], sheen: [0x000000, 0.5, 0.2, 0], rail: false, fog: [80, 190], tone: true, exposure: 1.0, shadow: 0.6, pool: [0x3626b8, 1, 30, 20, 1.2, -0.6], room: 'arcade', env: 1, neon: true, bevel: true, frame: 'arcade' }
@@ -428,12 +454,17 @@
     overcast: { bg: 0xe6e3dc, lamps: [[24, 24, 0, 10, 0, 0xffffff, 1.25], [24, 6, 0, -8, 0, 0xcfcac0, 0.9]] },
     // Broadsheet's room, as the claw machine's pressroom: a grey room lit by windows the colour of the page, and the
     // page itself below, which sends its light back up into the foot of everything that stands on it
-    pressroom: { bg: 0x171614, lamps: [
+    // The sources stand where the gloss dominoes look, in a room dark enough to set them off: a chip's round edge,
+    // turned to the camera, mirrors a light bank over the front of the table as a line along it; its flat top mirrors
+    // the back wall a third of the way up, where three windows stand with dark piers between them, so a sheen lies
+    // across part of the face and moves as the camera leans; the walls of a groove catch the same windows. blur: how
+    // sharp the room is kept (the other rooms take the usual softening).
+    pressroom: { bg: 0x171614, blur: 0.015, lamps: [
       [5, 7, -6.5, 3, 8.5, 0xfff6e8, 5],          // window, front left
-      [9, 1.8, -4.5, 8.5, -8.5, 0xfff6e8, 4],     // skylight, back left, high
-      [5, 3, 1, 10.5, 3, 0xfff6e8, 2.5],          // overhead
+      [16, 5, 0, 9.3, 3.7, 0xfff6e8, 6],          // light bank, overhead and to the front
       [24, 24, 0, -9, 0, 0xf2ede2, 0.7],          // the page below
-      [7, 7, 8, -3.5, -7.5, 0x4d4a43, 1]          // back right, low: the right sides stay the shade side
+      [7, 7, 8, -3.5, -7.5, 0x4d4a43, 1],         // back right, low: the right sides stay the shade side
+      [4.5, 3.9, -2.7, 7.1, -8.0, 0xfff6e8, 1.4], [3.0, 3.9, 1.6, 7.1, -8.3, 0xfff6e8, 1.4], [2.7, 3.9, 4.8, 7.1, -6.9, 0xfff6e8, 1.4]   // windows along the back
     ] },
     // a dark arcade hall, the claw machine's own room (js/claw-machine.js). A gloss face mirrors one part of it: the chips'
     // sides see low and to their own side, the rail sees front and overhead, the flat tops see back and high. Screens
@@ -459,7 +490,7 @@
       m.material.color.multiplyScalar(gain); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m);
     });
     const g = new THREE.PMREMGenerator(renderer);
-    const t = g.fromScene(s, 0.04).texture; g.dispose();
+    const t = g.fromScene(s, r.blur || 0.04).texture; g.dispose();
     s.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
     return (envs[name] = t);
   }
@@ -611,7 +642,9 @@
   }
   const chipMain = chipSet(), chipCap = chipSet(), chipLow = chipSet(), chipHigh = chipSet();
   function drawChips() {
-    const pal = CHIPS[look()] || CHIPS.default;
+    const l = look();
+    if ((RIGS[l] || RIGS.default).domino) return;   // the look's own tile is on the stack: this art would not be seen
+    const pal = CHIPS[l] || CHIPS.default;
     [[chipMain, {}], [chipCap, pal.cap], [chipLow, pal.low], [chipHigh, pal.high]].forEach(([set, own]) => chipTextures(Object.assign({}, pal, own || {}), set.sideC, set.topC));
     [chipMain, chipCap, chipLow, chipHigh].forEach(set => {
       set.side.needsUpdate = set.top.needsUpdate = true;
@@ -645,13 +678,144 @@
     g.setIndex(idx); g.addGroup(0, wall, 0); g.addGroup(wall, top, 1); g.addGroup(wall + top, idx.length - wall - top, 2);
     return g;
   })();
+  // Broadsheet's chips are ivory dominoes: thick gloss resin with soft round edges, the marks cut into it and filled
+  // with ink. A debossed groove from one drawing: draw(ctx, w, h) paints the groove in black on white; done() is
+  // handed the ink map, a normal map of the groove's rounded walls, and a roughness map that keeps the groove's floor
+  // matte under the gloss and, in its red, takes the clear coat off the ink (a coat left there, even a thin one, turns
+  // the stage light into white specks on the black). wall: how far the walls round off, in texels; depth: how steep
+  // they stand; foot: over how many rows at the bottom the piece's own foot is shaded, where it meets what it stands on.
+  // The cutting is handed back as short steps and not done at once: a look change must not hold the page (see defer).
+  function grooveSteps(w, h, draw, wall, depth, foot, done) {
+    const n = w * h, r = Math.max(1, wall | 0), ht = new Float32Array(n), sum = new Float32Array(Math.max(w, h) + 1), BAND = 128;
+    let ink, nor, rgh;
+    // a box blur each way round the walls, two times over (the canvas filter is not there in every Safari)
+    const blur = (count, len, step, stride) => {
+      for (let j = 0; j < count; j++) {
+        const o = j * stride;
+        for (let i = 0; i < len; i++) sum[i + 1] = sum[i] + ht[o + i * step];
+        for (let i = 0; i < len; i++) { const a = Math.max(0, i - r), b = Math.min(len - 1, i + r); ht[o + i * step] = (sum[b + 1] - sum[a]) / (b - a + 1); }
+      }
+    };
+    const soften = () => { blur(h, w, 1, w); blur(w, h, w, 1); };
+    const rows = y0 => () => {
+      for (let y = y0, y1 = Math.min(h, y0 + BAND); y < y1; y++) {
+        const up = y > 0 ? w : 0, down = y < h - 1 ? w : 0, sh = foot && y + 0.5 > h - foot ? 0.6 * (y + 0.5 - h + foot) / foot : 0;
+        for (let x = 0, j = y * w, k = (h - 1 - y) * w * 4; x < w; x++, j++, k += 4) {   // the picture's top row is the texture's last
+          const hv = ht[j], fl = Math.min(1, Math.max(0, (0.42 - hv) / 0.14));   // the ink lies on the floor and stops short of the walls, which stay the body's colour and show the cut
+          const v = (1 - fl * 0.9) * (0.6 + 0.4 * hv) * (1 - sh);                // multiplies the body's colour; the walls darken as they go down
+          ink[k] = 255 * v + 38 * sh; ink[k + 1] = 252 * v + 30 * sh; ink[k + 2] = 247 * v + 22 * sh; ink[k + 3] = 255;
+          const dx = (ht[j + (x < w - 1 ? 1 : 0)] - ht[j - (x > 0 ? 1 : 0)]) * depth, dy = (ht[j + down] - ht[j - up]) * depth, l = 0.5 / Math.sqrt(dx * dx + dy * dy + 1);
+          nor[k] = (0.5 - dx * l) * 255; nor[k + 1] = (0.5 + dy * l) * 255; nor[k + 2] = (0.5 + l) * 255; nor[k + 3] = 255;
+          rgh[k] = 255 * (1 - fl); rgh[k + 1] = 255 * (0.22 + fl * 0.5); rgh[k + 2] = 0; rgh[k + 3] = 255;   // green: the roughness (the material's own is 1 with this map); red: the clear coat, none on the ink
+        }
+      }
+    };
+    const steps = [() => {
+      const c = mkCanvas(w, h), x = c.getContext('2d', { willReadFrequently: true });
+      x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.fillStyle = x.strokeStyle = '#000'; draw(x, w, h);
+      const src = x.getImageData(0, 0, w, h).data;
+      for (let i = 0; i < n; i++) ht[i] = src[i * 4] / 255;                 // 1: the surface, 0: the groove's floor
+      ink = new Uint8Array(n * 4); nor = new Uint8Array(n * 4); rgh = new Uint8Array(n * 4);
+    }, soften, soften];
+    for (let y = 0; y < h; y += BAND) steps.push(rows(y));
+    steps.push(() => {
+      const tex = d => {
+        const t = new THREE.DataTexture(d, w, h, THREE.RGBAFormat); t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
+        t.anisotropy = renderer.capabilities.getMaxAnisotropy(); t.needsUpdate = true; return t;
+      };
+      const map = tex(ink); map.encoding = THREE.sRGBEncoding;
+      done({ map, normalMap: tex(nor), roughnessMap: tex(rgh) });
+    });
+    return steps;
+  }
+  // work that can wait: each step is a task of its own, so the page draws and answers between two of them
+  const waiting = [];
+  let stepping = false;
+  function step() { try { waiting.shift()(); } finally { if (waiting.length) setTimeout(step, 0); else stepping = false; } }
+  function defer(steps) { waiting.push(...steps); if (!stepping && waiting.length) { stepping = true; setTimeout(step, 0); } }
+  // The tile itself, built the first time the look is dealt. The chip's size is the plain chip's, so the hand cuts
+  // and piles it the same; each edge is a quarter round, for a highlight to run along. The top face has a ring and the
+  // nameplate LK cut in, and eight notches at the edge; each notch runs on over the edge and down the wall, where it
+  // breaks the highlight. The wall's art is one notch, repeated eight times round.
+  // The shape and the ivory are there at once; the grooves are cut in the moments after (the wall's first, then the
+  // face's, which waits a short while for the nameplate's type face). Until then each map is a flat stand-in of one
+  // texel, so the material is compiled once and a groove's arrival is only a new picture.
+  let domino = null;
+  function dominoChips() {
+    if (domino) return domino;
+    const r = 1.95, h = 0.33, b = 0.13, seg = 96, arc = 7, pos = [], nor = [], uv = [], idx = [], geo = new THREE.BufferGeometry();
+    // the wall in profile, foot to head: the lower round, the flat, the upper round; v runs with the distance along it
+    const prof = [], run = Math.PI * b + h - 2 * b;
+    for (let k = 0; k <= arc; k++) { const a = k / arc * Math.PI / 2; prof.push([r - b + b * Math.sin(a), -h / 2 + b - b * Math.cos(a), Math.sin(a), -Math.cos(a), a * b / run]); }
+    for (let k = 0; k <= arc; k++) { const a = k / arc * Math.PI / 2; prof.push([r - b + b * Math.cos(a), h / 2 - b + b * Math.sin(a), Math.cos(a), Math.sin(a), 1 - (Math.PI / 2 - a) * b / run]); }
+    for (let i = 0; i <= seg; i++) {
+      const a = i / seg * Math.PI * 2, sx = Math.sin(a), cz = Math.cos(a);
+      prof.forEach(([pr, py, nr, ny, v]) => { pos.push(pr * sx, py, pr * cz); nor.push(nr * sx, ny, nr * cz); uv.push(i / seg, v); });
+    }
+    const P = prof.length;
+    for (let i = 0; i < seg; i++) for (let k = 0; k < P - 1; k++) { const a0 = i * P + k, a1 = a0 + P; idx.push(a0, a1, a0 + 1, a0 + 1, a1, a1 + 1); }
+    const cap = (y, up) => {
+      const s = pos.length / 3, q = (r - b) / r; pos.push(0, y, 0); nor.push(0, up, 0); uv.push(0.5, 0.5);
+      for (let i = 0; i <= seg; i++) {
+        const a = i / seg * Math.PI * 2, sx = Math.sin(a), cz = Math.cos(a);
+        pos.push((r - b) * sx, y, (r - b) * cz); nor.push(0, up, 0); uv.push(0.5 + 0.5 * q * cz, 0.5 + 0.5 * q * sx * up);
+        if (i < seg) { if (up > 0) idx.push(s, s + 1 + i, s + 2 + i); else idx.push(s, s + 2 + i, s + 1 + i); }
+      }
+    };
+    const wall = idx.length; cap(h / 2, 1); const top = idx.length - wall; cap(-h / 2, -1);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setAttribute('uv2', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx); geo.addGroup(0, wall, 0); geo.addGroup(wall, top, 1); geo.addGroup(wall + top, idx.length - wall - top, 2);
+    const flat = (r, g, b) => { const t = new THREE.DataTexture(new Uint8Array([r, g, b, 255]), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; return t; };
+    const plain = { map: flat(255, 255, 255), normalMap: flat(128, 128, 255), roughnessMap: flat(255, 56, 0) }; plain.map.encoding = THREE.sRGBEncoding;
+    const cut = (m, g) => {   // the gloss stops at the groove, and the ink map's dark floor also shades it from the room
+      if (m.map && m.map !== plain.map) [m.map, m.normalMap, m.roughnessMap].forEach(t => t.dispose());
+      m.map = m.aoMap = g.map; m.normalMap = m.clearcoatNormalMap = g.normalMap; m.roughnessMap = m.clearcoatMap = g.roughnessMap;
+    };
+    // The look has no film curve, and its room is bright: the body's colour is held far under ivory, and the room's
+    // light, taken in full, brings it up to ivory on the screen. A highlight is a share of that same light, so the
+    // lower the colour, the further the highlight stands above the body; a pale colour would burn out to flat white.
+    const body = () => { const m = new THREE.MeshPhysicalMaterial({ color: 0x34322d, roughness: 1, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05 }); cut(m, plain); return m; };
+    const side = body(), face = body();
+    // the wall's art is stretched round the chip and squeezed over its height, and the renderer weighs a normal map by
+    // that: the scale puts the notch's walls back to the slope they were drawn with
+    side.normalScale.set(4, 1); side.clearcoatNormalScale.set(4, 1);
+    // one notch, the full height of the wall: as wide, and its walls as round, as the face's notch is where the two meet at the edge
+    defer(grooveSteps(256, 64, (x, w, hh) => { x.fillRect(w / 2 - 26, 0, 52, hh); }, 7, 4, 28, g => {
+      [g.map, g.normalMap, g.roughnessMap].forEach(t => { t.wrapS = THREE.RepeatWrapping; t.repeat.set(8, 1); });
+      cut(side, g); dirty = true;
+    }));
+    const probe = mkCanvas(4, 4).getContext('2d'), mark = '900 154px ' + PLAYFAIR;
+    const art = (x, s) => {
+      const c = s / 2;
+      x.lineCap = x.lineJoin = 'round';
+      x.lineWidth = s * 0.065; x.beginPath(); x.arc(c, c, s * 0.33, 0, Math.PI * 2); x.stroke();
+      x.lineWidth = s * 0.075;
+      for (let i = 0; i < 8; i++) { const a = (i + 0.5) * Math.PI / 4, ca = Math.cos(a), sa = Math.sin(a); x.beginPath(); x.moveTo(c + ca * s * 0.425, c + sa * s * 0.425); x.lineTo(c + ca * s * 0.53, c + sa * s * 0.53); x.stroke(); }
+      x.font = mark; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = s * 0.012;
+      x.fillText('LK', c, c + s * 0.016); x.strokeText('LK', c, c + s * 0.016);   // the stroke fattens the hairlines to a width a cutter could make
+    };
+    domino = { geo, mats: [side, face, face], set: 0, ready: false, busy: false,
+      // The top face is cut once the nameplate's type face is in, or after a short wait without it; and once more only
+      // if the face arrives after that. The mark's set width tells which face the canvas would draw with.
+      paint() {
+        if (!this.ready || this.busy) return;
+        probe.font = mark; const set = probe.measureText('LK').width;
+        if (this.set === set) return;
+        this.set = set; this.busy = true;
+        defer(grooveSteps(512, 512, art, 5, 4, 0, g => { cut(face, g); this.busy = false; dirty = true; this.paint(); }));
+      } };
+    const go = () => { domino.ready = true; domino.paint(); };
+    if (document.fonts && document.fonts.load) Promise.race([document.fonts.load(mark), new Promise(ok => setTimeout(ok, 300))]).then(go, go); else go();
+    take(side, 3.8); take(face, 3.8);
+    return domino;
+  }
   function chipStack(n, x, z, rot) {
     const g = chipPlain;
     const group = new THREE.Group();
     for (let i = 0; i < n; i++) {
       const m = new THREE.Mesh(g, (i === n - 1 ? chipCap : i < 2 ? chipLow : i > n - 4 ? chipHigh : chipMain).mats);
       m.position.set((Math.random() - 0.5) * 0.12, 0.165 + i * 0.33, (Math.random() - 0.5) * 0.12);
-      m.rotation.y = rot + i * 0.37; m.castShadow = true; m.receiveShadow = true; group.add(m);
+      m.rotation.y = rot + i * 0.37; m.castShadow = true; m.receiveShadow = true; m.userData.mats = m.material; group.add(m);
     }
     group.position.set(x, 0, z); scene.add(group); return group;
   }
@@ -801,6 +965,7 @@
   }
   function redrawAll() {
     drawBack(backCanvas); drawFace(faceA, 'A', 'spade'); drawFace(faceK, 'A', 'club'); drawBump(bumpCanvas); drawChips();
+    if (domino) domino.paint();
     backTex.needsUpdate = faceTexA.needsUpdate = faceTexK.needsUpdate = bumpTex.needsUpdate = true; dirty = cast = true;
   }
   // the materials that take the room (the foil fuller than the rest, the paper backs and faces lightly)
@@ -869,7 +1034,8 @@
     sheen.material.color.setHex(sh[0]); sheen.material.opacity = sh[1]; sheen.material.roughness = sh[2]; sheen.material.userData.envGain = sh[3];
     // the arcade's table has no padded rail and no etched line: a neon line beyond the hand, and the dark
     if (rig.rail === false) rail.visible = trim.visible = line.visible = false;
-    chips.forEach(m => { m.geometry = rig.bevel ? chipBevel : chipPlain; });
+    const tile = rig.domino ? dominoChips() : null;   // the look's own chip: its shape and its material
+    chips.forEach(m => { m.geometry = tile ? tile.geo : rig.bevel ? chipBevel : chipPlain; m.material = tile ? tile.mats : m.userData.mats; });
     POOL = rig.pool || null; pool.visible = !!POOL; softs.visible = !!rig.softs;
     if (POOL) { pool.material.color.setHex(POOL[0]); pool.material.opacity = POOL[1]; pool.material.blending = POOL[6] ? THREE.NormalBlending : THREE.AdditiveBlending; pool.material.map = POOL[6] ? washTex : glowTex; }
     scene.fog.near = rig.fog[0]; scene.fog.far = rig.fog[1];
@@ -882,6 +1048,7 @@
     if (renderer.toneMapping !== tone) {
       renderer.toneMapping = tone;
       scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
+      [chipMain, chipCap, chipLow, chipHigh].forEach(set => set.mats.forEach(m => { m.needsUpdate = true; }));   // and the chips' own, which are off the stack while the dominoes are on it
     }
     // the deck
     const back = l === 'foil' ? foilMat : (solitaire || paper) ? backFlat : backMat;
