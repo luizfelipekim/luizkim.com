@@ -1,25 +1,29 @@
 /* Theme switch. Runs synchronously in <head> so the chosen theme is on <html> before first paint.
-   A theme is a CSS file in css/themes/ scoped under html[data-theme="name"]; "charcoal" is the
-   default look and needs no file. The claw machine fires `claw:caught` on every prize; this picks a
+   A theme is a CSS file in css/themes/ scoped under html[data-theme="name"]; "charcoal" needs no file
+   (it is the page with no data-theme). DEFAULT is the look a first visit gets; HIDDEN looks keep their
+   code and stay reachable by ?theme=name, but leave the picker menu and the claw's draw. The claw machine fires `claw:caught` on every prize; this picks a
    look at random, never the current one and no repeats until all have shown this session.
    State lives in sessionStorage only, so it dies with the tab. ?theme=name forces a look. */
 (function () {
   var THEMES = ['brutalist', 'windows95', 'broadsheet', 'esports'];            // one entry per file in css/themes/; charcoal is implicit
   var LOOKS = ['charcoal'].concat(THEMES);
   var LABELS = { charcoal: 'Charcoal', brutalist: 'Brutalist', windows95: 'Windows 95', broadsheet: 'Broadsheet', esports: 'E-sports' };
+  var DEFAULT = 'brutalist';
+  var HIDDEN = ['charcoal'];                                                    // remove 'charcoal' here to offer it again
+  var DRAW = LOOKS.filter(function (n) { return HIDDEN.indexOf(n) < 0; });
   var KEY = 'theme', SEEN = 'theme-seen';
   var html = document.documentElement;
   var loaded = {};
 
   function store(k, v) { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
-  function valid(name) { return LOOKS.indexOf(name) >= 0 ? name : 'charcoal'; }
+  function valid(name) { return LOOKS.indexOf(name) >= 0 ? name : DEFAULT; }
   function href(name) { return (html.getAttribute('data-root') || '') + 'css/themes/' + name + '.css'; }
 
   /* ---------- first paint ---------- */
   var fromUrl = /[?&]theme=([^&#]*)/.exec(location.search);
   var initial = valid(fromUrl ? decodeURIComponent(fromUrl[1]) : read(KEY));
-  if (fromUrl) store(KEY, initial === 'charcoal' ? null : initial);
+  if (fromUrl) store(KEY, initial === DEFAULT ? null : initial);
   if (initial !== 'charcoal') {
     html.setAttribute('data-theme', initial);
     // document.write keeps the stylesheet render-blocking, so there is no flash of charcoal
@@ -49,7 +53,7 @@
 
   function apply(name) {
     if (name === 'charcoal') html.removeAttribute('data-theme'); else html.setAttribute('data-theme', name);
-    store(KEY, name === 'charcoal' ? null : name);
+    store(KEY, name === DEFAULT ? null : name);
     document.dispatchEvent(new CustomEvent('theme:change', { detail: { theme: name } }));
   }
 
@@ -57,8 +61,8 @@
     var current = html.getAttribute('data-theme') || 'charcoal';
     var seen = (read(SEEN) || '').split(',').filter(Boolean);
     if (seen.indexOf(current) < 0) seen.push(current);
-    var pool = LOOKS.filter(function (n) { return seen.indexOf(n) < 0; });
-    if (!pool.length) { seen = [current]; pool = LOOKS.filter(function (n) { return n !== current; }); }
+    var pool = DRAW.filter(function (n) { return seen.indexOf(n) < 0; });
+    if (!pool.length) { seen = [current]; pool = DRAW.filter(function (n) { return n !== current; }); }
     var next = pool[Math.floor(Math.random() * pool.length)];
     seen.push(next); store(SEEN, seen.join(','));
     return next;
@@ -80,10 +84,12 @@
     }, 280);
   }
 
+  var lastPrize = null;
   function announce(prize, name) {
     var el = document.querySelector('.claw__hint');
     if (!el) return;
-    var line = name === 'charcoal' ? 'The site is back to its default look.' : 'The site is now ' + (LABELS[name] || name) + '.';
+    lastPrize = prize;
+    var line = 'The site is now ' + (LABELS[name] || name) + '.';
     var head = el.querySelector('b'), tail = el.querySelector('span');
     if (head && tail) { head.textContent = 'Got the ' + prize + '.'; tail.textContent = line + ' Catch another to change it again.'; }
     else el.textContent = 'Got the ' + prize + '. ' + line;
@@ -140,10 +146,16 @@
      hands focus back, and a click outside or tabbing away closes it. */
   function current() { return html.getAttribute('data-theme') || 'charcoal'; }
   function picks() { return Array.prototype.slice.call(document.querySelectorAll('[data-theme-pick]')); }
-  function itemsOf(p) { return Array.prototype.slice.call(p.querySelectorAll('[data-look]')); }
+  function itemsOf(p) {
+    return Array.prototype.slice.call(p.querySelectorAll('[data-look]')).filter(function (it) {
+      if (HIDDEN.indexOf(it.getAttribute('data-look')) < 0) return true;
+      it.hidden = true; it.style.display = 'none';                               // the item's display: flex would beat [hidden]
+      return false;
+    });
+  }
   function syncPicks(name) {
     picks().forEach(function (p) {
-      itemsOf(p).forEach(function (it) { it.setAttribute('aria-checked', it.getAttribute('data-look') === name ? 'true' : 'false'); });
+      p.querySelectorAll('[data-look]').forEach(function (it) { it.setAttribute('aria-checked', it.getAttribute('data-look') === name ? 'true' : 'false'); });
       var on = p.querySelector('[data-look="' + name + '"]');
       p.querySelector('.pick__btn').setAttribute('aria-label', 'Theme: ' + (on ? on.textContent : name));
     });
@@ -189,7 +201,11 @@
   }
   function wirePicks() { picks().forEach(wirePick); syncPicks(current()); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePicks); else wirePicks();
-  document.addEventListener('theme:change', function (e) { syncPicks(e.detail.theme); });
+  document.addEventListener('theme:change', function (e) {
+    syncPicks(e.detail.theme);
+    // after a catch, a look picked from the menu would leave the claw's line naming the old one
+    if (lastPrize) announce(lastPrize, e.detail.theme);
+  });
 
   window.siteTheme = { looks: LOOKS, set: function (n) { n = valid(n); ensure(n, function () { apply(n); }); } };
 })();

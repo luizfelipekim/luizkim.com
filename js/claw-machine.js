@@ -279,7 +279,7 @@
     charcoal:   { ornament: 'artdeco', room: 'atelier', stage: 'studio', rig: [0.5, 0.2, 0.3], fitW: 4.8, fitH: 6.5, fitY: 3.35, slide: 0.45, topY: 4.35,   // the claw rests lower, clear of the roof
                   body: 0x060606, steel: 0xeef0f4, steelRough: 0.18, steelMetal: 1, steelEnv: 1.8, floor: 0x121212, inner: 0.1,
                   wood: 0x050505, woodRough: 0.06, woodMetal: 0, woodEnv: 1.5, woodCoat: 1, knob: 0xe8352a, prizes: [0xece7dc, 0xc8c2b5] },
-    manual:     null,   // Brutalist wears the default look's machine: set below, from charcoal
+    manual:     null,   // Brutalist wears the charcoal machine with a carbon-black lever ball: set below
     // the Broadsheet crane (near-black cabinet, paper trim, the deco front) in place of grey chrome, which went
     // grey-on-white in the 95 window; drawn through the 32-colour palette instead of the engraving
     win95:      { floor: 0x4a4540, hole: 0x0a0a0a, body: 0x0a0a0a, paper: 0xdedbd4, ink: 0x0c0c0c,
@@ -303,7 +303,7 @@
                   neonA: 0x00c8ff, neonB: 0xff00c0, glow: 0xe8e2ff, ornament: 'foil', lit: 0.6, room: 'arcade', spots: true, bloom: true,   // pure cyan and pink, the minor channel at zero (the sRGB curve lifts any small channel toward white); the tubes skip the tone curve
                   rig: [0.4, 0.15, 0.22], ribs: 18, ribDepth: 0.45, sticker: true, fitW: 4.9, fitH: 6.05, fitY: 3.5, topY: 4.35,   /* the claw rests lower here, clear of the marquee */ prizeEnv: 0.18, prizeRough: 0.35, glassEnv: 0.35, glass: 0.1, inner: 0.5 }   // the studio dims right down: in this look the neon is the light   // the iris, a step deeper so the tubes stay cyan and rose under the tone curve
   };
-  FINISH.manual = FINISH.charcoal;
+  FINISH.manual = Object.assign({}, FINISH.charcoal, { knob: 0x0c0c0c });
   // the theme stylesheet names the look on <html> as --look (manual, press, win95, foil); charcoal names none
   // no --look means charcoal, the look with no stylesheet. But while another look's sheet is still on its way the
   // variable is empty too: then the machine waits as the bare cabinet, and does not dress (and download) as charcoal

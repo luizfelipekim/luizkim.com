@@ -93,7 +93,8 @@ html[data-theme="brutalist"] .hero__scrim {
   background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--ink) 14%, transparent) 0 1px, transparent 1px calc(100% / 12));
   border-right: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
 }
-html[data-theme="brutalist"] .hero__top { padding-bottom: 0.9rem; }
+/* the fixed bar is frosted over the hero too, not only once it is stuck */
+html[data-theme="brutalist"] .hero__top { padding-bottom: 0.9rem; background: color-mix(in srgb, var(--page-bg) 84%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 html[data-theme="brutalist"] .hero__top::after {
   content: ""; position: absolute; left: max(16px, var(--m)); right: max(16px, var(--m)); bottom: 0; border-bottom: var(--border) solid var(--line);
 }
@@ -127,7 +128,8 @@ html[data-theme="brutalist"] .link { text-decoration-thickness: 2px; text-decora
 html[data-theme="brutalist"] .stats { padding-top: 2rem; padding-bottom: 8rem; }
 html[data-theme="brutalist"] .stats__list { grid-column: 1 / -1; }
 html[data-theme="brutalist"] .stats__head { font-size: clamp(2.5rem, 6vw, 6rem); max-width: 12ch; margin-bottom: 3rem; }
-html[data-theme="brutalist"] .stats__rows { column-gap: 0; border-top: var(--border) solid var(--line); border-bottom: var(--border) solid var(--line); counter-reset: fig; }
+/* the cells stretch to the tallest one, so a hover fills the whole cell */
+html[data-theme="brutalist"] .stats__rows { align-items: stretch; column-gap: 0; border-top: var(--border) solid var(--line); border-bottom: var(--border) solid var(--line); counter-reset: fig; }
 html[data-theme="brutalist"] .stats__row { counter-increment: fig; padding: 1rem 1.25rem 1.5rem; gap: 1rem; border-left: var(--border) solid var(--line); transition: background-color var(--t-hover) ease, color var(--t-hover) ease; }
 html[data-theme="brutalist"] .stats__row:first-child { border-left: 0; padding-left: 0; }
 html[data-theme="brutalist"] .stats__row::before {
@@ -166,8 +168,9 @@ html[data-theme="brutalist"] .claw__stage { border: var(--border) solid var(--li
 html[data-theme="brutalist"] .claw__key { background: var(--bg); border-width: var(--border); }
 html[data-theme="brutalist"] .claw__drop { border-radius: 0; background: var(--accent); color: var(--accent-ink); border-color: var(--ink); }
 html[data-theme="brutalist"] .claw__drop:active { background: var(--ink); color: var(--bg); }
-html[data-theme="brutalist"] .claw__hint { color: var(--ink); }
-html[data-theme="brutalist"] .claw__hint::before { content: "▲ "; content: "▲ " / ""; color: var(--accent); }
+/* this look wears the charcoal machine, whose art deco kit fills the glass: the invitation sits under the stage at every width */
+html[data-theme="brutalist"] .claw__hint { color: var(--ink); position: static; max-width: none; padding: 0; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-theme="brutalist"] .claw__hint b::before { content: "▲ "; content: "▲ " / ""; color: var(--accent); }   /* on the headline, which is a block: on the hint itself it took a line of its own */
 /* the poker peek is a page of the manual: the table is the paper itself, no vignette (no gradients), and the
    hint and cue take carbon over it */
 html[data-theme="brutalist"] .peek__vignette { display: none; }
@@ -209,6 +212,7 @@ html[data-theme="brutalist"] .field h2 { font-size: clamp(2.25rem, 5vw, 4.5rem);
 
 /* ---------- small screens ---------- */
 @media (max-width: 900px) {
+  html[data-theme="brutalist"] .claw__box { margin-bottom: 1rem; }
   html[data-theme="brutalist"] .case__visual { width: 100%; }
   html[data-theme="brutalist"] .case__title { font-size: 11vw; }
 }
@@ -234,6 +238,6 @@ html[data-theme="brutalist"] { --icon-stroke: 2.5; --icon-cap: square; --icon-jo
 html[data-theme="brutalist"] .pick__btn { border-width: var(--border); border-color: currentColor; }
 html[data-theme="brutalist"] .pick__menu { border: var(--border) solid var(--carbon); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--page-bg); padding: 0; animation: none; }
 html[data-theme="brutalist"] .pick__item { border-radius: 0; border-top: 1px solid var(--carbon); font-family: var(--mono); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
-html[data-theme="brutalist"] .pick__item:first-child { border-top: 0; }
+html[data-theme="brutalist"] :is(.pick__item:first-child, .pick__item[hidden] + .pick__item) { border-top: 0; }
 @media (hover: hover) and (pointer: fine) { html[data-theme="brutalist"] .pick__item:hover { background: var(--carbon); color: var(--page-bg); } }
 html[data-theme="brutalist"] .pick__item[aria-checked="true"] { color: var(--accent); }
