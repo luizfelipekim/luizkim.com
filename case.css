@@ -30,6 +30,7 @@ h1, h2, h3 { text-wrap: balance; }
 .pick__icon { width: 20px; height: 20px; stroke-width: var(--icon-stroke); stroke-linecap: var(--icon-cap); stroke-linejoin: var(--icon-join); }
 .pick__menu { position: absolute; z-index: 60; top: calc(100% + 10px); right: 0; display: grid; min-width: 13rem; padding: 6px; background: color-mix(in srgb, var(--page-bg) 94%, transparent); color: var(--page-ink); border: var(--border) solid color-mix(in srgb, var(--page-line) 80%, transparent); border-radius: calc(var(--radius) * 2); box-shadow: 0 24px 48px -20px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.12); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transform-origin: top right; animation: pick-in 180ms var(--ease-out); }
 .pick__menu[hidden] { display: none; }
+.pick__note { display: block; max-width: 13rem; padding: 0.6rem 0.75rem 0.4rem; margin-top: 4px; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); font-size: 0.75rem; line-height: 1.4; text-transform: none; letter-spacing: normal; opacity: 0.75; }
 .pick__item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; padding: 0.6rem 0.75rem; border: 0; border-radius: var(--radius); background: transparent; color: inherit; font: inherit; font-size: var(--step-small); font-weight: var(--weight); text-align: left; cursor: pointer; }
 .pick__item:focus-visible { outline: 2px solid var(--page-ink); outline-offset: -2px; }
 @media (hover: hover) and (pointer: fine) { .pick__item:hover { background: color-mix(in srgb, var(--page-ink) 9%, transparent); } }
@@ -44,6 +45,9 @@ h1, h2, h3 { text-wrap: balance; }
 .bar__mark { font-weight: var(--weight-strong); text-decoration: none; }
 .bar__nav { display: flex; align-items: center; gap: clamp(1rem, 2.4vw, 2.25rem); font-size: var(--step-small); font-weight: var(--weight-strong); }
 .bar__nav a:not(.button) { text-decoration: none; }
+/* phone: same as the home header. The name links home, so the text links go and nothing wraps */
+.bar__mark { white-space: nowrap; }
+@media (max-width: 700px) { .bar__nav a:not(.button) { display: none; } }
 @media (hover: hover) and (pointer: fine) { .bar__nav a:not(.button):hover { text-decoration: underline; text-underline-offset: 0.2em; } }
 
 /* top block */
