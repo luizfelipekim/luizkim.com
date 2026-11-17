@@ -17,7 +17,8 @@
 <script>document.documentElement.classList.add('js')</script>
 <script src="js/analytics.js" defer></script>
 <style>
-.cover--band { aspect-ratio: 8 / 3; }
+.cover--band { aspect-ratio: 16 / 3; margin-bottom: calc(var(--section) / 2); }
+@media (max-width: 700px) { .cover--band { aspect-ratio: 3 / 1; } }
 </style>
 </head>
 <body>
@@ -74,7 +75,7 @@
   </section>
 
   <div class="wrap">
-    <figure class="cover cover--band" data-reveal><img src="img/entain-dice/dice-pattern.webp" srcset="img/entain-dice/dice-pattern-960.webp 960w, img/entain-dice/dice-pattern.webp 1920w" sizes="100vw" width="1920" height="720" loading="lazy" alt="The Dice logo in green, with the system's brand pattern of dice faces and rounded shapes"></figure>
+    <figure class="cover cover--band" data-reveal><img src="img/entain-dice/dice-pattern.webp" srcset="img/entain-dice/dice-pattern-960.webp 960w, img/entain-dice/dice-pattern.webp 1920w" sizes="100vw" width="1920" height="360" loading="lazy" alt="The Dice logo in green, with the system's brand pattern of dice faces and rounded shapes"></figure>
   </div>
 
   <section class="led wrap" aria-label="What I led">
