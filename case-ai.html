@@ -8,7 +8,7 @@
 <meta property="og:title" content="AI design workflow: 2.2× handoffs per designer">
 <meta property="og:description" content="Luiz Kim, Design Director at A5 Labs, gave four designers Git and Claude Code. Handoffs per designer rose from 0.8 to 1.8 a week, with no new headcount.">
 <link rel="canonical" href="https://luizkim.com/case-ai.html">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"AI design workflow: 2.2× handoffs per designer","description":"Luiz Kim, Design Director at A5 Labs, gave four designers Git and Claude Code. Handoffs per designer rose from 0.8 to 1.8 a week, with no new headcount.","author":{"@type":"Person","name":"Luiz Kim","jobTitle":"Design Director","url":"https://luizkim.com/"},"about":["AI design workflow","Design leadership","DesignOps","UX research"],"url":"https://luizkim.com/case-ai.html","inLanguage":"en-GB"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"AI design workflow: 2.2× handoffs per designer","description":"Luiz Kim, Design Director at A5 Labs, gave four designers Git and Claude Code. Handoffs per designer rose from 0.8 to 1.8 a week, with no new headcount.","author":{"@type":"Person","name":"Luiz Kim","jobTitle":"Design Director","url":"https://luizkim.com/"},"about":["AI design workflow","Design leadership","Design systems","DesignOps","UX research"],"url":"https://luizkim.com/case-ai.html","inLanguage":"en-GB"}</script>
 <link rel="preload" href="fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="case.css">
@@ -16,7 +16,7 @@
 <script src="js/motion.js"></script>
 <style>
 /* Page-specific parts for this case: a commits chart drawn in HTML so it stays legible on a phone,
-   four adoption phases, and a short "next" list. */
+   four adoption phases, a component pipeline, and a short "next" list. */
 :root {
   --other: color-mix(in srgb, var(--muted) 47%, var(--bg)); /* the other teams' commits */
   --rule: var(--line);
@@ -51,17 +51,35 @@
 @media (max-width: 1000px) { .phases { grid-template-columns: 1fr 1fr; row-gap: 2rem; } }
 @media (max-width: 600px) { .phases { grid-template-columns: 1fr; } }
 
-/* the week, and where the time went */
-.week { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gutter); }
-.week li { display: flex; flex-direction: column; gap: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); font-size: var(--step-body); }
-.week b { font-weight: var(--weight-strong); }
-@media (max-width: 700px) { .week { grid-template-columns: 1fr 1fr; } }
+/* sources, decisions, results */
 .source { font-size: var(--step-small); color: var(--muted); }
 .decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 64rem; }
 .results .plain { font-size: var(--step-body); line-height: 1.5; max-width: 62ch; }
 .results .plain b { font-weight: var(--weight-strong); }
 .results .aside { margin-bottom: 2rem; }
 @media (max-width: 800px) { .decisions { grid-template-columns: 1fr; } }
+
+/* screenshots: round the corners and trim the capture edge */
+.shot--round img { border-radius: clamp(8px, 1.4vw, 14px); clip-path: inset(1px round clamp(8px, 1.4vw, 14px)); }
+
+/* the component pipeline: two bars against the old way, and three limits */
+.pipeline .plain { font-size: var(--step-body); line-height: 1.5; max-width: 62ch; }
+.bars { display: flex; flex-direction: column; gap: 1.5rem; background: var(--surface); padding: clamp(1.25rem, 3vw, 2rem); max-width: 64rem; }
+.gauge { display: flex; flex-direction: column; gap: 0.5rem; }
+.gauge__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem 1.5rem; flex-wrap: wrap; }
+.gauge__label { font-size: var(--step-small); color: var(--muted); }
+.gauge__value { font-weight: var(--weight-strong); }
+.gauge__track { display: flex; }
+.gauge__fill { display: block; height: 1.5rem; width: calc(var(--d) / 5 * 100%); background: var(--muted); }   /* muted ink, not --other: the old way is data here and must stay visible on every look */
+.gauge__fill--to { background: color-mix(in srgb, var(--muted) 45%, transparent); }   /* the top of a range */
+.gauge.is-key .gauge__fill { background: var(--accent); }
+.bars .chart__note { margin-top: -0.25rem; }
+.limits { display: flex; flex-direction: column; gap: 1rem; }
+.limits h3 { font-size: var(--step-body); font-weight: var(--weight-strong); }
+.limits ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); padding: 0; list-style: none; }
+.limits li { display: flex; flex-direction: column; gap: 0.3rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); font-size: var(--step-body); }
+.limits b { font-weight: var(--weight-strong); }
+@media (max-width: 700px) { .limits ul { grid-template-columns: 1fr; } }
 
 /* next */
 .notyet { display: flex; flex-direction: column; gap: 0.75rem; max-width: 62ch; }
@@ -166,6 +184,34 @@
     </ol>
   </section>
 
+  <section class="led pipeline wrap" aria-label="Component pipeline">
+    <p class="row__word star" data-reveal>Action</p>
+    <h2 class="led__head" data-reveal>Component pipeline: I estimated the old way first</h2>
+    <p class="plain" data-reveal style="--i:1">In November I piloted a pipeline that takes a design system component from brief to documented Figma library entry. Nine components in two and a half working days, five of them larger ones. Nobody had logged hours for the old way, so I estimated them from ticket dates and team update posts.</p>
+    <figure class="shot shot--round" data-reveal style="--i:2"><img src="img/ai/publish-pipeline.webp" width="2000" height="689" loading="lazy" alt="Pipeline from Figma to GitHub to Claude Design: Figma publish, webhook, rebuild in GitHub Actions, pull request, review, publish kit with Claude Code, canvases in Claude Design"><figcaption class="muted">How a Figma publish travels to Claude Design. One review step needs a person.</figcaption></figure>
+    <figure class="bars" data-reveal style="--i:2">
+      <div class="gauge">
+        <div class="gauge__head"><span class="gauge__label">Old way, estimated</span><span class="gauge__value nums">3 to 5 hands-on days per larger component</span></div>
+        <div class="gauge__track" aria-hidden="true"><i class="gauge__fill" style="--d:3"></i><i class="gauge__fill gauge__fill--to" style="--d:2"></i></div>
+      </div>
+      <div class="gauge is-key">
+        <div class="gauge__head"><span class="gauge__label">Pipeline, one run</span><span class="gauge__value nums">0.5 days per larger component at most</span></div>
+        <div class="gauge__track" aria-hidden="true"><i class="gauge__fill" style="--d:0.5"></i></div>
+      </div>
+      <figcaption class="chart__note">The whole run, charged to the five larger components alone.</figcaption>
+    </figure>
+    <p class="plain" data-reveal style="--i:3">The designer approves the brief and prunes the build. Every colour, radius and spacing value came from a token and all 14 states from the brief were built, counted twice.</p>
+    <figure class="shot shot--round" data-reveal style="--i:3"><img src="img/ai/quintace-kit.webp" width="2000" height="897" loading="lazy" alt="Quintace Kit 2.5.3 overview: colour swatches, rank badges, avatars and coin assets"><figcaption class="muted">The published kit: tokens, components and 1,213 asset files.</figcaption></figure>
+    <div class="limits" data-reveal style="--i:4">
+      <h3>Limits I put on the claim</h3>
+      <ul>
+        <li><b>Different scope</b><span>The baseline includes exploring options and choosing a direction. The pipeline run may not.</span></li>
+        <li><b>Never measured</b><span>Inferred from dates while tasks overlapped. Real hands-on time is probably lower.</span></li>
+        <li><b>One run, by me</b><span>Nine components say little about review rounds, harder ones or other designers.</span></li>
+      </ul>
+    </div>
+  </section>
+
   <section class="led wrap" aria-label="Decisions">
     <p class="row__word star" data-reveal>Action</p>
     <h2 class="led__head" data-reveal>Two decisions that cost something</h2>
@@ -183,21 +229,11 @@
     </div>
   </section>
 
-  <section class="led wrap" aria-label="How the week runs">
-    <p class="row__word star" data-reveal>Action</p>
-    <h2 class="led__head" data-reveal>DesignOps: an agent prepares my week</h2>
-    <p class="lead" data-reveal style="--i:1">Every ticket follows a Definition of Ready and a Definition of Done. Jira opens design and QA tickets automatically. An agent prepares each fixed meeting:</p>
-    <ul class="week" data-reveal style="--i:2">
-      <li><b>Monday</b><span>Sprint commitments for each designer, and cross-team priorities.</span></li>
-      <li><b>Tuesday</b><span>Action points from the product meetings.</span></li>
-      <li><b>Thursday</b><span>Backlog planning sync.</span></li>
-      <li><b>Friday</b><span>Sprint close and stakeholder updates.</span></li>
-    </ul>
-  </section>
 
   <section class="results wrap" aria-label="Results">
     <p class="row__word star" data-reveal>Result</p>
     <h2 class="results__head" data-reveal>Handoffs per designer went from 0.8 to 1.8 a week</h2>
+    <p class="plain" data-reveal style="--i:1">Every ticket follows a Definition of Ready and a Definition of Done, and Jira opens design and QA tickets itself.</p>
     <div class="aside">
       <div class="panel" data-reveal style="--i:1">
         <h3>Moved to AI</h3>
@@ -221,7 +257,7 @@
         <ul>
           <li><b>Hours saved:</b> tracking is live. First read next quarter.</li>
           <li><b>Product metric:</b> the first retention read on the new onboarding and analysis flows lands next quarter.</li>
-          <li><b>Handoff quality (planned):</b> a buddy developer for each designer.</li>
+          <li><b>Controlled test (proposed):</b> two or three components built both ways to one definition of done, hours logged.</li>
         </ul>
       </div>
     </div>
