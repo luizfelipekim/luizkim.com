@@ -95,9 +95,8 @@ html[data-theme="brutalist"] .hero__scrim {
 }
 /* the fixed bar is frosted over the hero too, not only once it is stuck */
 html[data-theme="brutalist"] .hero__top { padding-bottom: 0.9rem; background: color-mix(in srgb, var(--page-bg) 84%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-html[data-theme="brutalist"] .hero__top::after {
-  content: ""; position: absolute; left: max(16px, var(--m)); right: max(16px, var(--m)); bottom: 0; border-bottom: var(--border) solid var(--line);
-}
+/* one thin rule under the bar, the same over the hero and once stuck */
+html[data-theme="brutalist"] .hero__top, html[data-theme="brutalist"] .hero__top.is-stuck { border-bottom: 1px solid color-mix(in srgb, var(--page-line) 60%, transparent); }
 html[data-theme="brutalist"] :is(.hero__mark, .bar__mark) { font-size: 0.8125rem; }
 html[data-theme="brutalist"] :is(.hero__nav, .bar__nav) a:not(.button)::before { content: "["; content: "[" / ""; }
 html[data-theme="brutalist"] :is(.hero__nav, .bar__nav) a:not(.button)::after { content: "]"; content: "]" / ""; }

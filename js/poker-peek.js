@@ -218,8 +218,8 @@
   }
 
   // Solitaire drew at 71 x 96; the faces go down to the same kind of grid and back up, square pixels
-  function pixelate(c, f) {
-    const small = mkCanvas(Math.round(c.width / f), Math.round(c.height / f)), s = small.getContext('2d');
+  function pixelate(c, f, fy) {
+    const small = mkCanvas(Math.round(c.width / f), Math.round(c.height / (fy || f))), s = small.getContext('2d');
     s.drawImage(c, 0, 0, small.width, small.height);
     const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height);
     ctx.imageSmoothingEnabled = false; ctx.drawImage(small, 0, 0, c.width, c.height); ctx.imageSmoothingEnabled = true;
@@ -333,12 +333,17 @@
     foil: { base: '#140b3a', stripe: '#9a6bff', mark: '#ffcf3a', font: '900 50px ' + DISPLAY, rough: 0.28, metal: 0.35,
       low: { stripe: '#00b4ff' }, high: { stripe: '#ff1fb4' }, cap: { base: '#140b3a', stripe: '#ffcf3a', mark: '#ffcf3a' } }   // dark lacquer, the inlays running cyan, violet, magenta up the stack to the one gold chip
   };
+  // The wall art is drawn on a 512 x 64 grid and stretched across a canvas SIDE_X times as wide: the wall runs
+  // about 37 times its height round the chip, and at 512 texels the stripes' edges were magnified to a blur.
+  const SIDE_X = 4;
   function chipTextures(pal, side, top) {
     const s = side.getContext('2d');
+    s.setTransform(SIDE_X, 0, 0, 1, 0, 0);
     s.clearRect(0, 0, 512, 64);
     s.fillStyle = pal.base; s.fillRect(0, 0, 512, 64);
     s.fillStyle = pal.stripe;
     for (let i = 0; i < 8; i++) s.fillRect(i * 64 + 18, 0, 28, 64);
+    s.setTransform(1, 0, 0, 1, 0, 0);
     const t = top.getContext('2d');
     t.clearRect(0, 0, 256, 256);
     t.fillStyle = pal.base; t.beginPath(); t.arc(128, 128, 128, 0, Math.PI * 2); t.fill();
@@ -348,7 +353,7 @@
     }
     t.strokeStyle = pal.stripe; t.globalAlpha = 0.35; t.lineWidth = 2; t.beginPath(); t.arc(128, 128, 84, 0, Math.PI * 2); t.stroke();
     t.globalAlpha = 1; t.fillStyle = pal.mark; t.font = pal.font; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillText('LK', 128, 132);
-    if (pal.pixel) { pixelate(side, pal.pixel / 2); pixelate(top, pal.pixel / 2); }
+    if (pal.pixel) { pixelate(side, pal.pixel / 2 * SIDE_X, pal.pixel / 2); pixelate(top, pal.pixel / 2); }   // the same blocks as before the wider wall
   }
 
   // ---------- scene ----------
@@ -633,9 +638,10 @@
   // chips
   // two sets of chip art (the stack, and its capping chip), repainted in place when the look changes
   function chipSet() {
-    const sideC = mkCanvas(512, 64), topC = mkCanvas(256, 256);
-    const side = new THREE.CanvasTexture(sideC); side.wrapS = THREE.RepeatWrapping; side.encoding = THREE.sRGBEncoding;
-    const top = new THREE.CanvasTexture(topC); top.encoding = THREE.sRGBEncoding;
+    const sideC = mkCanvas(512 * SIDE_X, 64), topC = mkCanvas(256, 256);
+    // the wall is seen edge-on, so without anisotropic filtering its mipmaps smear the stripes
+    const side = new THREE.CanvasTexture(sideC); side.wrapS = THREE.RepeatWrapping; side.encoding = THREE.sRGBEncoding; side.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const top = new THREE.CanvasTexture(topC); top.encoding = THREE.sRGBEncoding; top.anisotropy = side.anisotropy;
     const mSide = new THREE.MeshStandardMaterial({ map: side, roughness: 0.45, metalness: 0.05 });
     const mTop = new THREE.MeshStandardMaterial({ map: top, roughness: 0.4, metalness: 0.05 });
     return { sideC, topC, side, top, mats: [mSide, mTop, mTop] };
